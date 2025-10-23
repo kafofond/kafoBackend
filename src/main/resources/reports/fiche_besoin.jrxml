@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports 
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="fiche_besoin"
+              pageWidth="595"
+              pageHeight="842"
+              columnWidth="555"
+              leftMargin="20"
+              rightMargin="20"
+              topMargin="20"
+              bottomMargin="20"
+              uuid="4eedbb89-b4f6-4469-9ab6-f6c5b72c9145">
+
+    <!-- Paramètres du rapport -->
+    <parameter name="TITRE" class="java.lang.String" isForPrompting="false">
+        <defaultValueExpression><![CDATA["FICHE DE BESOIN"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="ENTREPRISE" class="java.lang.String" isForPrompting="false">
+        <defaultValueExpression><![CDATA["KafoFond"]]></defaultValueExpression>
+    </parameter>
+    <parameter name="DATE_GENERATION" class="java.lang.String" isForPrompting="false"/>
+
+    <!-- Champs de l'entité FicheDeBesoin -->
+    <field name="id" class="java.lang.Long"/>
+    <field name="code" class="java.lang.String"/>
+    <field name="serviceBeneficiaire" class="java.lang.String"/>
+    <field name="objet" class="java.lang.String"/>
+    <field name="description" class="java.lang.String"/>
+    <field name="quantite" class="java.lang.Integer"/>
+    <field name="montantEstime" class="java.lang.Double"/>
+    <field name="dateAttendu" class="java.time.LocalDate"/>
+    <field name="dateCreation" class="java.time.LocalDate"/>
+    <field name="statut" class="kafofond.entity.Statut"/>
+
+    <!-- Variables calculées -->
+    <variable name="TOTAL_MONTANT" class="java.lang.Double" calculation="Sum">
+        <variableExpression><![CDATA[$F{montantEstime}]]></variableExpression>
+    </variable>
+
+    <!-- En-tête du document (Title Band) -->
+    <title>
+        <band height="100" splitType="Stretch">
+            <!-- Titre principal -->
+            <textField>
+                <reportElement x="0" y="10" width="555" height="30" uuid="a1b2c3d4-e5f6-7890-abcd-ef1234567890"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="18" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{TITRE}]]></textFieldExpression>
+            </textField>
+
+            <!-- Nom de l'entreprise -->
+            <textField>
+                <reportElement x="0" y="45" width="555" height="20" uuid="b2c3d4e5-f6a7-8901-bcde-f01234567891"/>
+                <textElement textAlignment="Center">
+                    <font size="12"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$P{ENTREPRISE}]]></textFieldExpression>
+            </textField>
+
+            <!-- Date de génération -->
+            <textField>
+                <reportElement x="400" y="70" width="155" height="20" uuid="c3d4e5f6-a7b8-9012-cdef-01234567892"/>
+                <textElement textAlignment="Right">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Généré le : " + ($P{DATE_GENERATION} != null ? $P{DATE_GENERATION} : new java.text.SimpleDateFormat("dd/MM/yyyy").format(new java.util.Date()))]]></textFieldExpression>
+            </textField>
+
+            <!-- Ligne de séparation -->
+            <line>
+                <reportElement x="0" y="95" width="555" height="1" uuid="d4e5f6a7-b8c9-0123-def0-1234567893"/>
+                <graphicElement>
+                    <pen lineWidth="2.0"/>
+                </graphicElement>
+            </line>
+        </band>
+    </title>
+
+    <!-- En-tête de colonne -->
+    <columnHeader>
+        <band height="30">
+            <staticText>
+                <reportElement x="0" y="0" width="80" height="25" uuid="e5f6a7b8-c9d0-1234-ef01-234567894"/>
+                <box>
+                    <pen lineWidth="1.0"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Code]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement x="80" y="0" width="120" height="25" uuid="f6a7b8c9-d0e1-2345-f012-34567895"/>
+                <box>
+                    <pen lineWidth="1.0"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Service]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement x="200" y="0" width="150" height="25" uuid="07b8c9d0-e1f2-3456-0123-4567896"/>
+                <box>
+                    <pen lineWidth="1.0"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Objet]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement x="350" y="0" width="60" height="25" uuid="18c9d0e1-f2a3-4567-1234-567897"/>
+                <box>
+                    <pen lineWidth="1.0"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Quantité]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement x="410" y="0" width="90" height="25" uuid="29d0e1f2-a3b4-5678-2345-67898"/>
+                <box>
+                    <pen lineWidth="1.0"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Montant]]></text>
+            </staticText>
+
+            <staticText>
+                <reportElement x="500" y="0" width="55" height="25" uuid="3ae1f2a3-b4c5-6789-3456-7899"/>
+                <box>
+                    <pen lineWidth="1.0"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font isBold="true"/>
+                </textElement>
+                <text><![CDATA[Statut]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <!-- Détails (lignes de données) -->
+    <detail>
+        <band height="80" splitType="Stretch">
+            <!-- Code -->
+            <textField>
+                <reportElement x="0" y="0" width="80" height="20" uuid="4bf2a3b4-c5d6-7890-4567-8900"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{code}]]></textFieldExpression>
+            </textField>
+
+            <!-- Service Bénéficiaire -->
+            <textField>
+                <reportElement x="80" y="0" width="120" height="20" uuid="5cf3b4c5-d6e7-8901-5678-9011"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="9"/>
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{serviceBeneficiaire}]]></textFieldExpression>
+            </textField>
+
+            <!-- Objet -->
+            <textField>
+                <reportElement x="200" y="0" width="150" height="20" uuid="6df4c5d6-e7f8-9012-6789-0122"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="9"/>
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{objet}]]></textFieldExpression>
+            </textField>
+
+            <!-- Quantité -->
+            <textField>
+                <reportElement x="350" y="0" width="60" height="20" uuid="7eg5d6e7-f8a9-0123-7890-1233"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{quantite}]]></textFieldExpression>
+            </textField>
+
+            <!-- Montant Estimé -->
+            <textField pattern="#,##0.00">
+                <reportElement x="410" y="0" width="90" height="20" uuid="8fh6e7f8-a9b0-1234-8901-2344"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="9"/>
+                    <paragraph rightIndent="5"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{montantEstime}]]></textFieldExpression>
+            </textField>
+
+            <!-- Statut -->
+            <textField>
+                <reportElement x="500" y="0" width="55" height="20" uuid="9gi7f8a9-b0c1-2345-9012-3455"/>
+                <box>
+                    <pen lineWidth="0.5"/>
+                </box>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="9" isBold="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{statut}]]></textFieldExpression>
+            </textField>
+
+            <!-- Description (sur plusieurs lignes si nécessaire) -->
+            <staticText>
+                <reportElement x="0" y="25" width="80" height="15" uuid="ahj8a9b0-c1d2-3456-0123-4566"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true" size="9"/>
+                </textElement>
+                <text><![CDATA[Description :]]></text>
+            </staticText>
+
+            <textField isStretchWithOverflow="true">
+                <reportElement x="80" y="25" width="475" height="15" uuid="bik9b0c1-d2e3-4567-1234-5677"/>
+                <textElement verticalAlignment="Top">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{description}]]></textFieldExpression>
+            </textField>
+
+            <!-- Date de création et date attendu -->
+            <staticText>
+                <reportElement x="0" y="45" width="80" height="15" uuid="cjl0c1d2-e3f4-5678-2345-6788"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true" size="9"/>
+                </textElement>
+                <text><![CDATA[Créé le :]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement x="80" y="45" width="150" height="15" uuid="dkm1d2e3-f4a5-6789-3456-7899"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{dateCreation}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="250" y="45" width="100" height="15" uuid="eln2e3f4-a5b6-7890-4567-8900"/>
+                <textElement verticalAlignment="Middle">
+                    <font isBold="true" size="9"/>
+                </textElement>
+                <text><![CDATA[Date attendu :]]></text>
+            </staticText>
+
+            <textField>
+                <reportElement x="350" y="45" width="150" height="15" uuid="fmo3f4a5-b6c7-8901-5678-9011"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{dateAttendu}]]></textFieldExpression>
+            </textField>
+
+            <!-- Ligne de séparation -->
+            <line>
+                <reportElement x="0" y="75" width="555" height="1" uuid="gnp4a5b6-c7d8-9012-6789-0122"/>
+                <graphicElement>
+                    <pen lineWidth="0.5" lineStyle="Dashed"/>
+                </graphicElement>
+            </line>
+        </band>
+    </detail>
+
+    <!-- Pied de page (Summary) -->
+    <summary>
+        <band height="60">
+            <!-- Total -->
+            <staticText>
+                <reportElement x="280" y="10" width="100" height="25" uuid="hoq5b6c7-d8e9-0123-7890-1233"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="12" isBold="true"/>
+                </textElement>
+                <text><![CDATA[TOTAL :]]></text>
+            </staticText>
+
+            <textField pattern="#,##0.00">
+                <reportElement x="380" y="10" width="90" height="25" uuid="ipr6c7d8-e9f0-1234-8901-2344"/>
+                <box>
+                    <pen lineWidth="1.0"/>
+                </box>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="12" isBold="true"/>
+                    <paragraph rightIndent="5"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$V{TOTAL_MONTANT}]]></textFieldExpression>
+            </textField>
+
+            <staticText>
+                <reportElement x="470" y="10" width="85" height="25" uuid="jqs7d8e9-f0a1-2345-9012-3455"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="10" isBold="true"/>
+                    <paragraph leftIndent="5"/>
+                </textElement>
+                <text><![CDATA[FCFA]]></text>
+            </staticText>
+        </band>
+    </summary>
+
+    <!-- Pied de page (apparaît sur chaque page) -->
+    <pageFooter>
+        <band height="30">
+            <!-- Numéro de page -->
+            <textField>
+                <reportElement x="0" y="5" width="280" height="20" uuid="krt8e9f0-a1b2-3456-0123-4566"/>
+                <textElement textAlignment="Left" verticalAlignment="Middle">
+                    <font size="9"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Page " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+
+            <!-- Système générateur -->
+            <staticText>
+                <reportElement x="280" y="5" width="275" height="20" uuid="lsu9f0a1-b2c3-4567-1234-5677"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle">
+                    <font size="8" isItalic="true"/>
+                </textElement>
+                <text><![CDATA[Généré par KafoFond - Système de gestion financière]]></text>
+            </staticText>
+        </band>
+    </pageFooter>
+
+</jasperReport>

@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Fichiers de configuration sensibles ###
+config/
+src/main/java/kafofond/config/
+src/main/resources/application-secrets.properties
+.env
+*.secret
