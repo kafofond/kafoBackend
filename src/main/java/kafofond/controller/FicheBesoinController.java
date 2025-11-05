@@ -56,7 +56,7 @@ public class FicheBesoinController {
                     .montantEstime(ficheDTO.getMontantEstime())
                     .dateAttendu(ficheDTO.getDateAttendu())
                     .urlFichierJoint(ficheDTO.getUrlFichierJoint())
-                    .dateCreation(LocalDate.now())
+                    .dateCreation(LocalDate.now().atStartOfDay())
                     .build();
             
             // Si des désignations sont fournies, les lier

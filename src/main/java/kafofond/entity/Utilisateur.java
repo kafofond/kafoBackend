@@ -3,6 +3,7 @@ package kafofond.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -28,6 +29,9 @@ public class Utilisateur {
 
     private boolean etat;
 
+    @Column(name = "date_creation")
+    private LocalDateTime dateCreation;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "entreprise_id")
     @JsonIgnore
@@ -36,4 +40,9 @@ public class Utilisateur {
     @OneToMany(mappedBy = "auteur", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Commentaire> commentaires;
+
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+    }
 }

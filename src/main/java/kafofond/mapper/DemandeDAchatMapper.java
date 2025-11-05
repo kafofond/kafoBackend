@@ -4,6 +4,8 @@ import kafofond.dto.DemandeDAchatDTO;
 import kafofond.entity.DemandeDAchat;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 /**
  * Mapper pour l'entité DemandeDAchat
  * Convertit entre entité et DTO
@@ -26,7 +28,7 @@ public class DemandeDAchatMapper {
                 .fournisseur(demande.getFournisseur())
                 .montantTotal(demande.getMontantTotal())
                 .serviceBeneficiaire(demande.getServiceBeneficiaire())
-                .dateCreation(demande.getDateCreation())
+                .dateCreation(LocalDate.from(demande.getDateCreation()))
                 .dateAttendu(demande.getDateAttendu())
                 .statut(demande.getStatut())
                 .urlFichierJoint(demande.getUrlFichierJoint())
@@ -54,7 +56,7 @@ public class DemandeDAchatMapper {
                 .fournisseur(demandeDTO.getFournisseur())
                 .montantTotal(demandeDTO.getMontantTotal())
                 .serviceBeneficiaire(demandeDTO.getServiceBeneficiaire())
-                .dateCreation(demandeDTO.getDateCreation())
+                .dateCreation(demandeDTO.getDateCreation().atStartOfDay())
                 .dateAttendu(demandeDTO.getDateAttendu())
                 .statut(demandeDTO.getStatut())
                 .urlFichierJoint(demandeDTO.getUrlFichierJoint());

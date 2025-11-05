@@ -2,6 +2,7 @@ package kafofond.dto;
 
 import kafofond.entity.Role;
 import lombok.*;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -19,4 +20,5 @@ public class UtilisateurDTO {
     private boolean actif;
     private Long entrepriseId;
     private String entrepriseNom;
+    private LocalDateTime dateCreation;
 }

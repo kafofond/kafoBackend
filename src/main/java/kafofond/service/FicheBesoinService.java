@@ -45,7 +45,7 @@ public class FicheBesoinService {
         fiche.setCreePar(utilisateur);
         fiche.setEntreprise(utilisateur.getEntreprise());
         fiche.setStatut(Statut.EN_COURS);
-        fiche.setDateCreation(LocalDate.now());
+        fiche.setDateCreation(LocalDate.now().atStartOfDay());
         
         // Calculer le montant total à partir des désignations
         if (fiche.getDesignations() != null && !fiche.getDesignations().isEmpty()) {
@@ -67,7 +67,7 @@ public class FicheBesoinService {
         FicheDeBesoin ficheCreee = ficheBesoinRepo.save(fiche);
         
         // Générer le code unique automatiquement
-        String code = codeGeneratorService.generateFicheBesoinCode(ficheCreee.getId(), ficheCreee.getDateCreation());
+        String code = codeGeneratorService.generateFicheBesoinCode(ficheCreee.getId(), LocalDate.from(ficheCreee.getDateCreation()));
         ficheCreee.setCode(code);
         ficheCreee = ficheBesoinRepo.save(ficheCreee);
 
@@ -121,7 +121,7 @@ public class FicheBesoinService {
                 .description(created.getDescription())
                 .montantEstime(created.getMontantEstime())
                 .dateAttendu(created.getDateAttendu())
-                .dateCreation(created.getDateCreation())
+                .dateCreation(LocalDate.from(created.getDateCreation()))
                 .statut(created.getStatut())
                 .urlFichierJoint(created.getUrlFichierJoint())
                 .createurNom(created.getCreePar() != null ? 
@@ -301,7 +301,7 @@ public class FicheBesoinService {
                 .description(validated.getDescription())
                 .montantEstime(validated.getMontantEstime())
                 .dateAttendu(validated.getDateAttendu())
-                .dateCreation(validated.getDateCreation())
+                .dateCreation(LocalDate.from(validated.getDateCreation()))
                 .statut(validated.getStatut())
                 .createurNom(validated.getCreePar() != null ? 
                     validated.getCreePar().getPrenom() + " " + validated.getCreePar().getNom() : null)
@@ -396,7 +396,7 @@ public class FicheBesoinService {
                 .description(approved.getDescription())
                 .montantEstime(approved.getMontantEstime())
                 .dateAttendu(approved.getDateAttendu())
-                .dateCreation(approved.getDateCreation())
+                .dateCreation(LocalDate.from(approved.getDateCreation()))
                 .statut(approved.getStatut())
                 .createurNom(approved.getCreePar() != null ? 
                     approved.getCreePar().getPrenom() + " " + approved.getCreePar().getNom() : null)
@@ -504,7 +504,7 @@ public class FicheBesoinService {
                 .description(rejected.getDescription())
                 .montantEstime(rejected.getMontantEstime())
                 .dateAttendu(rejected.getDateAttendu())
-                .dateCreation(rejected.getDateCreation())
+                .dateCreation(LocalDate.from(rejected.getDateCreation()))
                 .statut(rejected.getStatut())
                 .createurNom(rejected.getCreePar() != null ? 
                     rejected.getCreePar().getPrenom() + " " + rejected.getCreePar().getNom() : null)
@@ -569,7 +569,7 @@ public class FicheBesoinService {
                             .description(fiche.getDescription())
                             .montantEstime(fiche.getMontantEstime())
                             .dateAttendu(fiche.getDateAttendu())
-                            .dateCreation(fiche.getDateCreation())
+                            .dateCreation(LocalDate.from(fiche.getDateCreation()))
                             .statut(fiche.getStatut())
                             .createurNom(fiche.getCreePar() != null ? 
                                 fiche.getCreePar().getPrenom() + " " + fiche.getCreePar().getNom() : null)
@@ -627,7 +627,7 @@ public class FicheBesoinService {
                             .description(fiche.getDescription())
                             .montantEstime(fiche.getMontantEstime())
                             .dateAttendu(fiche.getDateAttendu())
-                            .dateCreation(fiche.getDateCreation())
+                            .dateCreation(LocalDate.from(fiche.getDateCreation()))
                             .statut(fiche.getStatut())
                             .createurNom(fiche.getCreePar() != null ? 
                                 fiche.getCreePar().getPrenom() + " " + fiche.getCreePar().getNom() : null)
@@ -675,7 +675,7 @@ public class FicheBesoinService {
                 .description(ficheModif.getDescription())
                 .montantEstime(ficheModif.getMontantEstime())
                 .dateAttendu(ficheModif.getDateAttendu())
-                .dateCreation(ficheModif.getDateCreation())
+                .dateCreation(LocalDate.from(ficheModif.getDateCreation()))
                 .statut(ficheModif.getStatut())
                 .createurNom(ficheModif.getCreePar() != null ? 
                     ficheModif.getCreePar().getPrenom() + " " + ficheModif.getCreePar().getNom() : null)

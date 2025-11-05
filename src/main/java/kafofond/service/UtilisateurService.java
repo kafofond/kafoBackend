@@ -1,5 +1,6 @@
 package kafofond.service;
 
+import kafofond.dto.UtilisateurCreateDTO;
 import kafofond.dto.UtilisateurDTO;
 import kafofond.entity.Entreprise;
 import kafofond.entity.Role;
@@ -30,15 +31,79 @@ public class UtilisateurService {
     private final UtilisateurMapper utilisateurMapper;
 
     @Transactional
+    public UtilisateurDTO creerUtilisateurFromSimpleDTO(UtilisateurCreateDTO utilisateurCreateDTO, Utilisateur admin) {
+        // Vérifier les permissions
+        if (admin.getRole() != Role.SUPER_ADMIN && admin.getRole() != Role.ADMIN && admin.getRole() != Role.DIRECTEUR) {
+            throw new IllegalArgumentException(
+                    "Seuls les Super Admins, Admins et Directeurs peuvent créer des utilisateurs");
+        }
+
+        // Vérifier que l'email n'est pas déjà utilisé
+        utilisateurRepo.findByEmail(utilisateurCreateDTO.getEmail())
+                .ifPresent(u -> {
+                    throw new IllegalArgumentException("Email déjà utilisé");
+                });
+
+        // Créer l'utilisateur à partir du DTO simplifié
+        Utilisateur user = new Utilisateur();
+        user.setNom(utilisateurCreateDTO.getNom());
+        user.setPrenom(utilisateurCreateDTO.getPrenom());
+        user.setEmail(utilisateurCreateDTO.getEmail());
+        user.setMotDePasse(passwordEncoder.encode(utilisateurCreateDTO.getMotDePasse()));
+        user.setDepartement(utilisateurCreateDTO.getDepartement());
+        user.setRole(utilisateurCreateDTO.getRole());
+        user.setEtat(true);
+
+        // Logique différente selon le rôle de l'administrateur
+        if (admin.getRole() == Role.SUPER_ADMIN) {
+            // SUPER_ADMIN : doit spécifier l'entreprise cible ou elle est optionnelle
+            if (utilisateurCreateDTO.getEntrepriseId() != null) {
+                // Vérifier que l'entreprise existe
+                Entreprise entreprise = entrepriseRepo.findById(utilisateurCreateDTO.getEntrepriseId())
+                        .orElseThrow(() -> new IllegalArgumentException("Entreprise introuvable"));
+                user.setEntreprise(entreprise);
+            } else {
+                // Si l'ID de l'entreprise n'est pas fourni, l'associer à l'entreprise de
+                // l'admin
+                user.setEntreprise(admin.getEntreprise());
+            }
+        } else {
+            // ADMIN/DIRECTEUR : hérite automatiquement de leur entreprise
+            user.setEntreprise(admin.getEntreprise());
+        }
+
+        Utilisateur saved = utilisateurRepo.save(user);
+
+        // Enregistrer l'action dans l'historique
+        historiqueService.enregistrerAction("UTILISATEUR", saved.getId(), "CREATION", admin, null,
+                saved.isEtat() ? "ACTIF" : "INACTIF", null, null, "Création utilisateur");
+
+        // Envoyer un email de notification
+        try {
+            notificationService.envoyerEmail(saved.getEmail(), "Compte créé",
+                    String.format("Bonjour %s %s, votre compte a été créé avec le rôle %s",
+                            saved.getPrenom(), saved.getNom(), saved.getRole()));
+        } catch (Exception e) {
+            log.warn("Impossible d'envoyer l'email de notification : {}", e.getMessage());
+        }
+
+        // Convertir en DTO pour la réponse
+        return utilisateurMapper.toDTO(saved);
+    }
+
+    @Transactional
     public Utilisateur creerUtilisateur(Utilisateur user, Utilisateur admin) {
         if (admin.getRole() != Role.SUPER_ADMIN && admin.getRole() != Role.ADMIN && admin.getRole() != Role.DIRECTEUR)
-            throw new IllegalArgumentException("Seuls les Super Admins, Admins et Directeurs peuvent créer des utilisateurs");
+            throw new IllegalArgumentException(
+                    "Seuls les Super Admins, Admins et Directeurs peuvent créer des utilisateurs");
 
         utilisateurRepo.findByEmail(user.getEmail())
-                .ifPresent(u -> { throw new IllegalArgumentException("Email déjà utilisé"); });
+                .ifPresent(u -> {
+                    throw new IllegalArgumentException("Email déjà utilisé");
+                });
 
         user.setMotDePasse(passwordEncoder.encode(user.getMotDePasse()));
-        
+
         // Logique différente selon le rôle
         if (admin.getRole() == Role.SUPER_ADMIN) {
             // SUPER_ADMIN : doit spécifier l'entreprise cible
@@ -53,7 +118,7 @@ public class UtilisateurService {
             // ADMIN/DIRECTEUR : hérite automatiquement de leur entreprise
             user.setEntreprise(admin.getEntreprise());
         }
-        
+
         user.setEtat(true);
 
         Utilisateur saved = utilisateurRepo.save(user);
@@ -64,7 +129,9 @@ public class UtilisateurService {
             notificationService.envoyerEmail(saved.getEmail(), "Compte créé",
                     String.format("Bonjour %s %s, votre compte a été créé avec le rôle %s",
                             saved.getPrenom(), saved.getNom(), saved.getRole()));
-        } catch (Exception e) { log.warn(e.getMessage()); }
+        } catch (Exception e) {
+            log.warn(e.getMessage());
+        }
 
         return saved;
     }
@@ -79,7 +146,8 @@ public class UtilisateurService {
 
         // Vérifier les permissions d'entreprise
         if (admin.getRole() != Role.SUPER_ADMIN) {
-            // ADMIN et DIRECTEUR ne peuvent modifier que les utilisateurs de leur entreprise
+            // ADMIN et DIRECTEUR ne peuvent modifier que les utilisateurs de leur
+            // entreprise
             if (!user.getEntreprise().getId().equals(admin.getEntreprise().getId())) {
                 throw new IllegalArgumentException("Vous ne pouvez modifier que les utilisateurs de votre entreprise");
             }
@@ -118,24 +186,24 @@ public class UtilisateurService {
         if (admin.getRole() != Role.SUPER_ADMIN && admin.getRole() != Role.ADMIN) {
             throw new IllegalArgumentException("Seuls les SUPER_ADMIN et ADMIN peuvent modifier les mots de passe");
         }
-        
+
         Utilisateur utilisateur = utilisateurRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
-        
+
         // Si c'est un admin, vérifier qu'il modifie un utilisateur de son entreprise
         if (admin.getRole() == Role.ADMIN) {
             if (!utilisateur.getEntreprise().getId().equals(admin.getEntreprise().getId())) {
                 throw new IllegalArgumentException("Vous ne pouvez modifier que les utilisateurs de votre entreprise");
             }
         }
-        
+
         // Modifier le mot de passe
         utilisateur.setMotDePasse(passwordEncoder.encode(nouveauMotDePasse));
         Utilisateur utilisateurModifie = utilisateurRepo.save(utilisateur);
-        
+
         historiqueService.enregistrerAction("UTILISATEUR", id, "MODIFICATION_MDP", admin,
                 null, null, null, null, "Modification du mot de passe");
-        
+
         return utilisateurMapper.toDTO(utilisateurModifie);
     }
 
@@ -149,16 +217,19 @@ public class UtilisateurService {
 
         // Vérifier les permissions d'entreprise
         if (admin.getRole() != Role.SUPER_ADMIN) {
-            // ADMIN et DIRECTEUR ne peuvent désactiver que les utilisateurs de leur entreprise
+            // ADMIN et DIRECTEUR ne peuvent désactiver que les utilisateurs de leur
+            // entreprise
             if (!user.getEntreprise().getId().equals(admin.getEntreprise().getId())) {
-                throw new IllegalArgumentException("Vous ne pouvez désactiver que les utilisateurs de votre entreprise");
+                throw new IllegalArgumentException(
+                        "Vous ne pouvez désactiver que les utilisateurs de votre entreprise");
             }
         }
 
         user.setEtat(false);
         Utilisateur updated = utilisateurRepo.save(user);
 
-        historiqueService.enregistrerAction("UTILISATEUR", id, "DESACTIVATION", admin, "ACTIF", "INACTIF", null, null, "Utilisateur désactivé");
+        historiqueService.enregistrerAction("UTILISATEUR", id, "DESACTIVATION", admin, "ACTIF", "INACTIF", null, null,
+                "Utilisateur désactivé");
         return updated;
     }
 
@@ -178,7 +249,8 @@ public class UtilisateurService {
 
         // Vérifier les permissions d'entreprise
         if (admin.getRole() != Role.SUPER_ADMIN) {
-            // ADMIN et DIRECTEUR ne peuvent réactiver que les utilisateurs de leur entreprise
+            // ADMIN et DIRECTEUR ne peuvent réactiver que les utilisateurs de leur
+            // entreprise
             if (!user.getEntreprise().getId().equals(admin.getEntreprise().getId())) {
                 throw new IllegalArgumentException("Vous ne pouvez réactiver que les utilisateurs de votre entreprise");
             }
@@ -187,7 +259,8 @@ public class UtilisateurService {
         user.setEtat(true);
         Utilisateur updated = utilisateurRepo.save(user);
 
-        historiqueService.enregistrerAction("UTILISATEUR", id, "REACTIVATION", admin, "INACTIF", "ACTIF", null, null, "Utilisateur réactivé");
+        historiqueService.enregistrerAction("UTILISATEUR", id, "REACTIVATION", admin, "INACTIF", "ACTIF", null, null,
+                "Utilisateur réactivé");
         return updated;
     }
 
@@ -335,7 +408,7 @@ public class UtilisateurService {
     public Optional<Utilisateur> trouverParEmail(String email) {
         return utilisateurRepo.findByEmail(email);
     }
-    
+
     @Transactional(readOnly = true)
     public Optional<Utilisateur> trouverParEmailAvecEntreprise(String email) {
         return utilisateurRepo.findByEmailWithEntreprise(email);

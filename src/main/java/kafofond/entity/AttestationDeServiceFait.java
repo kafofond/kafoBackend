@@ -30,7 +30,7 @@ public class AttestationDeServiceFait {
     private String titre;
     private String constat;
     private LocalDate dateLivraison;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
 
     // ⚠️ Statut supprimé : une AttestationDeServiceFait est émise une seule fois
@@ -62,4 +62,15 @@ public class AttestationDeServiceFait {
     @OneToOne(mappedBy = "attestationDeServiceFait", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private DecisionDePrelevement decisionDePrelevement;
+
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+        dateModification = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dateModification = LocalDateTime.now();
+    }
 }

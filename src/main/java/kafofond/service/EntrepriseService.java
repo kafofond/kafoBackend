@@ -1,5 +1,6 @@
 package kafofond.service;
 
+import kafofond.dto.EntrepriseCreateDTO;
 import kafofond.dto.EntrepriseDTO;
 import kafofond.entity.Entreprise;
 import kafofond.entity.Role;
@@ -54,7 +55,7 @@ public class EntrepriseService {
 
         // Préparation de l'entité
         Entreprise entreprise = entrepriseMapper.toEntity(entrepriseDTO);
-        entreprise.setDateCreation(LocalDate.now());
+        entreprise.setDateCreation(LocalDate.now().atStartOfDay());
         entreprise.setEtat(Boolean.TRUE); // actif par défaut
 
         Entreprise entrepriseCreee = entrepriseRepo.save(entreprise);
@@ -69,8 +70,63 @@ public class EntrepriseService {
                 "ACTIF",
                 null,
                 null,
-                "Création de l'entreprise " + entrepriseCreee.getNom()
-        );
+                "Création de l'entreprise " + entrepriseCreee.getNom());
+
+        return entrepriseMapper.toDTO(entrepriseCreee);
+    }
+
+    /**
+     * Crée une nouvelle entreprise à partir d'un DTO simplifié (Super Admin
+     * uniquement)
+     */
+    @Transactional
+    public EntrepriseDTO creerEntrepriseFromSimpleDTO(EntrepriseCreateDTO entrepriseCreateDTO, String emailSuperAdmin) {
+        log.info("Création d'une entreprise par {}", emailSuperAdmin);
+
+        Utilisateur superAdmin = utilisateurRepo.findByEmail(emailSuperAdmin)
+                .orElseThrow(() -> new RessourceNonTrouveeException("Utilisateur introuvable"));
+
+        // Vérification du rôle
+        if (superAdmin.getRole() != Role.SUPER_ADMIN) {
+            throw new OperationNonAutoriseeException("Seul le Super Admin peut créer des entreprises");
+        }
+
+        // Vérification des doublons
+        if (entrepriseRepo.existsByNom(entrepriseCreateDTO.getNom())) {
+            throw new IllegalArgumentException("Une entreprise avec ce nom existe déjà");
+        }
+
+        if (entrepriseCreateDTO.getEmail() != null && entrepriseRepo.existsByEmail(entrepriseCreateDTO.getEmail())) {
+            throw new IllegalArgumentException("Une entreprise avec cet email existe déjà");
+        }
+
+        // Conversion du DTO simplifié vers le DTO complet
+        EntrepriseDTO entrepriseDTO = EntrepriseDTO.builder()
+                .nom(entrepriseCreateDTO.getNom())
+                .domaine(entrepriseCreateDTO.getDomaine())
+                .adresse(entrepriseCreateDTO.getAdresse())
+                .telephone(entrepriseCreateDTO.getTelephone())
+                .email(entrepriseCreateDTO.getEmail())
+                .build();
+
+        // Préparation de l'entité
+        Entreprise entreprise = entrepriseMapper.toEntity(entrepriseDTO);
+        entreprise.setDateCreation(LocalDate.now().atStartOfDay());
+        entreprise.setEtat(Boolean.TRUE); // actif par défaut
+
+        Entreprise entrepriseCreee = entrepriseRepo.save(entreprise);
+
+        // Enregistrement historique
+        historiqueService.enregistrerAction(
+                "ENTREPRISE",
+                entrepriseCreee.getId(),
+                "CREATION",
+                superAdmin,
+                null,
+                "ACTIF",
+                null,
+                null,
+                "Création de l'entreprise " + entrepriseCreee.getNom());
 
         return entrepriseMapper.toDTO(entrepriseCreee);
     }
@@ -109,17 +165,24 @@ public class EntrepriseService {
         }
 
         if (entrepriseDTO.getEmail() != null && !entreprise.getEmail().equals(entrepriseDTO.getEmail())
-                && entrepriseRepo.existsByEmail(entrepriseDTO.getEmail())) {
-            throw new IllegalArgumentException("Une entreprise avec cet email existe déjà");
+                && entrepriseRepo.existsByEmail(entrepriseDTO.getEmail())) {            throw new IllegalArgumentException("Une entreprise avec cet email existe déjà");
+
         }
 
-        // Mise à jour des champs (on vérifie les nulls pour éviter d'écraser involontairement)
-        if (entrepriseDTO.getNom() != null) entreprise.setNom(entrepriseDTO.getNom());
-        if (entrepriseDTO.getDomaine() != null) entreprise.setDomaine(entrepriseDTO.getDomaine());
-        if (entrepriseDTO.getAdresse() != null) entreprise.setAdresse(entrepriseDTO.getAdresse());
-        if (entrepriseDTO.getTelephone() != null) entreprise.setTelephone(entrepriseDTO.getTelephone());
-        if (entrepriseDTO.getEmail() != null) entreprise.setEmail(entrepriseDTO.getEmail());
-        if (entrepriseDTO.getEtat() != null) entreprise.setEtat(entrepriseDTO.getEtat());
+        // Mise à jour des champs (on vérifie les nulls pour éviter d'écraser
+        // involontairement)
+        if (entrepriseDTO.getNom() != null)
+            entreprise.setNom(entrepriseDTO.getNom());
+        if (entrepriseDTO.getDomaine() != null)
+            entreprise.setDomaine(entrepriseDTO.getDomaine());
+        if (entrepriseDTO.getAdresse() != null)
+            entreprise.setAdresse(entrepriseDTO.getAdresse());
+        if (entrepriseDTO.getTelephone() != null)
+            entreprise.setTelephone(entrepriseDTO.getTelephone());
+        if (entrepriseDTO.getEmail() != null)
+            entreprise.setEmail(entrepriseDTO.getEmail());
+        if (entrepriseDTO.getEtat() != null)
+            entreprise.setEtat(entrepriseDTO.getEtat());
 
         Entreprise entrepriseModifiee = entrepriseRepo.save(entreprise);
 
@@ -133,8 +196,7 @@ public class EntrepriseService {
                 Boolean.TRUE.equals(entreprise.getEtat()) ? "ACTIF" : "INACTIF",
                 null,
                 null,
-                "Modification des informations de l'entreprise"
-        );
+                "Modification des informations de l'entreprise");
 
         return entrepriseMapper.toDTO(entrepriseModifiee);
     }
@@ -199,8 +261,7 @@ public class EntrepriseService {
                 etat ? "ACTIF" : "INACTIF",
                 null,
                 null,
-                etat ? "Activation de l'entreprise" : "Désactivation de l'entreprise"
-        );
+                etat ? "Activation de l'entreprise" : "Désactivation de l'entreprise");
 
         return entrepriseMapper.toDTO(entrepriseModifiee);
     }

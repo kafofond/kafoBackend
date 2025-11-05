@@ -38,7 +38,7 @@ public class BudgetDTO {
                 .intituleBudget(budget.getIntituleBudget())
                 .description(budget.getDescription())
                 .montantBudget(budget.getMontantBudget())
-                .dateCreation(budget.getDateCreation())
+                .dateCreation(LocalDate.from(budget.getDateCreation()))
                 .dateModification(budget.getDateModification())
                 .dateDebut(budget.getDateDebut())
                 .dateFin(budget.getDateFin())

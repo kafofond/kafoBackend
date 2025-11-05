@@ -6,6 +6,8 @@ import kafofond.entity.Utilisateur;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.List;
 
@@ -21,9 +23,27 @@ public interface UtilisateurRepo extends JpaRepository<Utilisateur, Long> {
 
     long countByRole(Role role);
 
+    /**
+     * Compte les utilisateurs actifs
+     */
+    long countByEtatTrue();
+
+    /**
+     * Compte les utilisateurs inactifs
+     */
+    long countByEtatFalse();
+
     // ✅ Méthode pour récupérer le directeur d'une entreprise
     Optional<Utilisateur> findByEntrepriseAndRole(Entreprise entreprise, Role role);
 
     // Si besoin, tous les utilisateurs d'une entreprise
     List<Utilisateur> findByEntreprise(Entreprise entreprise);
+
+    // Méthodes pour les statistiques par date
+    @Query("SELECT COUNT(u) FROM Utilisateur u WHERE u.dateCreation >= :startDate AND u.dateCreation < :endDate")
+    long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(u) FROM Utilisateur u WHERE u.dateCreation >= :startDate")
+    long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
 }

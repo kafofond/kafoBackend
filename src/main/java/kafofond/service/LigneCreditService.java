@@ -44,12 +44,12 @@ public class LigneCreditService {
         ligne.setCreePar(createur);
         ligne.setStatut(Statut.EN_COURS);
         ligne.setEtat(false);
-        ligne.setDateCreation(LocalDate.now());
+        ligne.setDateCreation(LocalDate.now().atStartOfDay());
 
         LigneCredit ligneCreee = ligneCreditRepo.save(ligne);
         
         // Générer le code unique automatiquement
-        String code = codeGeneratorService.generateLigneCreditCode(ligneCreee.getId(), ligneCreee.getDateCreation());
+        String code = codeGeneratorService.generateLigneCreditCode(ligneCreee.getId(), LocalDate.from(ligneCreee.getDateCreation()));
         ligneCreee.setCode(code);
         ligneCreee = ligneCreditRepo.save(ligneCreee);
 

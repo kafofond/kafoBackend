@@ -69,7 +69,7 @@ public class AttestationServiceFaitController {
                     .constat(attestationDTO.getConstat())
                     .dateLivraison(attestationDTO.getDateLivraison())
                     .urlFichierJoint(attestationDTO.getUrlFichierJoint())
-                    .dateCreation(LocalDate.now())
+                    .dateCreation(LocalDate.now().atStartOfDay())
                     .build();
             
             // Si un bon de commande est référencé, le lier
@@ -90,7 +90,7 @@ public class AttestationServiceFaitController {
                     .titre(attestationCreee.getTitre())
                     .constat(attestationCreee.getConstat())
                     .dateLivraison(attestationCreee.getDateLivraison())
-                    .dateCreation(attestationCreee.getDateCreation())
+                    .dateCreation(LocalDate.from(attestationCreee.getDateCreation()))
                     .urlFichierJoint(attestationCreee.getUrlFichierJoint())
                     .createurNom(attestationCreee.getCreePar() != null ? 
                         attestationCreee.getCreePar().getPrenom() + " " + attestationCreee.getCreePar().getNom() : null)
@@ -140,7 +140,7 @@ public class AttestationServiceFaitController {
                                     .titre(attestation.getTitre())
                                     .constat(attestation.getConstat())
                                     .dateLivraison(attestation.getDateLivraison())
-                                    .dateCreation(attestation.getDateCreation())
+                                    .dateCreation(LocalDate.from(attestation.getDateCreation()))
                                     .urlFichierJoint(attestation.getUrlFichierJoint())
                                     .createurNom(attestation.getCreePar() != null ? 
                                         attestation.getCreePar().getPrenom() + " " + attestation.getCreePar().getNom() : null)
@@ -201,7 +201,7 @@ public class AttestationServiceFaitController {
                     .titre(attestation.getTitre())
                     .constat(attestation.getConstat())
                     .dateLivraison(attestation.getDateLivraison())
-                    .dateCreation(attestation.getDateCreation())
+                    .dateCreation(LocalDate.from(attestation.getDateCreation()))
                     .urlFichierJoint(attestation.getUrlFichierJoint())
                     .createurNom(attestation.getCreePar() != null ? 
                         attestation.getCreePar().getPrenom() + " " + attestation.getCreePar().getNom() : null)
