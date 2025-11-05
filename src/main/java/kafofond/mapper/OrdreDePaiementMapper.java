@@ -4,6 +4,8 @@ import kafofond.dto.OrdreDePaiementDTO;
 import kafofond.entity.OrdreDePaiement;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 /**
  * Mapper pour l'entité OrdreDePaiement
  * Convertit entre entité et DTO
@@ -28,7 +30,7 @@ public class OrdreDePaiementMapper {
                 .compteOrigine(ordre.getCompteOrigine())
                 .compteDestinataire(ordre.getCompteDestinataire())
                 .dateExecution(ordre.getDateExecution())
-                .dateCreation(ordre.getDateCreation())
+                .dateCreation(LocalDate.from(ordre.getDateCreation()))
                 .dateModification(ordre.getDateModification())
                 .statut(ordre.getStatut())
                 .createurNom(ordre.getCreePar() != null ? 
@@ -56,7 +58,7 @@ public class OrdreDePaiementMapper {
                 .compteOrigine(ordreDTO.getCompteOrigine())
                 .compteDestinataire(ordreDTO.getCompteDestinataire())
                 .dateExecution(ordreDTO.getDateExecution())
-                .dateCreation(ordreDTO.getDateCreation())
+                .dateCreation(ordreDTO.getDateCreation().atStartOfDay())
                 .dateModification(ordreDTO.getDateModification())
                 .statut(ordreDTO.getStatut())
                 .build();

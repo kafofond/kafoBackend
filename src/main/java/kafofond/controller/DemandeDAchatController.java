@@ -55,7 +55,7 @@ public class DemandeDAchatController {
                     .serviceBeneficiaire(demandeDTO.getServiceBeneficiaire())
                     .dateAttendu(demandeDTO.getDateAttendu())
                     .urlFichierJoint(demandeDTO.getUrlFichierJoint())
-                    .dateCreation(LocalDate.now())
+                    .dateCreation(LocalDate.now().atStartOfDay())
                     .build();
             
             // Si une fiche de besoin est référencée, la lier

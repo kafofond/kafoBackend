@@ -2,7 +2,7 @@ package kafofond.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -30,7 +30,7 @@ public class Entreprise {
     private String email;
 
     @Column(name = "date_creation")
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
 
     @Builder.Default
     private Boolean etat = true; // true = actif, false = inactif
@@ -61,4 +61,9 @@ public class Entreprise {
 
     @OneToMany(mappedBy = "entreprise", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<RapportAchat> rapportsAchat;
+
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+    }
 }

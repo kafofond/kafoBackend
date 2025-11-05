@@ -30,7 +30,7 @@ public class LigneCredit {
     private double montantAllouer;
     private double montantEngager;
     private double montantRestant;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
     private LocalDate dateDebut;
     private LocalDate dateFin;
@@ -54,4 +54,14 @@ public class LigneCredit {
     @OneToMany(mappedBy = "ligneCredit", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrdreDePaiement> ordreDePaiements;
 
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+        dateModification = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dateModification = LocalDateTime.now();
+    }
 }

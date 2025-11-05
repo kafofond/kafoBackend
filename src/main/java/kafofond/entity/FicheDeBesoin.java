@@ -32,12 +32,12 @@ public class FicheDeBesoin {
     private int quantite;
     private double montantEstime;
     private LocalDate dateAttendu;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
 
     @Enumerated(EnumType.STRING)
     private Statut statut;
-    
+
     private String urlFichierJoint; // URL vers document joint
 
     @ManyToOne
@@ -58,11 +58,22 @@ public class FicheDeBesoin {
 
     /**
      * Relation OneToMany vers Designation
-     * Une FicheDeBesoin peut contenir plusieurs désignations (produits/services demandés)
+     * Une FicheDeBesoin peut contenir plusieurs désignations (produits/services
+     * demandés)
      */
     @OneToMany(mappedBy = "ficheDeBesoin", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     @Builder.Default
     private List<Designation> designations = new ArrayList<>();
 
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+        dateModification = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dateModification = LocalDateTime.now();
+    }
 }

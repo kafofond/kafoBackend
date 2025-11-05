@@ -56,7 +56,7 @@ public class BonDeCommandeService {
                 .montantTotal(demandeDAchat.getMontantTotal())
                 .serviceBeneficiaire(demandeDAchat.getServiceBeneficiaire())
                 .modePaiement("Virement bancaire")
-                .dateCreation(LocalDate.now())
+                .dateCreation(LocalDate.now().atStartOfDay())
                 .delaiPaiement(LocalDate.now().plusDays(30))
                 .dateExecution(LocalDate.now().plusDays(7))
                 .statut(Statut.EN_COURS)
@@ -69,7 +69,7 @@ public class BonDeCommandeService {
         BonDeCommande bonCree = bonDeCommandeRepo.save(bonDeCommande);
         
         // Générer le code automatiquement
-        String code = codeGeneratorService.generateBonCommandeCode(bonCree.getId(), bonCree.getDateCreation());
+        String code = codeGeneratorService.generateBonCommandeCode(bonCree.getId(), LocalDate.from(bonCree.getDateCreation()));
         bonCree.setCode(code);
         bonCree = bonDeCommandeRepo.save(bonCree);
 
@@ -171,7 +171,7 @@ public class BonDeCommandeService {
 
         // Si le bon n'a pas de code, le générer
         if (bon.getCode() == null || bon.getCode().isEmpty()) {
-            String code = codeGeneratorService.generateBonCommandeCode(bon.getId(), bon.getDateCreation());
+            String code = codeGeneratorService.generateBonCommandeCode(bon.getId(), LocalDate.from(bon.getDateCreation()));
             bon.setCode(code);
         }
 
@@ -250,7 +250,7 @@ public class BonDeCommandeService {
 
         // Si le bon n'a pas de code, le générer
         if (bon.getCode() == null || bon.getCode().isEmpty()) {
-            String code = codeGeneratorService.generateBonCommandeCode(bon.getId(), bon.getDateCreation());
+            String code = codeGeneratorService.generateBonCommandeCode(bon.getId(), LocalDate.from(bon.getDateCreation()));
             bon.setCode(code);
         }
 
@@ -353,7 +353,7 @@ public class BonDeCommandeService {
 
         // Si le bon n'a pas de code, le générer
         if (bon.getCode() == null || bon.getCode().isEmpty()) {
-            String code = codeGeneratorService.generateBonCommandeCode(bon.getId(), bon.getDateCreation());
+            String code = codeGeneratorService.generateBonCommandeCode(bon.getId(), LocalDate.from(bon.getDateCreation()));
             bon.setCode(code);
         }
 
@@ -462,7 +462,7 @@ public class BonDeCommandeService {
 
         // Si le bon n'a pas de code, le générer
         if (bon.getCode() == null || bon.getCode().isEmpty()) {
-            String code = codeGeneratorService.generateBonCommandeCode(bon.getId(), bon.getDateCreation());
+            String code = codeGeneratorService.generateBonCommandeCode(bon.getId(), LocalDate.from(bon.getDateCreation()));
             bon.setCode(code);
         }
 

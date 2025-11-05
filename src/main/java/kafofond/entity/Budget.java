@@ -28,7 +28,7 @@ public class Budget {
     private String intituleBudget;
     private String description;
     private double montantBudget;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
     private LocalDate dateDebut;
     private LocalDate dateFin;
@@ -51,9 +51,10 @@ public class Budget {
 
     @PrePersist
     public void prePersist() {
-        dateCreation = LocalDate.now();
+        dateCreation = LocalDateTime.now();
         dateModification = LocalDateTime.now();
-        if (etat == null) etat = false;
+        if (etat == null)
+            etat = false;
         // Le code sera généré par le service après la persistance
     }
 

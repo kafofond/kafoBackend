@@ -3,17 +3,13 @@ package kafofond.dto;
 import lombok.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EntrepriseDTO {
-    private Long id;
-
+public class EntrepriseCreateDTO {
     @NotBlank(message = "Le nom est obligatoire")
     @Size(max = 100, message = "Le nom ne peut pas dépasser 100 caractères")
     private String nom;
@@ -30,9 +26,4 @@ public class EntrepriseDTO {
     @Email(message = "L'email doit être valide")
     @Size(max = 100, message = "L'email ne peut pas dépasser 100 caractères")
     private String email;
-
-    private LocalDateTime dateCreation;
-
-    @Builder.Default
-    private Boolean etat = true; // true = actif, false = inactif
 }

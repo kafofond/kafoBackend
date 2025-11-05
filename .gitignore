@@ -38,3 +38,6 @@ src/main/java/kafofond/config/
 src/main/resources/application-secrets.properties
 .env
 *.secret
+
+# .gitignore
+logs/

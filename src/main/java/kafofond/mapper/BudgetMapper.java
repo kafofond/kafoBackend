@@ -20,7 +20,7 @@ public class BudgetMapper {
                 .intituleBudget(dto.getIntituleBudget())
                 .description(dto.getDescription())
                 .montantBudget(dto.getMontantBudget())
-                .dateCreation(dto.getDateCreation())
+                .dateCreation(dto.getDateCreation().atStartOfDay())
                 .dateModification(dto.getDateModification())
                 .dateDebut(dto.getDateDebut())
                 .dateFin(dto.getDateFin())

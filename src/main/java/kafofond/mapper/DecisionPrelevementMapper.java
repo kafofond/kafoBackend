@@ -4,6 +4,8 @@ import kafofond.dto.DecisionPrelevementDTO;
 import kafofond.entity.DecisionDePrelevement;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 /**
  * Mapper pour l'entité DecisionDePrelevement
  * Convertit entre entité et DTO
@@ -26,7 +28,7 @@ public class DecisionPrelevementMapper {
                 .compteOrigine(decision.getCompteOrigine())
                 .compteDestinataire(decision.getCompteDestinataire())
                 .motifPrelevement(decision.getMotifPrelevement())
-                .dateCreation(decision.getDateCreation())
+                .dateCreation(LocalDate.from(decision.getDateCreation()))
                 .dateModification(decision.getDateModification())
                 .statut(decision.getStatut())
                 .createurNom(decision.getCreePar() != null ? 
@@ -56,7 +58,7 @@ public class DecisionPrelevementMapper {
                 .compteOrigine(decisionDTO.getCompteOrigine())
                 .compteDestinataire(decisionDTO.getCompteDestinataire())
                 .motifPrelevement(decisionDTO.getMotifPrelevement())
-                .dateCreation(decisionDTO.getDateCreation())
+                .dateCreation(decisionDTO.getDateCreation().atStartOfDay())
                 .dateModification(decisionDTO.getDateModification())
                 .statut(decisionDTO.getStatut())
                 .build();

@@ -65,12 +65,12 @@ public class DemandeDAchatService {
         demande.setCreePar(utilisateur);
         demande.setEntreprise(utilisateur.getEntreprise());
         demande.setStatut(Statut.EN_COURS);
-        demande.setDateCreation(LocalDate.now());
+        demande.setDateCreation(LocalDate.now().atStartOfDay());
 
         DemandeDAchat demandeCreee = demandeDAchatRepo.save(demande);
         
         // Générer le code unique automatiquement
-        String code = codeGeneratorService.generateDemandeAchatCode(demandeCreee.getId(), demandeCreee.getDateCreation());
+        String code = codeGeneratorService.generateDemandeAchatCode(demandeCreee.getId(), LocalDate.from(demandeCreee.getDateCreation()));
         demandeCreee.setCode(code);
         demandeCreee = demandeDAchatRepo.save(demandeCreee);
 
@@ -424,7 +424,7 @@ public class DemandeDAchatService {
                 .montantTotal(demande.getMontantTotal())
                 .serviceBeneficiaire(demande.getServiceBeneficiaire())
                 .modePaiement("Virement bancaire")
-                .dateCreation(LocalDate.now())
+                .dateCreation(LocalDate.now().atStartOfDay())
                 .delaiPaiement(LocalDate.now().plusDays(30))
                 .dateExecution(LocalDate.now().plusDays(7))
                 .statut(Statut.EN_COURS)

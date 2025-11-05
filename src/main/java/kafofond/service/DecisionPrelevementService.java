@@ -89,14 +89,14 @@ public class DecisionPrelevementService {
         decision.setEntreprise(comptable.getEntreprise());
         decision.setAttestationDeServiceFait(attestation);
         decision.setStatut(Statut.EN_COURS);
-        decision.setDateCreation(LocalDate.now());
+        decision.setDateCreation(LocalDate.now().atStartOfDay());
         decision.setDateModification(LocalDateTime.now());
 
         // Sauvegarder d'abord pour obtenir l'ID
         DecisionDePrelevement decisionCreee = decisionDePrelevementRepo.save(decision);
         
         // Générer le code automatiquement
-        String code = codeGeneratorService.generateDecisionPrelevementCode(decisionCreee.getId(), decisionCreee.getDateCreation());
+        String code = codeGeneratorService.generateDecisionPrelevementCode(decisionCreee.getId(), LocalDate.from(decisionCreee.getDateCreation()));
         decisionCreee.setCode(code);
         decisionCreee = decisionDePrelevementRepo.save(decisionCreee);
 

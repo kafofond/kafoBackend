@@ -47,7 +47,7 @@ public class AttestationServiceFaitService {
 
         attestation.setCreePar(utilisateur);
         attestation.setEntreprise(utilisateur.getEntreprise());
-        attestation.setDateCreation(LocalDate.now());
+        attestation.setDateCreation(LocalDate.now().atStartOfDay());
         
         // Si un bon de commande est lié, le récupérer avec son entreprise pour éviter les problèmes de proxy
         if (attestation.getBonDeCommande() != null && attestation.getBonDeCommande().getId() != null) {
