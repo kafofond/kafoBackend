@@ -1,8 +1,8 @@
 package kafofond.repository;
 
 import kafofond.entity.OrdreDePaiement;
-import kafofond.entity.Entreprise;
 import kafofond.entity.DecisionDePrelevement;
+import kafofond.entity.Entreprise;
 import kafofond.entity.Statut;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -37,7 +37,7 @@ public interface OrdreDePaiementRepo extends JpaRepository<OrdreDePaiement, Long
     /**
      * Trouve tous les ordres d'une décision de prélèvement
      */
-    List<OrdreDePaiement> findByDecisionDePrelevement(DecisionDePrelevement decisionDePrelevement);
+    List<OrdreDePaiement> findByDecisionDePrelevement(DecisionDePrelevement decision);
 
     // Méthodes pour les statistiques par date
     @Query("SELECT COUNT(o) FROM OrdreDePaiement o WHERE o.dateCreation >= :startDate AND o.dateCreation < :endDate")
@@ -46,4 +46,12 @@ public interface OrdreDePaiementRepo extends JpaRepository<OrdreDePaiement, Long
 
     @Query("SELECT COUNT(o) FROM OrdreDePaiement o WHERE o.dateCreation >= :startDate")
     long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+
+    // Méthodes pour les statistiques par entreprise
+    @Query("SELECT COUNT(o) FROM OrdreDePaiement o WHERE o.entreprise.id = :entrepriseId")
+    long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+    @Query("SELECT COUNT(o) FROM OrdreDePaiement o WHERE o.entreprise.id = :entrepriseId AND o.dateCreation >= :startDate AND o.dateCreation < :endDate")
+    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

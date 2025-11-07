@@ -29,19 +29,9 @@ public interface BudgetRepo extends JpaRepository<Budget, Long> {
     List<Budget> findByStatut(Statut statut);
 
     /**
-     * Trouve tous les budgets par état
-     */
-    List<Budget> findByEtat(boolean etat);
-
-    /**
      * Trouve tous les budgets d'une entreprise par statut
      */
     List<Budget> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
-
-    /**
-     * Trouve tous les budgets d'une entreprise par état
-     */
-    List<Budget> findByEntrepriseAndEtat(Entreprise entreprise, boolean etat);
 
     // Méthodes pour les statistiques par date
     @Query("SELECT COUNT(b) FROM Budget b WHERE b.dateCreation >= :startDate AND b.dateCreation < :endDate")
@@ -50,4 +40,12 @@ public interface BudgetRepo extends JpaRepository<Budget, Long> {
 
     @Query("SELECT COUNT(b) FROM Budget b WHERE b.dateCreation >= :startDate")
     long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+
+    // Méthodes pour les statistiques par entreprise
+    @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId")
+    long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+    @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId AND b.dateCreation >= :startDate AND b.dateCreation < :endDate")
+    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

@@ -1,5 +1,6 @@
 package kafofond.service;
 
+import kafofond.entity.Entreprise;
 import kafofond.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -64,6 +65,15 @@ public class StatistiqueService {
         return (getUtilisateursActifs() * 100.0) / total;
     }
 
+    // Statistiques des utilisateurs par entreprise
+    public long getTotalUtilisateursParEntreprise(Long entrepriseId) {
+        return utilisateurRepo.countByEntrepriseId(entrepriseId);
+    }
+
+    public long getUtilisateursActifsParEntreprise(Long entrepriseId) {
+        return utilisateurRepo.countByEntrepriseIdAndEtatTrue(entrepriseId);
+    }
+
     // Statistiques des documents
     public long getTotalFichesBesoin() {
         return ficheBesoinRepo.count();
@@ -103,51 +113,131 @@ public class StatistiqueService {
                 getTotalBudgets() + getTotalLignesCredit();
     }
 
+    // Statistiques des documents par entreprise
+    public long getTotalDocumentsParEntreprise(Long entrepriseId) {
+        return ficheBesoinRepo.countByEntrepriseId(entrepriseId) +
+                demandeDAchatRepo.countByEntrepriseId(entrepriseId) +
+                bonDeCommandeRepo.countByEntrepriseId(entrepriseId) +
+                attestationServiceFaitRepo.countByEntrepriseId(entrepriseId) +
+                decisionPrelevementRepo.countByEntrepriseId(entrepriseId) +
+                ordreDePaiementRepo.countByEntrepriseId(entrepriseId) +
+                budgetRepo.countByEntrepriseId(entrepriseId) +
+                ligneCreditRepo.countByEntrepriseId(entrepriseId);
+    }
+
     // Statistiques par période
     public List<Integer> getUtilisateursParPeriode(String periode) {
         List<Integer> resultats = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        switch (periode.toLowerCase()) {
-            case "jour":
-                // Données par heure pour aujourd'hui
-                for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
-                    LocalDateTime start = now.with(LocalTime.of(i, 0));
-                    // Correction: éviter de créer une heure de 24h
-                    LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
-                    long count = utilisateurRepo.countByDateCreationBetween(start, end);
-                    resultats.add((int) count);
-                }
-                break;
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        // Correction: éviter de créer une heure de 24h
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+                        long count = utilisateurRepo.countByDateCreationBetween(start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
 
-            case "semaine":
-                // Données par jour pour cette semaine
-                for (int i = 6; i >= 0; i--) {
-                    LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
-                    long count = utilisateurRepo.countByDateCreationBetween(start, end);
-                    resultats.add((int) count);
-                }
-                break;
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = utilisateurRepo.countByDateCreationBetween(start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
 
-            case "mois":
-                // Données par semaine pour ce mois
-                for (int i = 3; i >= 0; i--) {
-                    LocalDateTime start = now.minusWeeks(i).minusDays(7).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
-                    long count = utilisateurRepo.countByDateCreationBetween(start, end);
-                    resultats.add((int) count);
-                }
-                break;
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                        long count = utilisateurRepo.countByDateCreationBetween(start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
 
-            default:
-                // Par défaut, données par jour pour la semaine
-                for (int i = 6; i >= 0; i--) {
-                    LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
-                    long count = utilisateurRepo.countByDateCreationBetween(start, end);
-                    resultats.add((int) count);
-                }
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = utilisateurRepo.countByDateCreationBetween(start, end);
+                        resultats.add((int) count);
+                    }
+            }
+        } catch (Exception e) {
+            // En cas d'erreur, retourner une liste vide
+            System.err.println("Erreur dans getUtilisateursParPeriode: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        return resultats;
+    }
+
+    // Statistiques par période et par entreprise
+    public List<Integer> getUtilisateursParPeriodeEtEntreprise(String periode, Long entrepriseId) {
+        List<Integer> resultats = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        // Correction: éviter de créer une heure de 24h
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+                        long count = utilisateurRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start,
+                                end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = utilisateurRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start,
+                                end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                        long count = utilisateurRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start,
+                                end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = utilisateurRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start,
+                                end);
+                        resultats.add((int) count);
+                    }
+            }
+        } catch (Exception e) {
+            // En cas d'erreur, retourner une liste vide
+            System.err.println("Erreur dans getUtilisateursParPeriodeEtEntreprise: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
 
         return resultats;
@@ -157,46 +247,53 @@ public class StatistiqueService {
         List<Integer> resultats = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        switch (periode.toLowerCase()) {
-            case "jour":
-                // Données par heure pour aujourd'hui
-                for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
-                    LocalDateTime start = now.with(LocalTime.of(i, 0));
-                    // Correction: éviter de créer une heure de 24h
-                    LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
-                    long count = entrepriseRepo.countByDateCreationBetween(start, end);
-                    resultats.add((int) count);
-                }
-                break;
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        // Correction: éviter de créer une heure de 24h
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+                        long count = entrepriseRepo.countByDateCreationBetween(start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
 
-            case "semaine":
-                // Données par jour pour cette semaine
-                for (int i = 6; i >= 0; i--) {
-                    LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
-                    long count = entrepriseRepo.countByDateCreationBetween(start, end);
-                    resultats.add((int) count);
-                }
-                break;
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = entrepriseRepo.countByDateCreationBetween(start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
 
-            case "mois":
-                // Données par semaine pour ce mois
-                for (int i = 3; i >= 0; i--) {
-                    LocalDateTime start = now.minusWeeks(i).minusDays(7).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
-                    long count = entrepriseRepo.countByDateCreationBetween(start, end);
-                    resultats.add((int) count);
-                }
-                break;
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                        long count = entrepriseRepo.countByDateCreationBetween(start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
 
-            default:
-                // Par défaut, données par jour pour la semaine
-                for (int i = 6; i >= 0; i--) {
-                    LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
-                    long count = entrepriseRepo.countByDateCreationBetween(start, end);
-                    resultats.add((int) count);
-                }
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = entrepriseRepo.countByDateCreationBetween(start, end);
+                        resultats.add((int) count);
+                    }
+            }
+        } catch (Exception e) {
+            // En cas d'erreur, retourner une liste vide
+            System.err.println("Erreur dans getEntreprisesParPeriode: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
 
         return resultats;
@@ -206,94 +303,238 @@ public class StatistiqueService {
         List<Integer> resultats = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        switch (periode.toLowerCase()) {
-            case "jour":
-                // Données par heure pour aujourd'hui
-                for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
-                    LocalDateTime start = now.with(LocalTime.of(i, 0));
-                    // Correction: éviter de créer une heure de 24h
-                    LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        // Correction: éviter de créer une heure de 24h
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
 
-                    // Compter tous les types de documents
-                    long countFiches = ficheBesoinRepo.countByDateCreationBetween(start, end);
-                    long countDemandes = demandeDAchatRepo.countByDateCreationBetween(start, end);
-                    long countBons = bonDeCommandeRepo.countByDateCreationBetween(start, end);
-                    long countAttestations = attestationServiceFaitRepo.countByDateCreationBetween(start, end);
-                    long countDecisions = decisionPrelevementRepo.countByDateCreationBetween(start, end);
-                    long countOrdres = ordreDePaiementRepo.countByDateCreationBetween(start, end);
-                    long countBudgets = budgetRepo.countByDateCreationBetween(start, end);
-                    long countLignes = ligneCreditRepo.countByDateCreationBetween(start, end);
+                        // Compter tous les types de documents
+                        long countFiches = ficheBesoinRepo.countByDateCreationBetween(start, end);
+                        long countDemandes = demandeDAchatRepo.countByDateCreationBetween(start, end);
+                        long countBons = bonDeCommandeRepo.countByDateCreationBetween(start, end);
+                        long countAttestations = attestationServiceFaitRepo.countByDateCreationBetween(start, end);
+                        long countDecisions = decisionPrelevementRepo.countByDateCreationBetween(start, end);
+                        long countOrdres = ordreDePaiementRepo.countByDateCreationBetween(start, end);
+                        long countBudgets = budgetRepo.countByDateCreationBetween(start, end);
+                        long countLignes = ligneCreditRepo.countByDateCreationBetween(start, end);
 
-                    long totalCount = countFiches + countDemandes + countBons + countAttestations +
-                            countDecisions + countOrdres + countBudgets + countLignes;
-                    resultats.add((int) totalCount);
-                }
-                break;
+                        long totalCount = countFiches + countDemandes + countBons + countAttestations +
+                                countDecisions + countOrdres + countBudgets + countLignes;
+                        resultats.add((int) totalCount);
+                    }
+                    break;
 
-            case "semaine":
-                // Données par jour pour cette semaine
-                for (int i = 6; i >= 0; i--) {
-                    LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
 
-                    // Compter tous les types de documents
-                    long countFiches = ficheBesoinRepo.countByDateCreationBetween(start, end);
-                    long countDemandes = demandeDAchatRepo.countByDateCreationBetween(start, end);
-                    long countBons = bonDeCommandeRepo.countByDateCreationBetween(start, end);
-                    long countAttestations = attestationServiceFaitRepo.countByDateCreationBetween(start, end);
-                    long countDecisions = decisionPrelevementRepo.countByDateCreationBetween(start, end);
-                    long countOrdres = ordreDePaiementRepo.countByDateCreationBetween(start, end);
-                    long countBudgets = budgetRepo.countByDateCreationBetween(start, end);
-                    long countLignes = ligneCreditRepo.countByDateCreationBetween(start, end);
+                        // Compter tous les types de documents
+                        long countFiches = ficheBesoinRepo.countByDateCreationBetween(start, end);
+                        long countDemandes = demandeDAchatRepo.countByDateCreationBetween(start, end);
+                        long countBons = bonDeCommandeRepo.countByDateCreationBetween(start, end);
+                        long countAttestations = attestationServiceFaitRepo.countByDateCreationBetween(start, end);
+                        long countDecisions = decisionPrelevementRepo.countByDateCreationBetween(start, end);
+                        long countOrdres = ordreDePaiementRepo.countByDateCreationBetween(start, end);
+                        long countBudgets = budgetRepo.countByDateCreationBetween(start, end);
+                        long countLignes = ligneCreditRepo.countByDateCreationBetween(start, end);
 
-                    long totalCount = countFiches + countDemandes + countBons + countAttestations +
-                            countDecisions + countOrdres + countBudgets + countLignes;
-                    resultats.add((int) totalCount);
-                }
-                break;
+                        long totalCount = countFiches + countDemandes + countBons + countAttestations +
+                                countDecisions + countOrdres + countBudgets + countLignes;
+                        resultats.add((int) totalCount);
+                    }
+                    break;
 
-            case "mois":
-                // Données par semaine pour ce mois
-                for (int i = 3; i >= 0; i--) {
-                    LocalDateTime start = now.minusWeeks(i).minusDays(7).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
 
-                    // Compter tous les types de documents
-                    long countFiches = ficheBesoinRepo.countByDateCreationBetween(start, end);
-                    long countDemandes = demandeDAchatRepo.countByDateCreationBetween(start, end);
-                    long countBons = bonDeCommandeRepo.countByDateCreationBetween(start, end);
-                    long countAttestations = attestationServiceFaitRepo.countByDateCreationBetween(start, end);
-                    long countDecisions = decisionPrelevementRepo.countByDateCreationBetween(start, end);
-                    long countOrdres = ordreDePaiementRepo.countByDateCreationBetween(start, end);
-                    long countBudgets = budgetRepo.countByDateCreationBetween(start, end);
-                    long countLignes = ligneCreditRepo.countByDateCreationBetween(start, end);
+                        // Compter tous les types de documents
+                        long countFiches = ficheBesoinRepo.countByDateCreationBetween(start, end);
+                        long countDemandes = demandeDAchatRepo.countByDateCreationBetween(start, end);
+                        long countBons = bonDeCommandeRepo.countByDateCreationBetween(start, end);
+                        long countAttestations = attestationServiceFaitRepo.countByDateCreationBetween(start, end);
+                        long countDecisions = decisionPrelevementRepo.countByDateCreationBetween(start, end);
+                        long countOrdres = ordreDePaiementRepo.countByDateCreationBetween(start, end);
+                        long countBudgets = budgetRepo.countByDateCreationBetween(start, end);
+                        long countLignes = ligneCreditRepo.countByDateCreationBetween(start, end);
 
-                    long totalCount = countFiches + countDemandes + countBons + countAttestations +
-                            countDecisions + countOrdres + countBudgets + countLignes;
-                    resultats.add((int) totalCount);
-                }
-                break;
+                        long totalCount = countFiches + countDemandes + countBons + countAttestations +
+                                countDecisions + countOrdres + countBudgets + countLignes;
+                        resultats.add((int) totalCount);
+                    }
+                    break;
 
-            default:
-                // Par défaut, données par jour pour la semaine
-                for (int i = 6; i >= 0; i--) {
-                    LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
-                    LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
 
-                    // Compter tous les types de documents
-                    long countFiches = ficheBesoinRepo.countByDateCreationBetween(start, end);
-                    long countDemandes = demandeDAchatRepo.countByDateCreationBetween(start, end);
-                    long countBons = bonDeCommandeRepo.countByDateCreationBetween(start, end);
-                    long countAttestations = attestationServiceFaitRepo.countByDateCreationBetween(start, end);
-                    long countDecisions = decisionPrelevementRepo.countByDateCreationBetween(start, end);
-                    long countOrdres = ordreDePaiementRepo.countByDateCreationBetween(start, end);
-                    long countBudgets = budgetRepo.countByDateCreationBetween(start, end);
-                    long countLignes = ligneCreditRepo.countByDateCreationBetween(start, end);
+                        // Compter tous les types de documents
+                        long countFiches = ficheBesoinRepo.countByDateCreationBetween(start, end);
+                        long countDemandes = demandeDAchatRepo.countByDateCreationBetween(start, end);
+                        long countBons = bonDeCommandeRepo.countByDateCreationBetween(start, end);
+                        long countAttestations = attestationServiceFaitRepo.countByDateCreationBetween(start, end);
+                        long countDecisions = decisionPrelevementRepo.countByDateCreationBetween(start, end);
+                        long countOrdres = ordreDePaiementRepo.countByDateCreationBetween(start, end);
+                        long countBudgets = budgetRepo.countByDateCreationBetween(start, end);
+                        long countLignes = ligneCreditRepo.countByDateCreationBetween(start, end);
 
-                    long totalCount = countFiches + countDemandes + countBons + countAttestations +
-                            countDecisions + countOrdres + countBudgets + countLignes;
-                    resultats.add((int) totalCount);
-                }
+                        long totalCount = countFiches + countDemandes + countBons + countAttestations +
+                                countDecisions + countOrdres + countBudgets + countLignes;
+                        resultats.add((int) totalCount);
+                    }
+            }
+        } catch (Exception e) {
+            // En cas d'erreur, retourner une liste vide
+            System.err.println("Erreur dans getDocumentsParPeriode: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        return resultats;
+    }
+
+    // Statistiques des documents par période et par entreprise
+    public List<Integer> getDocumentsParPeriodeEtEntreprise(String periode, Long entrepriseId) {
+        List<Integer> resultats = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        // Correction: éviter de créer une heure de 24h
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+
+                        // Compter tous les types de documents pour l'entreprise
+                        long countFiches = ficheBesoinRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countDemandes = demandeDAchatRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countBons = bonDeCommandeRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countAttestations = attestationServiceFaitRepo
+                                .countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        long countDecisions = decisionPrelevementRepo
+                                .countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        long countOrdres = ordreDePaiementRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countBudgets = budgetRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start,
+                                end);
+                        long countLignes = ligneCreditRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+
+                        long totalCount = countFiches + countDemandes + countBons + countAttestations +
+                                countDecisions + countOrdres + countBudgets + countLignes;
+                        resultats.add((int) totalCount);
+                    }
+                    break;
+
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+
+                        // Compter tous les types de documents pour l'entreprise
+                        long countFiches = ficheBesoinRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countDemandes = demandeDAchatRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countBons = bonDeCommandeRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countAttestations = attestationServiceFaitRepo
+                                .countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        long countDecisions = decisionPrelevementRepo
+                                .countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        long countOrdres = ordreDePaiementRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countBudgets = budgetRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start,
+                                end);
+                        long countLignes = ligneCreditRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+
+                        long totalCount = countFiches + countDemandes + countBons + countAttestations +
+                                countDecisions + countOrdres + countBudgets + countLignes;
+                        resultats.add((int) totalCount);
+                    }
+                    break;
+
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+
+                        // Compter tous les types de documents pour l'entreprise
+                        long countFiches = ficheBesoinRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countDemandes = demandeDAchatRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countBons = bonDeCommandeRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countAttestations = attestationServiceFaitRepo
+                                .countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        long countDecisions = decisionPrelevementRepo
+                                .countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        long countOrdres = ordreDePaiementRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countBudgets = budgetRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start,
+                                end);
+                        long countLignes = ligneCreditRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+
+                        long totalCount = countFiches + countDemandes + countBons + countAttestations +
+                                countDecisions + countOrdres + countBudgets + countLignes;
+                        resultats.add((int) totalCount);
+                    }
+                    break;
+
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+
+                        // Compter tous les types de documents pour l'entreprise
+                        long countFiches = ficheBesoinRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countDemandes = demandeDAchatRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countBons = bonDeCommandeRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countAttestations = attestationServiceFaitRepo
+                                .countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        long countDecisions = decisionPrelevementRepo
+                                .countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        long countOrdres = ordreDePaiementRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+                        long countBudgets = budgetRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start,
+                                end);
+                        long countLignes = ligneCreditRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId,
+                                start, end);
+
+                        long totalCount = countFiches + countDemandes + countBons + countAttestations +
+                                countDecisions + countOrdres + countBudgets + countLignes;
+                        resultats.add((int) totalCount);
+                    }
+            }
+        } catch (Exception e) {
+            // En cas d'erreur, retourner une liste vide
+            System.err.println("Erreur dans getDocumentsParPeriodeEtEntreprise: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
 
         return resultats;
@@ -303,37 +544,44 @@ public class StatistiqueService {
         List<String> labels = new ArrayList<>();
         LocalDateTime now = LocalDateTime.now();
 
-        switch (periode.toLowerCase()) {
-            case "jour":
-                // Labels par heure pour aujourd'hui
-                for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
-                    labels.add(String.format("%02dh", i));
-                }
-                break;
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Labels par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        labels.add(String.format("%02dh", i));
+                    }
+                    break;
 
-            case "semaine":
-                // Labels par jour pour cette semaine
-                String[] jours = { "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim" };
-                for (int i = 6; i >= 0; i--) {
-                    int dayOfWeek = now.minusDays(i).getDayOfWeek().getValue();
-                    labels.add(jours[dayOfWeek - 1]);
-                }
-                break;
+                case "semaine":
+                    // Labels par jour pour cette semaine
+                    String[] jours = { "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim" };
+                    for (int i = 6; i >= 0; i--) {
+                        int dayOfWeek = now.minusDays(i).getDayOfWeek().getValue();
+                        labels.add(jours[dayOfWeek - 1]);
+                    }
+                    break;
 
-            case "mois":
-                // Labels par semaine pour ce mois
-                for (int i = 3; i >= 0; i--) {
-                    labels.add("Sem " + (4 - i));
-                }
-                break;
+                case "mois":
+                    // Labels par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        labels.add("Sem " + (4 - i));
+                    }
+                    break;
 
-            default:
-                // Par défaut, labels par jour pour la semaine
-                String[] joursDefaut = { "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim" };
-                for (int i = 6; i >= 0; i--) {
-                    int dayOfWeek = now.minusDays(i).getDayOfWeek().getValue();
-                    labels.add(joursDefaut[dayOfWeek - 1]);
-                }
+                default:
+                    // Par défaut, labels par jour pour la semaine
+                    String[] joursDefaut = { "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim" };
+                    for (int i = 6; i >= 0; i--) {
+                        int dayOfWeek = now.minusDays(i).getDayOfWeek().getValue();
+                        labels.add(joursDefaut[dayOfWeek - 1]);
+                    }
+            }
+        } catch (Exception e) {
+            // En cas d'erreur, retourner une liste vide
+            System.err.println("Erreur dans getLabelsParPeriode: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
         }
 
         return labels;

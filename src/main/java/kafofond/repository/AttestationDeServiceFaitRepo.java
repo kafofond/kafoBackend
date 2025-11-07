@@ -2,7 +2,7 @@ package kafofond.repository;
 
 import kafofond.entity.AttestationDeServiceFait;
 import kafofond.entity.Entreprise;
-import kafofond.entity.BonDeCommande;
+import kafofond.entity.Statut;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,11 +25,6 @@ public interface AttestationDeServiceFaitRepo extends JpaRepository<AttestationD
     List<AttestationDeServiceFait> findByEntreprise(Entreprise entreprise);
 
     /**
-     * Trouve toutes les attestations d'un bon de commande
-     */
-    List<AttestationDeServiceFait> findByBonDeCommande(BonDeCommande bonDeCommande);
-
-    /**
      * Trouve une attestation par son code unique
      */
     Optional<AttestationDeServiceFait> findByCode(String code);
@@ -41,4 +36,12 @@ public interface AttestationDeServiceFaitRepo extends JpaRepository<AttestationD
 
     @Query("SELECT COUNT(a) FROM AttestationDeServiceFait a WHERE a.dateCreation >= :startDate")
     long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+
+    // Méthodes pour les statistiques par entreprise
+    @Query("SELECT COUNT(a) FROM AttestationDeServiceFait a WHERE a.entreprise.id = :entrepriseId")
+    long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+    @Query("SELECT COUNT(a) FROM AttestationDeServiceFait a WHERE a.entreprise.id = :entrepriseId AND a.dateCreation >= :startDate AND a.dateCreation < :endDate")
+    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

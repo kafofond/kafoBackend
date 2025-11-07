@@ -18,7 +18,8 @@ import java.util.Optional;
 
 /**
  * Service de gestion des attestations de service fait
- * Implémente le workflow : EN_COURS → VALIDÉ par Gestionnaire → APPROUVÉ par Comptable
+ * Implémente le workflow : EN_COURS → VALIDÉ par Gestionnaire → APPROUVÉ par
+ * Comptable
  */
 @Service
 @RequiredArgsConstructor
@@ -40,26 +41,32 @@ public class AttestationServiceFaitService {
         log.info("Création d'une attestation de service fait par {}", utilisateur.getEmail());
 
         // Autoriser la création par Trésorerie et Gestionnaire
-        if (utilisateur.getRole() != kafofond.entity.Role.TRESORERIE && 
-            utilisateur.getRole() != kafofond.entity.Role.GESTIONNAIRE) {
-            throw new IllegalArgumentException("Seule la Trésorerie et le Gestionnaire peuvent créer des attestations de service fait");
+        if (utilisateur.getRole() != kafofond.entity.Role.TRESORERIE &&
+                utilisateur.getRole() != kafofond.entity.Role.GESTIONNAIRE) {
+            throw new IllegalArgumentException(
+                    "Seule la Trésorerie et le Gestionnaire peuvent créer des attestations de service fait");
         }
 
         attestation.setCreePar(utilisateur);
         attestation.setEntreprise(utilisateur.getEntreprise());
         attestation.setDateCreation(LocalDate.now().atStartOfDay());
-        
-        // Si un bon de commande est lié, le récupérer avec son entreprise pour éviter les problèmes de proxy
+
+        // Si un bon de commande est lié, le récupérer avec son entreprise pour éviter
+        // les problèmes de proxy
         if (attestation.getBonDeCommande() != null && attestation.getBonDeCommande().getId() != null) {
-            BonDeCommande bonDeCommande = bonDeCommandeRepo.findByIdWithEntreprise(attestation.getBonDeCommande().getId());
-            if (bonDeCommande != null) {
+            Optional<BonDeCommande> bonDeCommandeOpt = bonDeCommandeRepo
+                    .findByIdWithEntreprise(attestation.getBonDeCommande().getId());
+            if (bonDeCommandeOpt.isPresent()) {
+                BonDeCommande bonDeCommande = bonDeCommandeOpt.get();
                 attestation.setBonDeCommande(bonDeCommande);
-                // S'assurer que l'entreprise de l'attestation correspond à celle du bon de commande
+                // S'assurer que l'entreprise de l'attestation correspond à celle du bon de
+                // commande
                 attestation.setEntreprise(bonDeCommande.getEntreprise());
             }
         }
-        
-        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy loading
+
+        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy
+        // loading
         if (utilisateur.getEntreprise() != null) {
             utilisateur.getEntreprise().getNom(); // Force le chargement de l'entreprise
         }
@@ -72,11 +79,11 @@ public class AttestationServiceFaitService {
                 attestationCreee.getId(),
                 "CREATION",
                 utilisateur,
-                null,                  // ancienEtat (pas utilisé)
-                null,                  // nouveauEtat (pas utilisé)
-                null,                  // ancienStatut
-                null,                  // nouveauStatut (pas de statut)
-                "Créée par " + utilisateur.getRole()  // commentaire
+                null, // ancienEtat (pas utilisé)
+                null, // nouveauEtat (pas utilisé)
+                null, // ancienStatut
+                null, // nouveauStatut (pas de statut)
+                "Créée par " + utilisateur.getRole() // commentaire
         );
 
         // Notifier le Gestionnaire
@@ -102,9 +109,10 @@ public class AttestationServiceFaitService {
     public Optional<AttestationDeServiceFait> trouverParId(Long id) {
         return attestationDeServiceFaitRepo.findById(id);
     }
-    
+
     /**
-     * Trouve une attestation de service fait par ID avec initialisation des relations
+     * Trouve une attestation de service fait par ID avec initialisation des
+     * relations
      * Utilisé pour éviter les problèmes de lazy loading
      */
     @Transactional(readOnly = true)
@@ -137,7 +145,8 @@ public class AttestationServiceFaitService {
      * Trouve le gestionnaire d'une entreprise
      */
     private Utilisateur trouverGestionnaire(kafofond.entity.Entreprise entreprise) {
-        // Éviter les problèmes de proxy en utilisant le nom de l'entreprise de manière sécurisée
+        // Éviter les problèmes de proxy en utilisant le nom de l'entreprise de manière
+        // sécurisée
         try {
             String nomEntreprise = entreprise.getNom();
             return utilisateurRepo.findByEmail("gestionnaire@" + nomEntreprise.toLowerCase().replace(" ", "") + ".com")
@@ -152,7 +161,8 @@ public class AttestationServiceFaitService {
      * Trouve le comptable d'une entreprise
      */
     private Utilisateur trouverComptable(kafofond.entity.Entreprise entreprise) {
-        // Éviter les problèmes de proxy en utilisant le nom de l'entreprise de manière sécurisée
+        // Éviter les problèmes de proxy en utilisant le nom de l'entreprise de manière
+        // sécurisée
         try {
             String nomEntreprise = entreprise.getNom();
             return utilisateurRepo.findByEmail("comptable@" + nomEntreprise.toLowerCase().replace(" ", "") + ".com")
