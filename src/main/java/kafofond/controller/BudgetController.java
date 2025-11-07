@@ -1,5 +1,6 @@
 package kafofond.controller;
 
+import kafofond.dto.BudgetCreateDTO;
 import kafofond.entity.Budget;
 import kafofond.entity.Utilisateur;
 import kafofond.service.BudgetService;
@@ -23,7 +24,8 @@ import java.util.Optional;
 
 /**
  * Controller pour la gestion des budgets
- * Endpoints : création, modification, validation, rejet, activation/désactivation
+ * Endpoints : création, modification, validation, rejet,
+ * activation/désactivation
  */
 @RestController
 @RequestMapping("/api/budgets")
@@ -37,16 +39,23 @@ public class BudgetController {
     private final UtilisateurService utilisateurService;
 
     /**
-     * Crée un nouveau budget
+     * Crée un nouveau budget avec le DTO simplifié
      */
     @PostMapping
-    public ResponseEntity<?> creerBudget(@RequestBody Budget budget, Authentication authentication) {
+    public ResponseEntity<?> creerBudget(@RequestBody BudgetCreateDTO budgetDTO, Authentication authentication) {
         try {
+            // Convertir le DTO simplifié en entité Budget
+            Budget budget = new Budget();
+            budget.setIntituleBudget(budgetDTO.getIntituleBudget());
+            budget.setDescription(budgetDTO.getDescription());
+            budget.setMontantBudget(budgetDTO.getMontantBudget());
+            budget.setDateDebut(budgetDTO.getDateDebut());
+            budget.setDateFin(budgetDTO.getDateFin());
+
             kafofond.dto.BudgetDTO budgetCree = budgetService.creerDTO(budget, authentication.getName());
             return ResponseEntity.ok(Map.of(
                     "message", "Budget créé avec succès",
-                    "budget", budgetCree
-            ));
+                    "budget", budgetCree));
 
         } catch (Exception e) {
             log.error("Erreur lors de la création du budget", e);
@@ -59,13 +68,12 @@ public class BudgetController {
      */
     @PutMapping("/{id}")
     public ResponseEntity<?> modifierBudget(@PathVariable Long id, @RequestBody Budget budget,
-                                            Authentication authentication) {
+            Authentication authentication) {
         try {
             kafofond.dto.BudgetDTO budgetModifie = budgetService.modifierDTO(id, budget, authentication.getName());
             return ResponseEntity.ok(Map.of(
                     "message", "Budget modifié avec succès",
-                    "budget", budgetModifie
-            ));
+                    "budget", budgetModifie));
 
         } catch (Exception e) {
             log.error("Erreur lors de la modification du budget", e);
@@ -82,8 +90,7 @@ public class BudgetController {
             kafofond.dto.BudgetDTO budgetValide = budgetService.validerDTO(id, authentication.getName());
             return ResponseEntity.ok(Map.of(
                     "message", "Budget validé avec succès",
-                    "budget", budgetValide
-            ));
+                    "budget", budgetValide));
 
         } catch (Exception e) {
             log.error("Erreur lors de la validation du budget", e);
@@ -96,7 +103,7 @@ public class BudgetController {
      */
     @PostMapping("/{id}/rejeter")
     public ResponseEntity<?> rejeterBudget(@PathVariable Long id, @RequestBody Map<String, String> request,
-                                           Authentication authentication) {
+            Authentication authentication) {
         try {
             String commentaire = request.get("commentaire");
             if (commentaire == null || commentaire.trim().isEmpty()) {
@@ -106,8 +113,7 @@ public class BudgetController {
             kafofond.dto.BudgetDTO budgetRejete = budgetService.rejeterDTO(id, authentication.getName(), commentaire);
             return ResponseEntity.ok(Map.of(
                     "message", "Budget rejeté avec succès",
-                    "budget", budgetRejete
-            ));
+                    "budget", budgetRejete));
 
         } catch (Exception e) {
             log.error("Erreur lors du rejet du budget", e);
@@ -124,8 +130,7 @@ public class BudgetController {
             kafofond.dto.BudgetDTO budgetActif = budgetService.activerDTO(id, authentication.getName());
             return ResponseEntity.ok(Map.of(
                     "message", "Budget activé avec succès",
-                    "budget", budgetActif
-            ));
+                    "budget", budgetActif));
 
         } catch (Exception e) {
             log.error("Erreur lors de l'activation du budget", e);
@@ -142,8 +147,7 @@ public class BudgetController {
             kafofond.dto.BudgetDTO budgetDesactive = budgetService.desactiverDTO(id, authentication.getName());
             return ResponseEntity.ok(Map.of(
                     "message", "Budget désactivé avec succès",
-                    "budget", budgetDesactive
-            ));
+                    "budget", budgetDesactive));
 
         } catch (Exception e) {
             log.error("Erreur lors de la désactivation du budget", e);
@@ -161,8 +165,7 @@ public class BudgetController {
 
             return ResponseEntity.ok(Map.of(
                     "total", dtoList.size(),
-                    "budgets", dtoList
-            ));
+                    "budgets", dtoList));
 
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des budgets", e);
@@ -187,15 +190,15 @@ public class BudgetController {
     public ResponseEntity<?> genererPdfBudget(@PathVariable Long id, Authentication authentication) {
         try {
             log.info("Génération du PDF pour le budget {} par {}", id, authentication.getName());
-            
+
             String urlPdf = budgetService.genererPdf(id);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "PDF généré avec succès");
             response.put("urlPdf", urlPdf);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la génération du PDF : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -203,19 +206,19 @@ public class BudgetController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-    
+
     /**
      * Liste les budgets de l'entreprise de l'utilisateur connecté
      * Accessible par Directeur, Responsable et Comptable
      */
     @GetMapping("/mon-entreprise")
-    @Operation(summary = "Lister les budgets de mon entreprise", 
-               description = "Récupère tous les budgets de l'entreprise de l'utilisateur connecté. " +
-                            "Accessible par Directeur, Responsable et Comptable.")
+    @Operation(summary = "Lister les budgets de mon entreprise", description = "Récupère tous les budgets de l'entreprise de l'utilisateur connecté. "
+            +
+            "Accessible par Directeur, Responsable et Comptable.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Budgets récupérés avec succès"),
-        @ApiResponse(responseCode = "400", description = "Erreur lors de la récupération des budgets"),
-        @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
+            @ApiResponse(responseCode = "200", description = "Budgets récupérés avec succès"),
+            @ApiResponse(responseCode = "400", description = "Erreur lors de la récupération des budgets"),
+            @ApiResponse(responseCode = "404", description = "Utilisateur introuvable")
     })
     public ResponseEntity<?> listerBudgetsMonEntreprise(Authentication authentication) {
         try {
@@ -223,8 +226,7 @@ public class BudgetController {
 
             return ResponseEntity.ok(Map.of(
                     "total", dtoList.size(),
-                    "budgets", dtoList
-            ));
+                    "budgets", dtoList));
 
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des budgets de l'entreprise", e);
@@ -232,4 +234,3 @@ public class BudgetController {
         }
     }
 }
-

@@ -46,4 +46,12 @@ public interface DecisionDePrelevementRepo extends JpaRepository<DecisionDePrele
 
     @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.dateCreation >= :startDate")
     long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+
+    // Méthodes pour les statistiques par entreprise
+    @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.entreprise.id = :entrepriseId")
+    long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+    @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.entreprise.id = :entrepriseId AND d.dateCreation >= :startDate AND d.dateCreation < :endDate")
+    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }
