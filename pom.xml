@@ -25,6 +25,7 @@
 		<poi.version>5.2.3</poi.version>
 		<jasperreports.version>6.21.0</jasperreports.version>
 		<caffeine.version>3.1.8</caffeine.version>
+		<maven.compiler.release>17</maven.compiler.release>
 	</properties>
 
 	<dependencies>
@@ -49,6 +50,8 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
+			<version>1.18.34</version>
+			<scope>provided</scope>
 			<optional>true</optional>
 		</dependency>
 
@@ -177,6 +180,7 @@
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
+							<version>1.18.34</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
