@@ -12,20 +12,35 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Repository pour l'entité LigneCredit
+ * Fournit les méthodes de recherche pour les lignes de crédit
+ */
 @Repository
 public interface LigneCreditRepo extends JpaRepository<LigneCredit, Long> {
 
+    /**
+     * Trouve toutes les lignes de crédit d'un budget
+     */
     List<LigneCredit> findByBudget(Budget budget);
 
-    List<LigneCredit> findByBudgetEntreprise(Entreprise entreprise);
-
+    /**
+     * Trouve toutes les lignes de crédit par statut
+     */
     List<LigneCredit> findByStatut(Statut statut);
 
-    List<LigneCredit> findByEtat(boolean etat);
+    /**
+     * Trouve toutes les lignes de crédit d'une entreprise
+     */
+    @Query("SELECT l FROM LigneCredit l WHERE l.budget.entreprise = :entreprise")
+    List<LigneCredit> findByBudgetEntreprise(@Param("entreprise") Entreprise entreprise);
 
-    List<LigneCredit> findByBudgetAndStatut(Budget budget, Statut statut);
-
-    List<LigneCredit> findByBudgetEntrepriseAndStatut(Entreprise entreprise, Statut statut);
+    /**
+     * Trouve toutes les lignes de crédit d'une entreprise et d'un statut
+     */
+    @Query("SELECT l FROM LigneCredit l WHERE l.budget.entreprise = :entreprise AND l.statut = :statut")
+    List<LigneCredit> findByBudgetEntrepriseAndStatut(@Param("entreprise") Entreprise entreprise,
+            @Param("statut") Statut statut);
 
     // Méthodes pour les statistiques par date
     @Query("SELECT COUNT(l) FROM LigneCredit l WHERE l.dateCreation >= :startDate AND l.dateCreation < :endDate")
@@ -34,4 +49,12 @@ public interface LigneCreditRepo extends JpaRepository<LigneCredit, Long> {
 
     @Query("SELECT COUNT(l) FROM LigneCredit l WHERE l.dateCreation >= :startDate")
     long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+
+    // Méthodes pour les statistiques par entreprise
+    @Query("SELECT COUNT(l) FROM LigneCredit l WHERE l.budget.entreprise.id = :entrepriseId")
+    long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+    @Query("SELECT COUNT(l) FROM LigneCredit l WHERE l.budget.entreprise.id = :entrepriseId AND l.dateCreation >= :startDate AND l.dateCreation < :endDate")
+    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

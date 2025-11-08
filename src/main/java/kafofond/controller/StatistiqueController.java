@@ -1,8 +1,12 @@
 package kafofond.controller;
 
+import kafofond.dto.DsiDashboardStats;
+import kafofond.entity.Utilisateur;
 import kafofond.service.StatistiqueService;
+import kafofond.service.UtilisateurService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -18,6 +22,7 @@ import java.util.Map;
 public class StatistiqueController {
 
     private final StatistiqueService statistiqueService;
+    private final UtilisateurService utilisateurService;
 
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> getStatistiquesDashboard() {
@@ -39,6 +44,59 @@ public class StatistiqueController {
         statistiques.put("totalDocuments", statistiqueService.getTotalDocuments());
 
         return ResponseEntity.ok(statistiques);
+    }
+
+    // Nouvel endpoint pour le dashboard DSI
+    @GetMapping("/dsi/dashboard")
+    public ResponseEntity<DsiDashboardStats> getStatistiquesDashboardDSI(Authentication authentication) {
+        try {
+            // Récupérer l'utilisateur authentifié
+            Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+            DsiDashboardStats stats = new DsiDashboardStats();
+
+            // Total users = utilisateurs actifs de l'entreprise
+            int totalUsers = Math.toIntExact(
+                    statistiqueService.getUtilisateursActifsParEntreprise(utilisateur.getEntreprise().getId()));
+            stats.setTotalUsers(totalUsers);
+
+            // Disabled users = total utilisateurs - utilisateurs actifs de l'entreprise
+            int totalUtilisateurs = Math.toIntExact(
+                    statistiqueService.getTotalUtilisateursParEntreprise(utilisateur.getEntreprise().getId()));
+            int disabledUsers = totalUtilisateurs - totalUsers;
+            stats.setDisabledUsers(disabledUsers);
+
+            // Shared documents = total documents de l'entreprise
+            int sharedDocuments = Math
+                    .toIntExact(statistiqueService.getTotalDocumentsParEntreprise(utilisateur.getEntreprise().getId()));
+            stats.setSharedDocuments(sharedDocuments);
+
+            // Active users percentage
+            double activeUsersPercentage = totalUtilisateurs > 0 ? (double) totalUsers / totalUtilisateurs * 100 : 0;
+            stats.setActiveUsersPercentage(Math.round(activeUsersPercentage * 100.0) / 100.0);
+
+            // Disabled users percentage
+            double disabledUsersPercentage = totalUtilisateurs > 0 ? (double) disabledUsers / totalUtilisateurs * 100
+                    : 0;
+            stats.setDisabledUsersPercentage(Math.round(disabledUsersPercentage * 100.0) / 100.0);
+
+            // Documents percentage (par rapport à un seuil, par exemple 1000)
+            double documentsPercentage = Math.min(100.0, (double) sharedDocuments / 1000 * 100);
+            stats.setDocumentsPercentage(Math.round(documentsPercentage * 100.0) / 100.0);
+
+            return ResponseEntity.ok(stats);
+        } catch (Exception e) {
+            // En cas d'erreur, retourner des statistiques par défaut
+            DsiDashboardStats defaultStats = new DsiDashboardStats();
+            defaultStats.setTotalUsers(0);
+            defaultStats.setDisabledUsers(0);
+            defaultStats.setSharedDocuments(0);
+            defaultStats.setActiveUsersPercentage(0.0);
+            defaultStats.setDisabledUsersPercentage(0.0);
+            defaultStats.setDocumentsPercentage(0.0);
+            return ResponseEntity.ok(defaultStats);
+        }
     }
 
     @GetMapping("/documents")
@@ -78,5 +136,43 @@ public class StatistiqueController {
         response.put("datasets", datasets);
 
         return ResponseEntity.ok(response);
+    }
+
+    // Nouvel endpoint pour les graphiques DSI
+    @GetMapping("/dsi/chart")
+    public ResponseEntity<Map<String, Object>> getStatistiquesChartDSI(@RequestParam String periode,
+            Authentication authentication) {
+        try {
+            // Récupérer l'utilisateur authentifié
+            Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> datasets = new HashMap<>();
+
+            // Récupérer les vraies données pour l'entreprise
+            List<String> labels = statistiqueService.getLabelsParPeriode(periode);
+            List<Integer> utilisateurs = statistiqueService.getUtilisateursParPeriodeEtEntreprise(periode,
+                    utilisateur.getEntreprise().getId());
+            List<Integer> documents = statistiqueService.getDocumentsParPeriodeEtEntreprise(periode,
+                    utilisateur.getEntreprise().getId());
+
+            datasets.put("utilisateurs", utilisateurs);
+            datasets.put("documents", documents);
+
+            response.put("labels", labels);
+            response.put("datasets", datasets);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            // En cas d'erreur, retourner des données vides
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> datasets = new HashMap<>();
+            datasets.put("utilisateurs", new int[0]);
+            datasets.put("documents", new int[0]);
+            response.put("labels", new String[0]);
+            response.put("datasets", datasets);
+            return ResponseEntity.ok(response);
+        }
     }
 }

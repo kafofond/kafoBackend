@@ -46,4 +46,13 @@ public interface UtilisateurRepo extends JpaRepository<Utilisateur, Long> {
 
     @Query("SELECT COUNT(u) FROM Utilisateur u WHERE u.dateCreation >= :startDate")
     long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+
+    // Méthodes pour les statistiques par entreprise
+    long countByEntrepriseId(Long entrepriseId);
+
+    long countByEntrepriseIdAndEtatTrue(Long entrepriseId);
+
+    @Query("SELECT COUNT(u) FROM Utilisateur u WHERE u.entreprise.id = :entrepriseId AND u.dateCreation >= :startDate AND u.dateCreation < :endDate")
+    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }
