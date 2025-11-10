@@ -32,8 +32,10 @@ public class LigneCreditMapper {
                 .montantAllouer(ligne.getMontantAllouer())
                 .montantEngager(ligne.getMontantEngager())
                 .montantRestant(ligne.getMontantRestant())
-                .dateCreation(LocalDate.from(ligne.getDateCreation()))
+                .dateCreation(ligne.getDateCreation().toLocalDate())
                 .dateModification(ligne.getDateModification())
+                .dateDebut(ligne.getDateDebut())
+                .dateFin(ligne.getDateFin())
                 .statut(ligne.getStatut())
                 .actif(ligne.isEtat())
                 .budgetId(ligne.getBudget() != null ? ligne.getBudget().getId() : null)
@@ -57,6 +59,8 @@ public class LigneCreditMapper {
                 .montantRestant(dto.getMontantRestant())
                 .dateCreation(dto.getDateCreation().atStartOfDay())
                 .dateModification(dto.getDateModification())
+                .dateDebut(dto.getDateDebut())
+                .dateFin(dto.getDateFin())
                 .statut(dto.getStatut())
                 .etat(dto.isActif());
         

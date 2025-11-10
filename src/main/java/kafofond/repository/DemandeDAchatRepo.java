@@ -3,6 +3,7 @@ package kafofond.repository;
 import kafofond.entity.DemandeDAchat;
 import kafofond.entity.Entreprise;
 import kafofond.entity.Statut;
+import kafofond.entity.Utilisateur;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,6 +33,28 @@ public interface DemandeDAchatRepo extends JpaRepository<DemandeDAchat, Long> {
      * Trouve toutes les demandes d'une entreprise par statut
      */
     List<DemandeDAchat> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
+
+    /**
+     * Trouve toutes les demandes créées par un utilisateur
+     */
+    List<DemandeDAchat> findByCreePar(Utilisateur utilisateur);
+
+    /**
+     * Trouve toutes les demandes créées par un utilisateur avec un statut spécifique
+     */
+    List<DemandeDAchat> findByCreeParAndStatut(Utilisateur utilisateur, Statut statut);
+
+    /**
+     * Compte le nombre total de demandes créées par un utilisateur
+     */
+    @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.creePar.id = :utilisateurId")
+    long countByCreeParId(@Param("utilisateurId") Long utilisateurId);
+
+    /**
+     * Compte le nombre de demandes créées par un utilisateur avec un statut spécifique
+     */
+    @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.creePar.id = :utilisateurId AND d.statut = :statut")
+    long countByCreeParIdAndStatut(@Param("utilisateurId") Long utilisateurId, @Param("statut") Statut statut);
 
     // Méthodes pour les statistiques par date
     @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.dateCreation >= :startDate AND d.dateCreation < :endDate")

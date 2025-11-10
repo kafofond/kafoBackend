@@ -23,6 +23,8 @@ public class LigneCreditDTO {
     private double montantRestant;
     private LocalDate dateCreation;
     private LocalDateTime dateModification;
+    private LocalDate dateDebut;
+    private LocalDate dateFin;
     private Statut statut;
     private boolean actif;
     private Long budgetId;
