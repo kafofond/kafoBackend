@@ -18,34 +18,41 @@ import java.util.List;
 @Repository
 public interface BudgetRepo extends JpaRepository<Budget, Long> {
 
-    /**
-     * Trouve tous les budgets d'une entreprise
-     */
-    List<Budget> findByEntreprise(Entreprise entreprise);
+        /**
+         * Trouve tous les budgets d'une entreprise
+         */
+        List<Budget> findByEntreprise(Entreprise entreprise);
 
-    /**
-     * Trouve tous les budgets par statut
-     */
-    List<Budget> findByStatut(Statut statut);
+        /**
+         * Trouve tous les budgets par statut
+         */
+        List<Budget> findByStatut(Statut statut);
 
-    /**
-     * Trouve tous les budgets d'une entreprise par statut
-     */
-    List<Budget> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
+        /**
+         * Trouve tous les budgets d'une entreprise par statut
+         */
+        List<Budget> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
 
-    // Méthodes pour les statistiques par date
-    @Query("SELECT COUNT(b) FROM Budget b WHERE b.dateCreation >= :startDate AND b.dateCreation < :endDate")
-    long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+        // Méthodes pour les statistiques par date
+        @Query("SELECT COUNT(b) FROM Budget b WHERE b.dateCreation >= :startDate AND b.dateCreation < :endDate")
+        long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT COUNT(b) FROM Budget b WHERE b.dateCreation >= :startDate")
-    long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+        @Query("SELECT COUNT(b) FROM Budget b WHERE b.dateCreation >= :startDate")
+        long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
 
-    // Méthodes pour les statistiques par entreprise
-    @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId")
-    long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+        // Méthodes pour les statistiques par entreprise
+        @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId")
+        long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
 
-    @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId AND b.dateCreation >= :startDate AND b.dateCreation < :endDate")
-    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
-            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+        @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId AND b.dateCreation >= :startDate AND b.dateCreation < :endDate")
+        long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+                        @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+        // Méthodes pour les statistiques du directeur
+        @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId")
+        long countBudgetByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+        @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId AND (b.statut = 'EN_COURS' OR b.statut = 'APPROUVE')")
+        long countByEntrepriseIdAndStatutEnCours(@Param("entrepriseId") Long entrepriseId);
 }

@@ -19,39 +19,43 @@ import java.util.List;
 @Repository
 public interface DecisionDePrelevementRepo extends JpaRepository<DecisionDePrelevement, Long> {
 
-    /**
-     * Trouve toutes les décisions d'une entreprise
-     */
-    List<DecisionDePrelevement> findByEntreprise(Entreprise entreprise);
+        /**
+         * Trouve toutes les décisions d'une entreprise
+         */
+        List<DecisionDePrelevement> findByEntreprise(Entreprise entreprise);
 
-    /**
-     * Trouve toutes les décisions par statut
-     */
-    List<DecisionDePrelevement> findByStatut(Statut statut);
+        /**
+         * Trouve toutes les décisions par statut
+         */
+        List<DecisionDePrelevement> findByStatut(Statut statut);
 
-    /**
-     * Trouve toutes les décisions d'une entreprise par statut
-     */
-    List<DecisionDePrelevement> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
+        /**
+         * Trouve toutes les décisions d'une entreprise par statut
+         */
+        List<DecisionDePrelevement> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
 
-    /**
-     * Trouve toutes les décisions d'une attestation de service fait
-     */
-    List<DecisionDePrelevement> findByAttestationDeServiceFait(AttestationDeServiceFait attestationDeServiceFait);
+        /**
+         * Trouve toutes les décisions d'une attestation de service fait
+         */
+        List<DecisionDePrelevement> findByAttestationDeServiceFait(AttestationDeServiceFait attestationDeServiceFait);
 
-    // Méthodes pour les statistiques par date
-    @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.dateCreation >= :startDate AND d.dateCreation < :endDate")
-    long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+        // Méthodes pour les statistiques par date
+        @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.dateCreation >= :startDate AND d.dateCreation < :endDate")
+        long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.dateCreation >= :startDate")
-    long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+        @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.dateCreation >= :startDate")
+        long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
 
-    // Méthodes pour les statistiques par entreprise
-    @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.entreprise.id = :entrepriseId")
-    long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+        // Méthodes pour les statistiques par entreprise
+        @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.entreprise.id = :entrepriseId")
+        long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
 
-    @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.entreprise.id = :entrepriseId AND d.dateCreation >= :startDate AND d.dateCreation < :endDate")
-    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
-            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+        @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.entreprise.id = :entrepriseId AND d.dateCreation >= :startDate AND d.dateCreation < :endDate")
+        long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+                        @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+        // Méthodes pour les statistiques du directeur
+        @Query("SELECT COUNT(d) FROM DecisionDePrelevement d WHERE d.entreprise.id = :entrepriseId AND (d.statut = 'EN_COURS' OR d.statut = 'APPROUVE')")
+        long countByEntrepriseIdAndStatutEnAttente(@Param("entrepriseId") Long entrepriseId);
 }
