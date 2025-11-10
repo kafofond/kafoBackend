@@ -57,6 +57,8 @@ public class LigneCreditController {
             ligne.setIntituleLigne(ligneCreateDTO.getIntituleLigne());
             ligne.setDescription(ligneCreateDTO.getDescription());
             ligne.setMontantAllouer(ligneCreateDTO.getMontantAllouer());
+            ligne.setDateDebut(ligneCreateDTO.getDateDebut());
+            ligne.setDateFin(ligneCreateDTO.getDateFin());
 
             // Associer le budget si l'ID est fourni
             if (ligneCreateDTO.getBudgetId() != null) {

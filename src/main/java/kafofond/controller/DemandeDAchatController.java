@@ -303,4 +303,147 @@ public class DemandeDAchatController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    /**
+     * Récupère les statistiques des demandes d'achat pour un utilisateur
+     */
+    @GetMapping("/utilisateur/{utilisateurId}/statistiques")
+    public ResponseEntity<?> obtenirStatistiquesParUtilisateur(@PathVariable Long utilisateurId, Authentication authentication) {
+        try {
+            log.info("Statistiques des demandes d'achat pour l'utilisateur {} demandées par {}", 
+                    utilisateurId, authentication.getName());
+            
+            Map<String, Long> statistiques = demandeDAchatService.obtenirStatistiquesParUtilisateur(utilisateurId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("utilisateurId", utilisateurId);
+            response.put("statistiques", statistiques);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des statistiques : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Compte le nombre total de demandes d'achat créées par un utilisateur
+     */
+    @GetMapping("/utilisateur/{utilisateurId}/total")
+    public ResponseEntity<?> compterTotalParUtilisateur(@PathVariable Long utilisateurId, Authentication authentication) {
+        try {
+            log.info("Nombre total de demandes d'achat pour l'utilisateur {} demandé par {}", 
+                    utilisateurId, authentication.getName());
+            
+            long total = demandeDAchatService.compterParUtilisateur(utilisateurId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("utilisateurId", utilisateurId);
+            response.put("total", total);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors du comptage des demandes d'achat : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Compte le nombre de demandes d'achat créées par un utilisateur avec un statut spécifique
+     */
+    @GetMapping("/utilisateur/{utilisateurId}/statut/{statut}")
+    public ResponseEntity<?> compterParUtilisateurEtStatut(@PathVariable Long utilisateurId, 
+                                                          @PathVariable kafofond.entity.Statut statut, 
+                                                          Authentication authentication) {
+        try {
+            log.info("Nombre de demandes d'achat {} pour l'utilisateur {} demandé par {}", 
+                    statut, utilisateurId, authentication.getName());
+            
+            long total = demandeDAchatService.compterParUtilisateurEtStatut(utilisateurId, statut);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("utilisateurId", utilisateurId);
+            response.put("statut", statut);
+            response.put("total", total);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors du comptage des demandes d'achat par statut : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Liste toutes les demandes d'achat créées par un utilisateur
+     */
+    @GetMapping("/utilisateur/{utilisateurId}")
+    public ResponseEntity<?> listerParUtilisateur(@PathVariable Long utilisateurId, Authentication authentication) {
+        try {
+            log.info("Liste des demandes d'achat de l'utilisateur {} demandée par {}", 
+                    utilisateurId, authentication.getName());
+            
+            List<DemandeDAchat> demandes = demandeDAchatService.listerParUtilisateur(utilisateurId);
+            
+            // Convertir en DTOs
+            List<DemandeDAchatDTO> dtos = demandes.stream()
+                    .map(demandeDAchatMapper::toDTO)
+                    .toList();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("demandes", dtos);
+            response.put("total", dtos.size());
+            response.put("utilisateurId", utilisateurId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des demandes d'achat par utilisateur : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Liste toutes les demandes d'achat créées par un utilisateur avec un statut spécifique
+     */
+    @GetMapping("/utilisateur/{utilisateurId}/statut/{statut}/demandes")
+    public ResponseEntity<?> listerParUtilisateurEtStatut(@PathVariable Long utilisateurId, 
+                                                         @PathVariable kafofond.entity.Statut statut, 
+                                                         Authentication authentication) {
+        try {
+            log.info("Liste des demandes d'achat {} de l'utilisateur {} demandée par {}", 
+                    statut, utilisateurId, authentication.getName());
+            
+            List<DemandeDAchat> demandes = demandeDAchatService.listerParUtilisateurEtStatut(utilisateurId, statut);
+            
+            // Convertir en DTOs
+            List<DemandeDAchatDTO> dtos = demandes.stream()
+                    .map(demandeDAchatMapper::toDTO)
+                    .toList();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("demandes", dtos);
+            response.put("total", dtos.size());
+            response.put("utilisateurId", utilisateurId);
+            response.put("statut", statut);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des demandes d'achat par utilisateur et statut : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
 }
