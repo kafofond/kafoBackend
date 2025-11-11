@@ -6,6 +6,7 @@ import kafofond.repository.NotificationRepo;
 import kafofond.repository.AttestationDeServiceFaitRepo;
 import kafofond.repository.BonDeCommandeRepo;
 import kafofond.repository.DemandeDAchatRepo;
+import kafofond.repository.UtilisateurRepo;
 import kafofond.service.CodeGeneratorService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Service de gestion des notifications
@@ -28,6 +30,7 @@ import java.time.LocalDateTime;
 public class NotificationService {
 
     private final NotificationRepo notificationRepo;
+    private final UtilisateurRepo utilisateurRepo;
     private final JavaMailSender mailSender;
     private final AttestationDeServiceFaitRepo attestationDeServiceFaitRepo;
     private final BonDeCommandeRepo bonDeCommandeRepo;
@@ -92,6 +95,36 @@ public class NotificationService {
         } catch (Exception e) {
             log.error("Erreur lors de l'envoi de l'email HTML à {} : {}", destinataire, e.getMessage());
         }
+    }
+
+    /**
+     * Récupère toutes les notifications d'un utilisateur par son ID
+     */
+    public List<Notification> recupererNotificationsParUtilisateurId(Long utilisateurId) {
+        // Récupérer l'utilisateur par son ID
+        Utilisateur utilisateur = utilisateurRepo.findById(utilisateurId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable avec ID: " + utilisateurId));
+        return notificationRepo.findByDestinataire(utilisateur);
+    }
+
+    /**
+     * Récupère toutes les notifications non lues d'un utilisateur par son ID
+     */
+    public List<Notification> recupererNotificationsNonLuesParUtilisateurId(Long utilisateurId) {
+        // Récupérer l'utilisateur par son ID
+        Utilisateur utilisateur = utilisateurRepo.findById(utilisateurId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable avec ID: " + utilisateurId));
+        return notificationRepo.findByDestinataireAndEtat(utilisateur, false);
+    }
+
+    /**
+     * Compte les notifications non lues d'un utilisateur par son ID
+     */
+    public long compterNotificationsNonLuesParUtilisateurId(Long utilisateurId) {
+        // Récupérer l'utilisateur par son ID
+        Utilisateur utilisateur = utilisateurRepo.findById(utilisateurId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable avec ID: " + utilisateurId));
+        return notificationRepo.countByDestinataireAndEtat(utilisateur, false);
     }
 
     /**
@@ -193,5 +226,30 @@ public class NotificationService {
             log.error("Échec d'envoi email pour notification {} : {}", notification.getId(), e.getMessage());
         }
         notificationRepo.save(notification);
+    }
+
+    /**
+     * Marque une notification comme lue
+     */
+    public Notification marquerCommeLue(Long notificationId) {
+        Notification notification = notificationRepo.findById(notificationId)
+                .orElseThrow(() -> new IllegalArgumentException("Notification introuvable avec ID: " + notificationId));
+        notification.setEtat(true); // Marquer comme lue
+        return notificationRepo.save(notification);
+    }
+
+    /**
+     * Marque toutes les notifications d'un utilisateur comme lues
+     */
+    public void marquerToutesCommeLues(Long utilisateurId) {
+        // Récupérer l'utilisateur par son ID
+        Utilisateur utilisateur = utilisateurRepo.findById(utilisateurId)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable avec ID: " + utilisateurId));
+        
+        List<Notification> notifications = notificationRepo.findByDestinataireAndEtat(utilisateur, false);
+        for (Notification notification : notifications) {
+            notification.setEtat(true); // Marquer comme lue
+        }
+        notificationRepo.saveAll(notifications);
     }
 }

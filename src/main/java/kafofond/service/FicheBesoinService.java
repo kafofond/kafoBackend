@@ -536,6 +536,9 @@ public class FicheBesoinService {
                 .orElse(null);
     }
 
+    /**
+     * Liste toutes les fiches de besoin d'une entreprise
+     */
     public List<FicheDeBesoin> listerParEntreprise(kafofond.entity.Entreprise entreprise) {
         return ficheBesoinRepo.findByEntreprise(entreprise);
     }
@@ -571,6 +574,7 @@ public class FicheBesoinService {
                             .dateAttendu(fiche.getDateAttendu())
                             .dateCreation(LocalDate.from(fiche.getDateCreation()))
                             .statut(fiche.getStatut())
+                            .urlFichierJoint(fiche.getUrlFichierJoint())
                             .createurNom(fiche.getCreePar() != null ? 
                                 fiche.getCreePar().getPrenom() + " " + fiche.getCreePar().getNom() : null)
                             .createurEmail(fiche.getCreePar() != null ? fiche.getCreePar().getEmail() : null)
@@ -629,6 +633,7 @@ public class FicheBesoinService {
                             .dateAttendu(fiche.getDateAttendu())
                             .dateCreation(LocalDate.from(fiche.getDateCreation()))
                             .statut(fiche.getStatut())
+                            .urlFichierJoint(fiche.getUrlFichierJoint())
                             .createurNom(fiche.getCreePar() != null ? 
                                 fiche.getCreePar().getPrenom() + " " + fiche.getCreePar().getNom() : null)
                             .createurEmail(fiche.getCreePar() != null ? fiche.getCreePar().getEmail() : null)
@@ -677,6 +682,7 @@ public class FicheBesoinService {
                 .dateAttendu(ficheModif.getDateAttendu())
                 .dateCreation(LocalDate.from(ficheModif.getDateCreation()))
                 .statut(ficheModif.getStatut())
+                .urlFichierJoint(ficheModif.getUrlFichierJoint())
                 .createurNom(ficheModif.getCreePar() != null ? 
                     ficheModif.getCreePar().getPrenom() + " " + ficheModif.getCreePar().getNom() : null)
                 .createurEmail(ficheModif.getCreePar() != null ? ficheModif.getCreePar().getEmail() : null)

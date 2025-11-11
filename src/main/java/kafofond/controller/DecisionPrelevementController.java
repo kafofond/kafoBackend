@@ -195,6 +195,50 @@ public class DecisionPrelevementController {
     }
 
     /**
+     * Liste toutes les décisions de prélèvement d'une entreprise spécifique
+     */
+    @Operation(summary = "Lister les décisions de prélèvement par entreprise", 
+               description = "Liste toutes les décisions de prélèvement d'une entreprise donnée par son ID.")
+    @GetMapping("/entreprise/{entrepriseId}")
+    public ResponseEntity<?> listerDecisionsPrelevementParEntreprise(@PathVariable Long entrepriseId, Authentication authentication) {
+        try {
+            log.info("Liste des décisions de prélèvement de l'entreprise {} demandée par {}", 
+                    entrepriseId, authentication.getName());
+            
+            // Vérifier que l'utilisateur a le droit d'accéder à cette entreprise
+            Utilisateur utilisateur = utilisateurService.trouverParEmailAvecEntreprise(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+            
+            // Vérifier que l'utilisateur appartient à l'entreprise ou est admin
+            if (!utilisateur.getEntreprise().getId().equals(entrepriseId) && 
+                utilisateur.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Accès non autorisé à cette entreprise");
+                return ResponseEntity.status(403).body(error);
+            }
+            
+            // Utiliser la méthode du service pour récupérer les décisions de prélèvement
+            List<DecisionDePrelevement> decisions = decisionPrelevementService.listerParEntrepriseId(entrepriseId);
+            List<DecisionPrelevementDTO> decisionsDTO = decisions.stream()
+                    .map(decisionPrelevementMapper::toDTO)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("decisions", decisionsDTO);
+            response.put("total", decisionsDTO.size());
+            response.put("entrepriseId", entrepriseId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des décisions de prélèvement par entreprise : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
      * Liste toutes les décisions de prélèvement de l'entreprise
      */
     @Operation(summary = "Lister les décisions de prélèvement", description = "Liste toutes les décisions de prélèvement de l'entreprise.")
