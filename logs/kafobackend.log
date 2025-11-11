@@ -174,3 +174,100 @@
 2025-11-10T00:22:19.553Z DEBUG 11644 --- [kafobackend] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Using 'application/json', given [application/json, text/plain, */*] and supported [application/json, application/*+json, application/yaml, application/xml;charset=UTF-8, text/xml;charset=UTF-8, application/*+xml;charset=UTF-8]
 2025-11-10T00:22:19.555Z DEBUG 11644 --- [kafobackend] [http-nio-8080-exec-6] o.s.w.s.m.m.a.HttpEntityMethodProcessor  : Writing [{total=5, budgets=[BudgetDTO(id=1, code=BUD-0001-11-2025, intituleBudget=Budget 2025, description=Bu (truncated)...]
 2025-11-10T00:22:19.558Z DEBUG 11644 --- [kafobackend] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:35:05.543Z  INFO 11068 --- [kafobackend] [main] kafofond.KafobackendApplication          : Starting KafobackendApplication using Java 17.0.15 with PID 11068 (C:\Users\Hamza SANMO\Desktop\kafoBackend\target\classes started by Hamza SANMO in C:\Users\Hamza SANMO\Desktop\kafoBackend)
+2025-11-11T22:35:05.558Z  INFO 11068 --- [kafobackend] [main] kafofond.KafobackendApplication          : The following 2 profiles are active: "prod", "secrets"
+2025-11-11T22:35:09.507Z  INFO 11068 --- [kafobackend] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-11T22:35:09.836Z  INFO 11068 --- [kafobackend] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 304 ms. Found 17 JPA repository interfaces.
+2025-11-11T22:35:12.131Z  INFO 11068 --- [kafobackend] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-11-11T22:35:12.163Z  INFO 11068 --- [kafobackend] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-11T22:35:12.163Z  INFO 11068 --- [kafobackend] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-11-11T22:35:12.397Z  INFO 11068 --- [kafobackend] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-11-11T22:35:12.413Z  INFO 11068 --- [kafobackend] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 6696 ms
+2025-11-11T22:35:12.710Z  INFO 11068 --- [kafobackend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-11T22:35:13.260Z  INFO 11068 --- [kafobackend] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@37c1cfa
+2025-11-11T22:35:13.276Z  INFO 11068 --- [kafobackend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-11T22:35:13.545Z  INFO 11068 --- [kafobackend] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-11T22:35:13.733Z  INFO 11068 --- [kafobackend] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.29.Final
+2025-11-11T22:35:13.870Z  INFO 11068 --- [kafobackend] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-11-11T22:35:14.812Z  INFO 11068 --- [kafobackend] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-11T22:35:15.075Z  WARN 11068 --- [kafobackend] [main] org.hibernate.dialect.Dialect            : HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2025-11-11T22:35:15.137Z  INFO 11068 --- [kafobackend] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-11T22:35:19.421Z  INFO 11068 --- [kafobackend] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-11T22:35:20.497Z  INFO 11068 --- [kafobackend] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-11T22:35:22.008Z  INFO 11068 --- [kafobackend] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-11T22:35:27.279Z DEBUG 11068 --- [kafobackend] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 144 mappings in 'requestMappingHandlerMapping'
+2025-11-11T22:35:27.707Z DEBUG 11068 --- [kafobackend] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /uploads/**, /swagger-ui/swagger-ui*/*swagger-initializer.js, /swagger-ui/swagger-ui*/**] in 'resourceHandlerMapping'
+2025-11-11T22:35:27.769Z  INFO 11068 --- [kafobackend] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2025-11-11T22:35:28.286Z  INFO 11068 --- [kafobackend] [main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-11-11T22:35:28.369Z DEBUG 11068 --- [kafobackend] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-11-11T22:35:28.509Z DEBUG 11068 --- [kafobackend] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 2 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-11-11T22:35:29.093Z  INFO 11068 --- [kafobackend] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-11-11T22:35:29.124Z  INFO 11068 --- [kafobackend] [main] kafofond.KafobackendApplication          : Started KafobackendApplication in 25.066 seconds (process running for 42.332)
+2025-11-11T22:35:29.144Z  INFO 11068 --- [kafobackend] [main] kafofond.config.DataInitializer          : Initialisation des données de l'application...
+2025-11-11T22:35:29.295Z DEBUG 11068 --- [kafobackend] [main] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        entreprises e1_0
+2025-11-11T22:35:29.348Z  INFO 11068 --- [kafobackend] [main] kafofond.config.DataInitializer          : Des entreprises existent déjà, vérification de l'existence d'un super admin...
+2025-11-11T22:35:29.503Z DEBUG 11068 --- [kafobackend] [main] org.hibernate.SQL                        : 
+    select
+        count(u1_0.id) 
+    from
+        utilisateurs u1_0 
+    where
+        u1_0.role=?
+2025-11-11T22:35:29.519Z  INFO 11068 --- [kafobackend] [main] kafofond.config.DataInitializer          : Initialisation des données terminée.
+2025-11-11T22:40:37.497Z  INFO 11068 --- [kafobackend] [http-nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-11-11T22:40:37.497Z  INFO 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-11-11T22:40:37.497Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected StandardServletMultipartResolver
+2025-11-11T22:40:37.497Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedLocaleResolver
+2025-11-11T22:40:37.497Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected FixedThemeResolver
+2025-11-11T22:40:37.514Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.view.DefaultRequestToViewNameTranslator@5727a03d
+2025-11-11T22:40:37.514Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Detected org.springframework.web.servlet.support.SessionFlashMapManager@2c0b29cf
+2025-11-11T22:40:37.514Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : enableLoggingRequestDetails='false': request parameters and headers will be masked to prevent unsafe logging of potentially sensitive data
+2025-11-11T22:40:37.514Z  INFO 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 17 ms
+2025-11-11T22:40:37.614Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/index.html", parameters={}
+2025-11-11T22:40:37.634Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-11-11T22:40:37.840Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:40:38.090Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/swagger-ui-bundle.js", parameters={}
+2025-11-11T22:40:38.092Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-2] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-11-11T22:40:38.093Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/swagger-ui-standalone-preset.js", parameters={}
+2025-11-11T22:40:38.098Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-5] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-11-11T22:40:38.099Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/swagger-initializer.js", parameters={}
+2025-11-11T22:40:38.101Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-6] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-11-11T22:40:38.090Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/index.css", parameters={}
+2025-11-11T22:40:38.104Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/swagger-ui.css", parameters={}
+2025-11-11T22:40:38.105Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-4] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-11-11T22:40:38.106Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-3] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-11-11T22:40:38.117Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:40:38.129Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-5] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:40:38.152Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-3] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:40:38.233Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-2] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:40:38.269Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-6] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:40:38.931Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : GET "/v3/api-docs/swagger-config", parameters={}
+2025-11-11T22:40:38.932Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-7] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springdoc.webmvc.ui.SwaggerConfigResource#openapiJson(HttpServletRequest)
+2025-11-11T22:40:38.945Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : GET "/swagger-ui/swagger-ui/favicon-32x32.png", parameters={}
+2025-11-11T22:40:38.945Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-8] o.s.w.s.handler.SimpleUrlHandlerMapping  : Mapped to ResourceHttpRequestHandler [classpath [META-INF/resources/webjars/]]
+2025-11-11T22:40:38.953Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-8] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:40:38.978Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [*/*] and supported [application/json]
+2025-11-11T22:40:39.063Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-7] m.m.a.RequestResponseBodyMethodProcessor : Writing [{configUrl=/v3/api-docs/swagger-config, oauth2RedirectUrl=http://localhost:8080/swagger-ui/swagger-u (truncated)...]
+2025-11-11T22:40:39.100Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-7] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T22:40:39.478Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : GET "/v3/api-docs", parameters={}
+2025-11-11T22:40:39.478Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-9] s.w.s.m.m.a.RequestMappingHandlerMapping : Mapped to org.springdoc.webmvc.api.OpenApiWebMvcResource#openapiJson(HttpServletRequest, String, Locale)
+2025-11-11T22:40:44.380Z  INFO 11068 --- [kafobackend] [http-nio-8080-exec-9] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 4839 ms
+2025-11-11T22:40:44.627Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Using 'application/json', given [application/json, */*] and supported [application/json]
+2025-11-11T22:40:44.734Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-9] m.m.a.RequestResponseBodyMethodProcessor : Writing [{123, 34, 111, 112, 101, 110, 97, 112, 105, 34, 58, 34, 51, 46, 48, 46, 49, 34, 44, 34, 105, 110, 10 (truncated)...]
+2025-11-11T22:40:44.734Z DEBUG 11068 --- [kafobackend] [http-nio-8080-exec-9] o.s.web.servlet.DispatcherServlet        : Completed 200 OK
+2025-11-11T23:30:56.692Z  INFO 11068 --- [kafobackend] [SpringApplicationShutdownHook] o.s.b.w.e.tomcat.GracefulShutdown        : Commencing graceful shutdown. Waiting for active requests to complete
+2025-11-11T23:30:57.408Z  INFO 11068 --- [kafobackend] [tomcat-shutdown] o.s.b.w.e.tomcat.GracefulShutdown        : Graceful shutdown complete
+2025-11-11T23:30:57.658Z  INFO 11068 --- [kafobackend] [SpringApplicationShutdownHook] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2025-11-11T23:30:57.901Z  INFO 11068 --- [kafobackend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2025-11-11T23:30:57.963Z  INFO 11068 --- [kafobackend] [SpringApplicationShutdownHook] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
