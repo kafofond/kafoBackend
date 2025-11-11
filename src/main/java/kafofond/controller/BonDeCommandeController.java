@@ -41,6 +41,50 @@ public class BonDeCommandeController {
     private final DocumentService documentService; // Ajout du service de document
 
     /**
+     * Liste tous les bons de commande d'une entreprise spécifique
+     */
+    @GetMapping("/entreprise/{entrepriseId}")
+    public ResponseEntity<?> listerBonsDeCommandeParEntreprise(@PathVariable Long entrepriseId, Authentication authentication) {
+        try {
+            log.info("Liste des bons de commande de l'entreprise {} demandée par {}", 
+                    entrepriseId, authentication.getName());
+            
+            // Vérifier que l'utilisateur a le droit d'accéder à cette entreprise
+            Utilisateur utilisateur = utilisateurService.trouverParEmailAvecEntreprise(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+            
+            // Vérifier que l'utilisateur appartient à l'entreprise ou est admin
+            if (!utilisateur.getEntreprise().getId().equals(entrepriseId) && 
+                utilisateur.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Accès non autorisé à cette entreprise");
+                return ResponseEntity.status(403).body(error);
+            }
+            
+            // Utiliser la méthode du service pour récupérer les bons de commande
+            List<BonDeCommande> bons = bonDeCommandeService.listerParEntrepriseId(entrepriseId);
+            
+            // Convertir en DTOs
+            List<BonDeCommandeDTO> bonsDTO = bons.stream()
+                    .map(bonDeCommandeMapper::toDTO)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("bons", bonsDTO);
+            response.put("total", bonsDTO.size());
+            response.put("entrepriseId", entrepriseId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des bons de commande par entreprise : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
      * Liste tous les bons de commande de l'entreprise
      */
     @GetMapping

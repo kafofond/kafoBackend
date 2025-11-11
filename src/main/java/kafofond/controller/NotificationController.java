@@ -55,6 +55,47 @@ public class NotificationController {
     }
 
     /**
+     * Liste toutes les notifications d'un utilisateur spécifique (par ID)
+     */
+    @GetMapping("/utilisateur/{utilisateurId}")
+    public ResponseEntity<?> listerNotificationsParUtilisateurId(@PathVariable Long utilisateurId, Authentication authentication) {
+        try {
+            log.info("Liste des notifications de l'utilisateur {} demandée par {}", 
+                    utilisateurId, authentication.getName());
+            
+            // Vérifier que l'utilisateur a le droit d'accéder à ces notifications
+            Utilisateur utilisateurActuel = utilisateurService.trouverParEmail(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+            
+            // Vérifier que l'utilisateur demandé existe
+            Utilisateur utilisateurCible = utilisateurService.trouverParId(utilisateurId)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur cible introuvable"));
+            
+            // Vérifier que l'utilisateur actuel a le droit d'accéder aux notifications de l'utilisateur cible
+            // (soit il s'agit de lui-même, soit il est admin)
+            if (!utilisateurActuel.getId().equals(utilisateurId) && 
+                utilisateurActuel.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
+                throw new RuntimeException("Accès non autorisé aux notifications de cet utilisateur");
+            }
+            
+            List<Notification> notifications = notificationRepo.findByDestinataire(utilisateurCible);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("notifications", notifications);
+            response.put("total", notifications.size());
+            response.put("utilisateurId", utilisateurId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des notifications par utilisateur ID : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
      * Compte les notifications non lues de l'utilisateur connecté
      */
     @GetMapping("/non-lues")
@@ -74,6 +115,45 @@ public class NotificationController {
             
         } catch (Exception e) {
             log.error("Erreur lors du comptage des notifications non lues : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Compte les notifications non lues d'un utilisateur spécifique (par ID)
+     */
+    @GetMapping("/utilisateur/{utilisateurId}/non-lues")
+    public ResponseEntity<?> compterNotificationsNonLuesParUtilisateurId(@PathVariable Long utilisateurId, Authentication authentication) {
+        try {
+            log.info("Comptage des notifications non lues de l'utilisateur {} demandé par {}", 
+                    utilisateurId, authentication.getName());
+            
+            // Vérifier que l'utilisateur a le droit d'accéder à ces notifications
+            Utilisateur utilisateurActuel = utilisateurService.trouverParEmail(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+            
+            // Vérifier que l'utilisateur demandé existe
+            Utilisateur utilisateurCible = utilisateurService.trouverParId(utilisateurId)
+                    .orElseThrow(() -> new RuntimeException("Utilisateur cible introuvable"));
+            
+            // Vérifier que l'utilisateur actuel a le droit d'accéder aux notifications de l'utilisateur cible
+            if (!utilisateurActuel.getId().equals(utilisateurId) && 
+                utilisateurActuel.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
+                throw new RuntimeException("Accès non autorisé aux notifications de cet utilisateur");
+            }
+            
+            long nombreNonLues = notificationRepo.countByDestinataireAndEtat(utilisateurCible, false);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("nombreNonLues", nombreNonLues);
+            response.put("utilisateurId", utilisateurId);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors du comptage des notifications non lues par utilisateur ID : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);

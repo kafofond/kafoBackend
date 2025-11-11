@@ -4,9 +4,11 @@ import kafofond.entity.OrdreDePaiement;
 import kafofond.entity.DecisionDePrelevement;
 import kafofond.entity.Utilisateur;
 import kafofond.entity.Statut;
+import kafofond.entity.Entreprise;
 import kafofond.repository.OrdreDePaiementRepo;
 import kafofond.repository.UtilisateurRepo;
 import kafofond.repository.LigneCreditRepo;
+import kafofond.repository.EntrepriseRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ public class OrdreDePaiementService {
 
     private final OrdreDePaiementRepo ordreDePaiementRepo;
     private final UtilisateurRepo utilisateurRepo;
+    private final EntrepriseRepo entrepriseRepo;
     private final NotificationService notificationService;
     private final HistoriqueService historiqueService;
     private final ValidationService validationService;
@@ -391,6 +394,16 @@ public class OrdreDePaiementService {
     }
 
     public List<OrdreDePaiement> listerParEntreprise(kafofond.entity.Entreprise entreprise) {
+        return ordreDePaiementRepo.findByEntreprise(entreprise);
+    }
+    
+    /**
+     * Liste tous les ordres de paiement d'une entreprise par son ID
+     */
+    public List<OrdreDePaiement> listerParEntrepriseId(Long entrepriseId) {
+        // Récupérer l'entreprise par son ID
+        kafofond.entity.Entreprise entreprise = entrepriseRepo.findById(entrepriseId)
+                .orElseThrow(() -> new IllegalArgumentException("Entreprise introuvable avec ID: " + entrepriseId));
         return ordreDePaiementRepo.findByEntreprise(entreprise);
     }
 

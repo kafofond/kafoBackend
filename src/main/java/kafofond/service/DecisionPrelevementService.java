@@ -445,6 +445,16 @@ public class DecisionPrelevementService {
         return decisionDePrelevementRepo.findByEntreprise(entreprise);
     }
 
+    /**
+     * Liste toutes les décisions de prélèvement d'une entreprise par son ID
+     */
+    public List<DecisionDePrelevement> listerParEntrepriseId(Long entrepriseId) {
+        // Récupérer l'entreprise par son ID
+        Entreprise entreprise = entrepriseRepo.findById(entrepriseId)
+                .orElseThrow(() -> new IllegalArgumentException("Entreprise introuvable avec ID: " + entrepriseId));
+        return decisionDePrelevementRepo.findByEntreprise(entreprise);
+    }
+
     public Optional<DecisionDePrelevement> trouverParId(Long id) {
         return decisionDePrelevementRepo.findById(id);
     }
