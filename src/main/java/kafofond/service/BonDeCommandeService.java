@@ -578,6 +578,16 @@ public class BonDeCommandeService {
     }
     
     /**
+     * Liste tous les bons de commande d'une entreprise par son ID
+     */
+    public List<BonDeCommande> listerParEntrepriseId(Long entrepriseId) {
+        // Récupérer l'entreprise par son ID
+        kafofond.entity.Entreprise entreprise = entrepriseRepo.findById(entrepriseId)
+                .orElseThrow(() -> new IllegalArgumentException("Entreprise introuvable avec ID: " + entrepriseId));
+        return bonDeCommandeRepo.findByEntreprise(entreprise);
+    }
+    
+    /**
      * Liste tous les bons de commande d'une entreprise et retourne les DTO
      */
     @Transactional(readOnly = true)

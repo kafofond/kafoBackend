@@ -42,6 +42,12 @@ public interface LigneCreditRepo extends JpaRepository<LigneCredit, Long> {
         List<LigneCredit> findByBudgetEntrepriseAndStatut(@Param("entreprise") Entreprise entreprise,
                         @Param("statut") Statut statut);
 
+        /**
+         * Calcule le total des montants alloués pour un budget donné
+         */
+        @Query("SELECT COALESCE(SUM(l.montantAllouer), 0) FROM LigneCredit l WHERE l.budget.id = :budgetId")
+        double calculateTotalMontantAllouerByBudgetId(@Param("budgetId") Long budgetId);
+
         // Méthodes pour les statistiques par date
         @Query("SELECT COUNT(l) FROM LigneCredit l WHERE l.dateCreation >= :startDate AND l.dateCreation < :endDate")
         long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,

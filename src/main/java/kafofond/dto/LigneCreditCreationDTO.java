@@ -4,20 +4,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import java.time.LocalDate;
 
-@Schema(description = "DTO simplifié pour la création d'une ligne de crédit")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class LigneCreditCreateDTO {
+@Schema(description = "Données nécessaires pour créer une ligne de crédit")
+public class LigneCreditCreationDTO {
 
-    @Schema(description = "Intitulé de la ligne de crédit", example = "Ligne de crédit équipements")
+    @Schema(description = "Intitulé de la ligne de crédit", example = "Ligne pour fournitures")
     private String intituleLigne;
 
-    @Schema(description = "Description de la ligne de crédit", example = "Ligne de crédit pour l'achat d'équipements informatiques")
+    @Schema(description = "Description détaillée de la ligne de crédit", example = "Ligne de crédit pour les fournitures de bureau")
     private String description;
 
-    @Schema(description = "Montant alloué à la ligne de crédit", example = "5000000")
+    @Schema(description = "Montant alloué à la ligne de crédit", example = "5000.0")
     private double montantAllouer;
 
     @Schema(description = "Date de début de la ligne de crédit", example = "2025-01-01")

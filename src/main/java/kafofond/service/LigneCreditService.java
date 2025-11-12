@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,21 +38,41 @@ public class LigneCreditService {
         if (createur.getEntreprise() != null) {
             createur.getEntreprise().getNom();
         }
-
+        
         if (createur.getRole() != Role.RESPONSABLE && createur.getRole() != Role.DIRECTEUR)
+            throw new IllegalArgumentException("Seuls le Responsable et le Directeur peuvent créer des lignes de crédit");
+
+        // Vérifier que le budget existe et est valide
+        if (ligne.getBudget() == null || ligne.getBudget().getId() == null) {
+            throw new IllegalArgumentException("Un budget doit être associé à la ligne de crédit");
+        }
+        
+        Budget budget = budgetService.trouverParId(ligne.getBudget().getId())
+                .orElseThrow(() -> new IllegalArgumentException("Budget introuvable"));
+        
+        // Vérifier que le montant alloué ne dépasse pas le montant disponible du budget
+        double montantDejaAlloue = ligneCreditRepo.calculateTotalMontantAllouerByBudgetId(budget.getId());
+        double montantDisponible = budget.getMontantBudget() - montantDejaAlloue;
+        
+        if (ligne.getMontantAllouer() > montantDisponible) {
             throw new IllegalArgumentException(
-                    "Seuls le Responsable et le Directeur peuvent créer des lignes de crédit");
+                String.format("Le montant alloué (%.2f) dépasse le montant disponible du budget (%.2f)", 
+                             ligne.getMontantAllouer(), montantDisponible));
+        }
 
         ligne.setCreePar(createur);
+        ligne.setBudget(budget);
         ligne.setStatut(Statut.EN_COURS);
         ligne.setEtat(false);
-        ligne.setDateCreation(LocalDate.now().atStartOfDay());
+        ligne.setDateCreation(LocalDateTime.now());
+        // Initialiser les montants engagé et restant
+        ligne.setMontantEngager(0.0);
+        ligne.setMontantRestant(ligne.getMontantAllouer());
 
         LigneCredit ligneCreee = ligneCreditRepo.save(ligne);
-
+        
         // Générer le code unique automatiquement
-        String code = codeGeneratorService.generateLigneCreditCode(ligneCreee.getId(),
-                LocalDate.from(ligneCreee.getDateCreation()));
+        String code = codeGeneratorService.generateLigneCreditCode(ligneCreee.getId(), ligneCreee.getDateCreation().toLocalDate());
         ligneCreee.setCode(code);
         ligneCreee = ligneCreditRepo.save(ligneCreee);
 
@@ -60,11 +81,12 @@ public class LigneCreditService {
                 ligneCreee.getId(),
                 "CREATION",
                 createur,
-                null, // ancienEtat
-                "INACTIF", // nouveauEtat (etat = false)
-                null, // ancienStatut
-                ligneCreee.getStatut().name(), // nouveauStatut
-                "Ligne de crédit créée");
+                null,                       // ancienEtat
+                "INACTIF",                  // nouveauEtat (etat = false)
+                null,                       // ancienStatut
+                ligneCreee.getStatut().name(),  // nouveauStatut
+                "Ligne de crédit créée"
+        );
 
         Utilisateur directeur = trouverDirecteur(createur.getEntreprise());
         if (directeur != null)
@@ -79,21 +101,39 @@ public class LigneCreditService {
         if (modificateur.getEntreprise() != null) {
             modificateur.getEntreprise().getNom();
         }
-
+        
         LigneCredit ligne = ligneCreditRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ligne de crédit introuvable"));
 
         if (modificateur.getRole() != Role.RESPONSABLE && modificateur.getRole() != Role.DIRECTEUR)
-            throw new IllegalArgumentException(
-                    "Seuls le Responsable et le Directeur peuvent modifier des lignes de crédit");
+            throw new IllegalArgumentException("Seuls le Responsable et le Directeur peuvent modifier des lignes de crédit");
 
         boolean ancienEtat = ligne.isEtat();
         String ancienStatut = ligne.getStatut().name();
 
         ligne.setIntituleLigne(ligneModifiee.getIntituleLigne());
         ligne.setDescription(ligneModifiee.getDescription());
-        ligne.setMontantAllouer(ligneModifiee.getMontantAllouer());
-
+        ligne.setDateDebut(ligneModifiee.getDateDebut());
+        ligne.setDateFin(ligneModifiee.getDateFin());
+        
+        // Vérifier que le nouveau montant ne dépasse pas le montant disponible du budget
+        if (ligneModifiee.getMontantAllouer() != ligne.getMontantAllouer()) {
+            Budget budget = ligne.getBudget();
+            double montantDejaAlloue = ligneCreditRepo.calculateTotalMontantAllouerByBudgetId(budget.getId());
+            // Soustraire l'ancien montant et ajouter le nouveau
+            double montantDisponible = budget.getMontantBudget() - (montantDejaAlloue - ligne.getMontantAllouer());
+            
+            if (ligneModifiee.getMontantAllouer() > montantDisponible) {
+                throw new IllegalArgumentException(
+                    String.format("Le nouveau montant alloué (%.2f) dépasse le montant disponible du budget (%.2f)", 
+                                 ligneModifiee.getMontantAllouer(), montantDisponible));
+            }
+            
+            ligne.setMontantAllouer(ligneModifiee.getMontantAllouer());
+            // Mettre à jour le montant restant en conséquence
+            ligne.setMontantRestant(ligne.getMontantAllouer() - ligne.getMontantEngager());
+        }
+        
         // Si un budget est spécifié dans la ligne modifiée, l'associer
         if (ligneModifiee.getBudget() != null && ligneModifiee.getBudget().getId() != null) {
             Budget budget = budgetService.trouverParId(ligneModifiee.getBudget().getId())
@@ -111,11 +151,12 @@ public class LigneCreditService {
                 id,
                 "MODIFICATION",
                 modificateur,
-                ancienEtat ? "ACTIF" : "INACTIF", // ancienEtat
-                ligneModifie.isEtat() ? "ACTIF" : "INACTIF", // nouveauEtat
-                ancienStatut, // ancienStatut
-                ligneModifie.getStatut().name(), // nouveauStatut
-                "Ligne de crédit modifiée");
+                ancienEtat ? "ACTIF" : "INACTIF",       // ancienEtat
+                ligneModifie.isEtat() ? "ACTIF" : "INACTIF",  // nouveauEtat
+                ancienStatut,                           // ancienStatut
+                ligneModifie.getStatut().name(),        // nouveauStatut
+                "Ligne de crédit modifiée"
+        );
 
         Utilisateur directeur = trouverDirecteur(modificateur.getEntreprise());
         if (directeur != null)

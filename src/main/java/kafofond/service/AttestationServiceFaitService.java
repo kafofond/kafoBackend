@@ -7,6 +7,7 @@ import kafofond.entity.BonDeCommande;
 import kafofond.repository.AttestationDeServiceFaitRepo;
 import kafofond.repository.UtilisateurRepo;
 import kafofond.repository.BonDeCommandeRepo;
+import kafofond.repository.EntrepriseRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class AttestationServiceFaitService {
     private final AttestationDeServiceFaitRepo attestationDeServiceFaitRepo;
     private final UtilisateurRepo utilisateurRepo;
     private final BonDeCommandeRepo bonDeCommandeRepo;
+    private final EntrepriseRepo entrepriseRepo;
     private final NotificationService notificationService;
     private final HistoriqueService historiqueService;
     private final TableValidationService tableValidationService;
@@ -100,6 +102,16 @@ public class AttestationServiceFaitService {
      * Liste toutes les attestations de service fait d'une entreprise
      */
     public List<AttestationDeServiceFait> listerParEntreprise(kafofond.entity.Entreprise entreprise) {
+        return attestationDeServiceFaitRepo.findByEntreprise(entreprise);
+    }
+    
+    /**
+     * Liste toutes les attestations de service fait d'une entreprise par son ID
+     */
+    public List<AttestationDeServiceFait> listerParEntrepriseId(Long entrepriseId) {
+        // Récupérer l'entreprise par son ID
+        kafofond.entity.Entreprise entreprise = entrepriseRepo.findById(entrepriseId)
+                .orElseThrow(() -> new IllegalArgumentException("Entreprise introuvable avec ID: " + entrepriseId));
         return attestationDeServiceFaitRepo.findByEntreprise(entreprise);
     }
 

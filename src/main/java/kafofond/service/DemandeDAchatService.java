@@ -445,6 +445,54 @@ public class DemandeDAchatService {
                 .orElse(null);
     }
 
+    /**
+     * Compte le nombre total de demandes d'achat créées par un utilisateur
+     */
+    public long compterParUtilisateur(Long utilisateurId) {
+        return demandeDAchatRepo.countByCreeParId(utilisateurId);
+    }
+
+    /**
+     * Compte le nombre de demandes d'achat créées par un utilisateur avec un statut spécifique
+     */
+    public long compterParUtilisateurEtStatut(Long utilisateurId, Statut statut) {
+        return demandeDAchatRepo.countByCreeParIdAndStatut(utilisateurId, statut);
+    }
+
+    /**
+     * Récupère toutes les demandes d'achat créées par un utilisateur
+     */
+    public List<DemandeDAchat> listerParUtilisateur(Long utilisateurId) {
+        return utilisateurRepo.findById(utilisateurId)
+                .map(utilisateur -> demandeDAchatRepo.findByCreePar(utilisateur))
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+    }
+
+    /**
+     * Récupère toutes les demandes d'achat créées par un utilisateur avec un statut spécifique
+     */
+    public List<DemandeDAchat> listerParUtilisateurEtStatut(Long utilisateurId, Statut statut) {
+        return utilisateurRepo.findById(utilisateurId)
+                .map(utilisateur -> demandeDAchatRepo.findByCreeParAndStatut(utilisateur, statut))
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+    }
+
+    /**
+     * Récupère les statistiques des demandes d'achat pour un utilisateur
+     * Retourne le nombre total et le nombre par statut
+     */
+    public java.util.Map<String, Long> obtenirStatistiquesParUtilisateur(Long utilisateurId) {
+        java.util.Map<String, Long> statistiques = new java.util.HashMap<>();
+        
+        statistiques.put("total", compterParUtilisateur(utilisateurId));
+        statistiques.put("en_cours", compterParUtilisateurEtStatut(utilisateurId, Statut.EN_COURS));
+        statistiques.put("valide", compterParUtilisateurEtStatut(utilisateurId, Statut.VALIDE));
+        statistiques.put("approuve", compterParUtilisateurEtStatut(utilisateurId, Statut.APPROUVE));
+        statistiques.put("rejete", compterParUtilisateurEtStatut(utilisateurId, Statut.REJETE));
+        
+        return statistiques;
+    }
+
     public List<DemandeDAchat> listerParEntreprise(kafofond.entity.Entreprise entreprise) {
         return demandeDAchatRepo.findByEntreprise(entreprise);
     }
