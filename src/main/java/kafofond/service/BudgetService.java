@@ -78,6 +78,13 @@ public class BudgetService {
                 "Créé par " + createur.getRole().name()
         );
 
+        // Enregistrer dans la table de validation
+        tableValidationService.enregistrerCreation(
+                budgetCree.getId(),
+                kafofond.entity.TypeDocument.BUDGET,
+                createur
+        );
+
         // Notifier le Directeur si ce n'est pas lui qui crée
         if (createur.getRole() != kafofond.entity.Role.DIRECTEUR) {
             Utilisateur directeur = trouverDirecteur(createur.getEntreprise());

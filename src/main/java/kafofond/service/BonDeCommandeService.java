@@ -86,6 +86,13 @@ public class BonDeCommandeService {
                 "Généré automatiquement depuis DA #" + demandeDAchat.getId()
         );
 
+        // Enregistrer dans la table de validation
+        tableValidationService.enregistrerCreation(
+                bonCree.getId(),
+                kafofond.entity.TypeDocument.BON_COMMANDE,
+                comptable
+        );
+
         // Notifier le Comptable
         Utilisateur responsable = trouverResponsable(comptable.getEntreprise());
         if (responsable != null) {
@@ -660,5 +667,11 @@ public class BonDeCommandeService {
      */
     public Optional<BonDeCommande> trouverParDemandeDAchat(DemandeDAchat demandeDAchat) {
         return Optional.ofNullable(bonDeCommandeRepo.findByDemandeDAchat(demandeDAchat));
+    }
+
+    @Transactional(readOnly = true)
+    public List<BonDeCommande> getApprovedWithoutAttestation() {
+        log.info("Récupération des bons de commande approuvés sans attestation de service fait");
+        return bonDeCommandeRepo.findApprovedWithoutAttestation();
     }
 }

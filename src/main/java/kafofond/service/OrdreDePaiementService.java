@@ -96,6 +96,13 @@ public class OrdreDePaiementService {
                 "Créé par " + comptable.getRole().name()
         );
 
+        // Enregistrer dans la table de validation
+        tableValidationService.enregistrerCreation(
+                ordreCree.getId(),
+                kafofond.entity.TypeDocument.ORDRE_PAIEMENT,
+                comptable
+        );
+
         // Vérifier le seuil et notifier le bon validateur
         boolean depasseSeuil = validationService.verifierSeuilValidation(ordre.getMontant(), comptable.getEntreprise());
 

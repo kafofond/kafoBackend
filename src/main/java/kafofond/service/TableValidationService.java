@@ -50,6 +50,29 @@ public class TableValidationService {
     }
 
     /**
+     * Enregistre la création d'un document
+     */
+    @Transactional
+    public TableValidation enregistrerCreation(
+            Long idDocument,
+            TypeDocument typeDocument,
+            Utilisateur createur
+    ) {
+        log.info("Enregistrement de la création du {} #{} par {}",
+                typeDocument, idDocument, createur.getEmail());
+
+        TableValidation validation = TableValidation.builder()
+                .validateurId(createur.getId())
+                .statut("CREATION")
+                .idDocument(idDocument)
+                .typeDocument(typeDocument)
+                .dateValidation(LocalDateTime.now())
+                .build();
+
+        return tableValidationRepo.save(validation);
+    }
+
+    /**
      * Récupère toutes les validations d'un document
      */
     @Transactional(readOnly = true)

@@ -72,6 +72,13 @@ public class DecisionPrelevementService {
             throw new IllegalArgumentException("L'ID de l'attestation de service fait est requis");
         }
 
+        // Récupérer la ligne de crédit si fournie
+        LigneCredit ligneCredit = null;
+        if (dto.getLigneCreditId() != null) {
+            ligneCredit = ligneCreditRepo.findById(dto.getLigneCreditId())
+                    .orElseThrow(() -> new IllegalArgumentException("Ligne de crédit introuvable"));
+        }
+
         // Créer une décision de prélèvement à partir du DTO simplifié
         DecisionDePrelevement decision = new DecisionDePrelevement();
         decision.setMontant(dto.getMontant());
@@ -82,6 +89,7 @@ public class DecisionPrelevementService {
         decision.setCreePar(comptable);
         decision.setEntreprise(comptable.getEntreprise());
         decision.setAttestationDeServiceFait(attestation);
+        decision.setLigneCredit(ligneCredit); // Associer la ligne de crédit si présente
         decision.setStatut(Statut.EN_COURS);
         decision.setDateCreation(LocalDate.now().atStartOfDay());
         decision.setDateModification(LocalDateTime.now());
@@ -106,6 +114,13 @@ public class DecisionPrelevementService {
                 null, // ancienStatut
                 Statut.EN_COURS.name(), // nouveauStatut
                 "Décision créée");
+
+        // Enregistrer dans la table de validation
+        tableValidationService.enregistrerCreation(
+                decisionCreee.getId(),
+                kafofond.entity.TypeDocument.DECISION_PRELEVEMENT,
+                comptable
+        );
 
         Utilisateur responsable = trouverResponsableDansTransaction(comptable.getEntreprise().getId(),
                 comptable.getEntreprise().getNom());

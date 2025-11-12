@@ -87,6 +87,13 @@ public class FicheBesoinService {
                                 Statut.EN_COURS.name(), // nouveauStatut
                                 "Créée par " + utilisateur.getRole());
 
+                // Enregistrer dans la table de validation
+                tableValidationService.enregistrerCreation(
+                                ficheCreee.getId(),
+                                kafofond.entity.TypeDocument.FICHE_BESOIN,
+                                utilisateur
+                );
+
                 Utilisateur gestionnaire = trouverGestionnaire(utilisateur.getEntreprise());
                 if (gestionnaire != null) {
                         notificationService.notifierModification("FICHE_BESOIN", ficheCreee.getId(),

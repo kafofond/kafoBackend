@@ -338,4 +338,28 @@ public class DemandeDAchatController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    /**
+     * Récupère les statistiques des demandes d'achat d'un utilisateur par statut
+     */
+    @GetMapping("/statistiques/{utilisateurId}")
+    public ResponseEntity<?> getStatistiquesParUtilisateur(@PathVariable Long utilisateurId) {
+        try {
+            log.info("Récupération des statistiques des demandes d'achat pour l'utilisateur #{}", utilisateurId);
+            
+            kafofond.dto.StatistiquesDemandesDTO statistiques = demandeDAchatService.getStatistiquesParUtilisateur(utilisateurId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Statistiques récupérées avec succès");
+            response.put("statistiques", statistiques);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des statistiques : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
 }

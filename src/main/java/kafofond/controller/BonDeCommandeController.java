@@ -190,6 +190,37 @@ public class BonDeCommandeController {
     }
 
     /**
+     * Récupère la liste des bons de commande approuvés qui ne sont pas encore associés à une attestation de service fait
+     */
+    @GetMapping("/approuves/sans-attestation")
+    public ResponseEntity<?> getApprovedWithoutAttestation(Authentication authentication) {
+        try {
+            log.info("Récupération des bons de commande approuvés sans attestation demandée par {}", authentication.getName());
+            
+            // Récupérer les bons de commande approuvés sans attestation
+            List<BonDeCommande> bons = bonDeCommandeService.getApprovedWithoutAttestation();
+            
+            // Convertir en DTOs
+            List<BonDeCommandeDTO> bonsDTO = bons.stream()
+                    .map(bonDeCommandeMapper::toDTO)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Bons de commande approuvés sans attestation récupérés avec succès");
+            response.put("bons", bonsDTO);
+            response.put("total", bonsDTO.size());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des bons de commande approuvés sans attestation : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
      * Valide un bon de commande (Comptable - première étape)
      */
     @PostMapping("/{id}/valider")

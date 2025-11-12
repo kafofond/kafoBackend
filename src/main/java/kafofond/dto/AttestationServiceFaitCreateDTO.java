@@ -17,7 +17,6 @@ import java.time.LocalDate;
 @Builder
 public class AttestationServiceFaitCreateDTO {
     
-    private String referenceBonCommande;
     private String fournisseur;
     private String titre;
     private String constat;

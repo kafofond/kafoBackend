@@ -20,11 +20,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.Parameter;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -63,7 +59,6 @@ public class AttestationServiceFaitController {
             
             // Convertir le DTO de création en entité
             AttestationDeServiceFait attestation = AttestationDeServiceFait.builder()
-                    .referenceBonCommande(attestationDTO.getReferenceBonCommande())
                     .fournisseur(attestationDTO.getFournisseur())
                     .titre(attestationDTO.getTitre())
                     .constat(attestationDTO.getConstat())
@@ -77,6 +72,8 @@ public class AttestationServiceFaitController {
                 kafofond.entity.BonDeCommande bonDeCommande = new kafofond.entity.BonDeCommande();
                 bonDeCommande.setId(attestationDTO.getBonDeCommandeId());
                 attestation.setBonDeCommande(bonDeCommande);
+                // Définir la référence du bon de commande comme référence de l'attestation
+                attestation.setReferenceBonCommande("BC-" + attestationDTO.getBonDeCommandeId());
             }
             
             AttestationDeServiceFait attestationCreee = attestationServiceFaitService.creer(attestation, utilisateur);
