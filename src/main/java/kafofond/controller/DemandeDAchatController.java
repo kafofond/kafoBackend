@@ -25,7 +25,8 @@ import java.util.Optional;
 
 /**
  * Controller pour la gestion des demandes d'achat
- * Workflow : EN_COURS → VALIDÉ par Gestionnaire → APPROUVÉ par Comptable → génère BonDeCommande
+ * Workflow : EN_COURS → VALIDÉ par Gestionnaire → APPROUVÉ par Comptable →
+ * génère BonDeCommande
  */
 @RestController
 @RequestMapping("/api/demandes-achat")
@@ -43,10 +44,11 @@ public class DemandeDAchatController {
      * Crée une nouvelle demande d'achat (Trésorerie et Gestionnaire)
      */
     @PostMapping
-    public ResponseEntity<?> creerDemandeAchat(@RequestBody DemandeDAchatCreateDTO demandeDTO, Authentication authentication) {
+    public ResponseEntity<?> creerDemandeAchat(@RequestBody DemandeDAchatCreateDTO demandeDTO,
+            Authentication authentication) {
         try {
             log.info("Création d'une demande d'achat par {}", authentication.getName());
-            
+
             // Convertir le DTO de création en entité
             DemandeDAchat demande = DemandeDAchat.builder()
                     .description(demandeDTO.getDescription())
@@ -57,22 +59,22 @@ public class DemandeDAchatController {
                     .urlFichierJoint(demandeDTO.getUrlFichierJoint())
                     .dateCreation(LocalDate.now().atStartOfDay())
                     .build();
-            
+
             // Si une fiche de besoin est référencée, la lier
             if (demandeDTO.getFicheBesoinId() != null) {
                 kafofond.entity.FicheDeBesoin fiche = new kafofond.entity.FicheDeBesoin();
                 fiche.setId(demandeDTO.getFicheBesoinId());
                 demande.setFicheDeBesoin(fiche);
             }
-            
+
             DemandeDAchatDTO dto = demandeDAchatService.creerDTO(demande, authentication.getName());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Demande d'achat créée avec succès");
             response.put("demande", dto);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la création de la demande d'achat : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -85,11 +87,11 @@ public class DemandeDAchatController {
      * Modifie une demande d'achat existante (Trésorerie et Gestionnaire)
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> modifierDemandeAchat(@PathVariable Long id, @RequestBody DemandeDAchatCreateDTO demandeDTO, 
-                                                Authentication authentication) {
+    public ResponseEntity<?> modifierDemandeAchat(@PathVariable Long id, @RequestBody DemandeDAchatCreateDTO demandeDTO,
+            Authentication authentication) {
         try {
             log.info("Modification de la demande d'achat {} par {}", id, authentication.getName());
-            
+
             // Convertir le DTO de création en entité pour la modification
             DemandeDAchat demande = DemandeDAchat.builder()
                     .description(demandeDTO.getDescription())
@@ -99,22 +101,22 @@ public class DemandeDAchatController {
                     .dateAttendu(demandeDTO.getDateAttendu())
                     .urlFichierJoint(demandeDTO.getUrlFichierJoint())
                     .build();
-            
+
             // Si une fiche de besoin est référencée, la lier
             if (demandeDTO.getFicheBesoinId() != null) {
                 kafofond.entity.FicheDeBesoin fiche = new kafofond.entity.FicheDeBesoin();
                 fiche.setId(demandeDTO.getFicheBesoinId());
                 demande.setFicheDeBesoin(fiche);
             }
-            
+
             DemandeDAchatDTO dto = demandeDAchatService.modifierDTO(id, demande, authentication.getName());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Demande d'achat modifiée avec succès");
             response.put("demande", dto);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la modification de la demande d'achat : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -130,15 +132,15 @@ public class DemandeDAchatController {
     public ResponseEntity<?> validerDemandeAchat(@PathVariable Long id, Authentication authentication) {
         try {
             log.info("Validation de la demande d'achat {} par {}", id, authentication.getName());
-            
+
             DemandeDAchatDTO dto = demandeDAchatService.validerDTO(id, authentication.getName());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Demande d'achat validée avec succès");
             response.put("demande", dto);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la validation de la demande d'achat : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -148,21 +150,23 @@ public class DemandeDAchatController {
     }
 
     /**
-     * Approuve une demande d'achat (Comptable uniquement) et génère automatiquement le Bon de Commande
+     * Approuve une demande d'achat (Comptable uniquement) et génère automatiquement
+     * le Bon de Commande
      */
     @PostMapping("/{id}/approuver")
     public ResponseEntity<?> approuverDemandeAchat(@PathVariable Long id, Authentication authentication) {
         try {
             log.info("Approbation de la demande d'achat {} par {}", id, authentication.getName());
-            
+
             DemandeDAchatDTO dto = demandeDAchatService.approuverDTO(id, authentication.getName());
-            
+
             Map<String, Object> response = new HashMap<>();
-            response.put("message", "Demande d'achat approuvée avec succès. Un bon de commande a été généré automatiquement.");
+            response.put("message",
+                    "Demande d'achat approuvée avec succès. Un bon de commande a été généré automatiquement.");
             response.put("demande", dto);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de l'approbation de la demande d'achat : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -175,29 +179,29 @@ public class DemandeDAchatController {
      * Rejette une demande d'achat avec commentaire obligatoire
      */
     @PostMapping("/{id}/rejeter")
-    public ResponseEntity<?> rejeterDemandeAchat(@PathVariable Long id, @RequestBody Map<String, String> request, 
-                                                Authentication authentication) {
+    public ResponseEntity<?> rejeterDemandeAchat(@PathVariable Long id, @RequestBody Map<String, String> request,
+            Authentication authentication) {
         try {
             log.info("Rejet de la demande d'achat {} par {}", id, authentication.getName());
-            
+
             String commentaire = request.get("commentaire");
             if (commentaire == null || commentaire.trim().isEmpty()) {
                 throw new IllegalArgumentException("Un commentaire est obligatoire lors du rejet");
             }
-            
+
             DemandeDAchatDTO dto = demandeDAchatService.rejeterDTO(id, authentication.getName(), commentaire);
-            
+
             // Récupérer les commentaires simplifiés pour le DTO
             var commentaires = commentaireService.getCommentairesByDocument(id, TypeDocument.DEMANDE_ACHAT)
                     .stream().map(commentaireMapper::toSimplifieDTO).toList();
             dto.setCommentaires(commentaires);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Demande d'achat rejetée avec succès");
             response.put("demande", dto);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors du rejet de la demande d'achat : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -213,29 +217,31 @@ public class DemandeDAchatController {
     public ResponseEntity<?> listerDemandesAchat(Authentication authentication) {
         try {
             log.info("Liste des demandes d'achat demandée par {}", authentication.getName());
-            
+
             Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
-            
+
             List<DemandeDAchat> demandes = demandeDAchatService.listerParEntreprise(utilisateur.getEntreprise());
-            
-            // Convertir en DTOs et récupérer les commentaires simplifiés pour chaque demande
+
+            // Convertir en DTOs et récupérer les commentaires simplifiés pour chaque
+            // demande
             List<DemandeDAchatDTO> dtos = demandes.stream()
                     .map(demande -> {
                         DemandeDAchatDTO dto = demandeDAchatMapper.toDTO(demande);
-                        var commentaires = commentaireService.getCommentairesByDocument(demande.getId(), TypeDocument.DEMANDE_ACHAT)
+                        var commentaires = commentaireService
+                                .getCommentairesByDocument(demande.getId(), TypeDocument.DEMANDE_ACHAT)
                                 .stream().map(commentaireMapper::toSimplifieDTO).toList();
                         dto.setCommentaires(commentaires);
                         return dto;
                     })
                     .toList();
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("demandes", dtos);
             response.put("total", dtos.size());
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des demandes d'achat : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -251,27 +257,27 @@ public class DemandeDAchatController {
     public ResponseEntity<?> obtenirDemandeAchat(@PathVariable Long id, Authentication authentication) {
         try {
             log.info("Détails de la demande d'achat {} demandés par {}", id, authentication.getName());
-            
+
             Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
-            
+
             Optional<DemandeDAchat> demande = demandeDAchatService.trouverParId(id);
-            
+
             // Vérifier que la demande appartient à l'entreprise de l'utilisateur
-            if (demande.isEmpty() || 
-                !demande.get().getEntreprise().getId().equals(utilisateur.getEntreprise().getId())) {
+            if (demande.isEmpty() ||
+                    !demande.get().getEntreprise().getId().equals(utilisateur.getEntreprise().getId())) {
                 Map<String, String> error = new HashMap<>();
                 error.put("message", "Demande d'achat introuvable");
                 return ResponseEntity.notFound().build();
             }
-            
+
             // Convertir en DTO
             DemandeDAchatDTO dto = demandeDAchatMapper.toDTO(demande.get());
             var commentaires = commentaireService.getCommentairesByDocument(id, TypeDocument.DEMANDE_ACHAT)
                     .stream().map(commentaireMapper::toSimplifieDTO).toList();
             dto.setCommentaires(commentaires);
             return ResponseEntity.ok(dto);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la récupération de la demande d'achat : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -305,199 +311,28 @@ public class DemandeDAchatController {
     }
 
     /**
-     * Liste toutes les demandes d'achat d'une entreprise spécifique
-     */
-    @GetMapping("/entreprise/{entrepriseId}")
-    public ResponseEntity<?> listerDemandesAchatParEntreprise(@PathVariable Long entrepriseId, Authentication authentication) {
-        try {
-            log.info("Liste des demandes d'achat de l'entreprise {} demandée par {}", 
-                    entrepriseId, authentication.getName());
-            
-            // Vérifier que l'utilisateur a le droit d'accéder à cette entreprise
-            Utilisateur utilisateur = utilisateurService.trouverParEmailAvecEntreprise(authentication.getName())
-                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
-            
-            // Vérifier que l'utilisateur appartient à l'entreprise ou est admin
-            if (!utilisateur.getEntreprise().getId().equals(entrepriseId) && 
-                utilisateur.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Accès non autorisé à cette entreprise");
-                return ResponseEntity.status(403).body(error);
-            }
-            
-            // Récupérer l'entreprise
-            kafofond.entity.Entreprise entreprise = utilisateur.getEntreprise();
-            if (entreprise == null) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Entreprise introuvable");
-                return ResponseEntity.badRequest().body(error);
-            }
-            
-            List<DemandeDAchat> demandes = demandeDAchatService.listerParEntreprise(entreprise);
-            
-            // Convertir en DTOs et récupérer les commentaires simplifiés pour chaque demande
-            List<DemandeDAchatDTO> dtos = demandes.stream()
-                    .map(demande -> {
-                        DemandeDAchatDTO dto = demandeDAchatMapper.toDTO(demande);
-                        var commentaires = commentaireService.getCommentairesByDocument(demande.getId(), TypeDocument.DEMANDE_ACHAT)
-                                .stream().map(commentaireMapper::toSimplifieDTO).toList();
-                        dto.setCommentaires(commentaires);
-                        return dto;
-                    })
-                    .toList();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("demandes", dtos);
-            response.put("total", dtos.size());
-            response.put("entrepriseId", entrepriseId);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des demandes d'achat par entreprise : {}", e.getMessage());
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * Récupère les statistiques des demandes d'achat pour un utilisateur
-     */
-    @GetMapping("/utilisateur/{utilisateurId}/statistiques")
-    public ResponseEntity<?> obtenirStatistiquesParUtilisateur(@PathVariable Long utilisateurId, Authentication authentication) {
-        try {
-            log.info("Statistiques des demandes d'achat pour l'utilisateur {} demandées par {}", 
-                    utilisateurId, authentication.getName());
-            
-            Map<String, Long> statistiques = demandeDAchatService.obtenirStatistiquesParUtilisateur(utilisateurId);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("utilisateurId", utilisateurId);
-            response.put("statistiques", statistiques);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des statistiques : {}", e.getMessage());
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * Compte le nombre total de demandes d'achat créées par un utilisateur
-     */
-    @GetMapping("/utilisateur/{utilisateurId}/total")
-    public ResponseEntity<?> compterTotalParUtilisateur(@PathVariable Long utilisateurId, Authentication authentication) {
-        try {
-            log.info("Nombre total de demandes d'achat pour l'utilisateur {} demandé par {}", 
-                    utilisateurId, authentication.getName());
-            
-            long total = demandeDAchatService.compterParUtilisateur(utilisateurId);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("utilisateurId", utilisateurId);
-            response.put("total", total);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("Erreur lors du comptage des demandes d'achat : {}", e.getMessage());
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * Compte le nombre de demandes d'achat créées par un utilisateur avec un statut spécifique
-     */
-    @GetMapping("/utilisateur/{utilisateurId}/statut/{statut}")
-    public ResponseEntity<?> compterParUtilisateurEtStatut(@PathVariable Long utilisateurId, 
-                                                          @PathVariable kafofond.entity.Statut statut, 
-                                                          Authentication authentication) {
-        try {
-            log.info("Nombre de demandes d'achat {} pour l'utilisateur {} demandé par {}", 
-                    statut, utilisateurId, authentication.getName());
-            
-            long total = demandeDAchatService.compterParUtilisateurEtStatut(utilisateurId, statut);
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("utilisateurId", utilisateurId);
-            response.put("statut", statut);
-            response.put("total", total);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("Erreur lors du comptage des demandes d'achat par statut : {}", e.getMessage());
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * Liste toutes les demandes d'achat créées par un utilisateur
+     * Récupère toutes les demandes d'achat créées par un utilisateur
      */
     @GetMapping("/utilisateur/{utilisateurId}")
-    public ResponseEntity<?> listerParUtilisateur(@PathVariable Long utilisateurId, Authentication authentication) {
+    public ResponseEntity<?> getDemandesAchatByUtilisateur(@PathVariable Long utilisateurId,
+            Authentication authentication) {
         try {
-            log.info("Liste des demandes d'achat de l'utilisateur {} demandée par {}", 
+            log.info("Récupération des demandes d'achat de l'utilisateur {} demandée par {}",
                     utilisateurId, authentication.getName());
-            
-            List<DemandeDAchat> demandes = demandeDAchatService.listerParUtilisateur(utilisateurId);
-            
-            // Convertir en DTOs
-            List<DemandeDAchatDTO> dtos = demandes.stream()
-                    .map(demandeDAchatMapper::toDTO)
-                    .toList();
-            
+
+            Utilisateur utilisateur = utilisateurService.trouverParId(utilisateurId)
+                    .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+            List<kafofond.dto.DemandeDAchatDTO> demandes = demandeDAchatService.listerParCreateurDTO(utilisateur);
+
             Map<String, Object> response = new HashMap<>();
-            response.put("demandes", dtos);
-            response.put("total", dtos.size());
-            response.put("utilisateurId", utilisateurId);
-            
+            response.put("demandes", demandes);
+            response.put("total", demandes.size());
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des demandes d'achat par utilisateur : {}", e.getMessage());
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * Liste toutes les demandes d'achat créées par un utilisateur avec un statut spécifique
-     */
-    @GetMapping("/utilisateur/{utilisateurId}/statut/{statut}/demandes")
-    public ResponseEntity<?> listerParUtilisateurEtStatut(@PathVariable Long utilisateurId, 
-                                                         @PathVariable kafofond.entity.Statut statut, 
-                                                         Authentication authentication) {
-        try {
-            log.info("Liste des demandes d'achat {} de l'utilisateur {} demandée par {}", 
-                    statut, utilisateurId, authentication.getName());
-            
-            List<DemandeDAchat> demandes = demandeDAchatService.listerParUtilisateurEtStatut(utilisateurId, statut);
-            
-            // Convertir en DTOs
-            List<DemandeDAchatDTO> dtos = demandes.stream()
-                    .map(demandeDAchatMapper::toDTO)
-                    .toList();
-            
-            Map<String, Object> response = new HashMap<>();
-            response.put("demandes", dtos);
-            response.put("total", dtos.size());
-            response.put("utilisateurId", utilisateurId);
-            response.put("statut", statut);
-            
-            return ResponseEntity.ok(response);
-            
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des demandes d'achat par utilisateur et statut : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);

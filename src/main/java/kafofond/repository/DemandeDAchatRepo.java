@@ -19,56 +19,64 @@ import java.util.List;
 @Repository
 public interface DemandeDAchatRepo extends JpaRepository<DemandeDAchat, Long> {
 
-    /**
-     * Trouve toutes les demandes d'une entreprise
-     */
-    List<DemandeDAchat> findByEntreprise(Entreprise entreprise);
+        /**
+         * Trouve toutes les demandes d'une entreprise
+         */
+        List<DemandeDAchat> findByEntreprise(Entreprise entreprise);
 
-    /**
-     * Trouve toutes les demandes par statut
-     */
-    List<DemandeDAchat> findByStatut(Statut statut);
+        /**
+         * Trouve toutes les demandes par statut
+         */
+        List<DemandeDAchat> findByStatut(Statut statut);
 
-    /**
-     * Trouve toutes les demandes d'une entreprise par statut
-     */
-    List<DemandeDAchat> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
+        /**
+         * Trouve toutes les demandes d'une entreprise par statut
+         */
+        List<DemandeDAchat> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
 
-    /**
-     * Trouve toutes les demandes créées par un utilisateur
-     */
-    List<DemandeDAchat> findByCreePar(Utilisateur utilisateur);
+        /**
+         * Trouve toutes les demandes d'une entreprise par ID
+         */
+        @Query("SELECT d FROM DemandeDAchat d WHERE d.entreprise.id = :entrepriseId")
+        List<DemandeDAchat> findByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
 
-    /**
-     * Trouve toutes les demandes créées par un utilisateur avec un statut spécifique
-     */
-    List<DemandeDAchat> findByCreeParAndStatut(Utilisateur utilisateur, Statut statut);
+        /**
+         * Compte le nombre de demandes d'achat créées par un utilisateur
+         */
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.creePar.id = :utilisateurId")
+        long countByCreeParId(@Param("utilisateurId") Long utilisateurId);
 
-    /**
-     * Compte le nombre total de demandes créées par un utilisateur
-     */
-    @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.creePar.id = :utilisateurId")
-    long countByCreeParId(@Param("utilisateurId") Long utilisateurId);
+        /**
+         * Compte le nombre de demandes d'achat créées par un utilisateur avec un statut
+         * spécifique
+         */
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.creePar.id = :utilisateurId AND d.statut = :statut")
+        long countByCreeParIdAndStatut(@Param("utilisateurId") Long utilisateurId, @Param("statut") Statut statut);
 
-    /**
-     * Compte le nombre de demandes créées par un utilisateur avec un statut spécifique
-     */
-    @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.creePar.id = :utilisateurId AND d.statut = :statut")
-    long countByCreeParIdAndStatut(@Param("utilisateurId") Long utilisateurId, @Param("statut") Statut statut);
+        /**
+         * Trouve toutes les demandes d'achat créées par un utilisateur
+         */
+        List<DemandeDAchat> findByCreePar(Utilisateur utilisateur);
 
-    // Méthodes pour les statistiques par date
-    @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.dateCreation >= :startDate AND d.dateCreation < :endDate")
-    long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate);
+        /**
+         * Trouve toutes les demandes d'achat créées par un utilisateur avec un statut
+         * spécifique
+         */
+        List<DemandeDAchat> findByCreeParAndStatut(Utilisateur utilisateur, Statut statut);
 
-    @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.dateCreation >= :startDate")
-    long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
+        // Méthodes pour les statistiques par date
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.dateCreation >= :startDate AND d.dateCreation < :endDate")
+        long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
+                        @Param("endDate") LocalDateTime endDate);
 
-    // Méthodes pour les statistiques par entreprise
-    @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.entreprise.id = :entrepriseId")
-    long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.dateCreation >= :startDate")
+        long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
 
-    @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.entreprise.id = :entrepriseId AND d.dateCreation >= :startDate AND d.dateCreation < :endDate")
-    long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
-            @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+        // Méthodes pour les statistiques par entreprise
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.entreprise.id = :entrepriseId")
+        long countByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.entreprise.id = :entrepriseId AND d.dateCreation >= :startDate AND d.dateCreation < :endDate")
+        long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
+                        @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }
