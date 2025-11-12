@@ -76,16 +76,12 @@ public class LigneCreditService {
         ligneCreee.setCode(code);
         ligneCreee = ligneCreditRepo.save(ligneCreee);
 
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerCreation(
                 "LIGNE_CREDIT",
                 ligneCreee.getId(),
-                "CREATION",
                 createur,
-                null,                       // ancienEtat
-                "INACTIF",                  // nouveauEtat (etat = false)
-                null,                       // ancienStatut
-                ligneCreee.getStatut().name(),  // nouveauStatut
-                "Ligne de crédit créée"
+                false, // etat = false (INACTIF)
+                ligneCreee.getStatut()
         );
 
         // Enregistrer dans la table de validation
@@ -153,16 +149,14 @@ public class LigneCreditService {
 
         LigneCredit ligneModifie = ligneCreditRepo.save(ligne);
 
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerModification(
                 "LIGNE_CREDIT",
                 id,
-                "MODIFICATION",
                 modificateur,
-                ancienEtat ? "ACTIF" : "INACTIF",       // ancienEtat
-                ligneModifie.isEtat() ? "ACTIF" : "INACTIF",  // nouveauEtat
-                ancienStatut,                           // ancienStatut
-                ligneModifie.getStatut().name(),        // nouveauStatut
-                "Ligne de crédit modifiée"
+                ancienEtat,
+                ligneModifie.isEtat(),
+                Statut.valueOf(ancienStatut),
+                ligneModifie.getStatut()
         );
 
         Utilisateur directeur = trouverDirecteur(modificateur.getEntreprise());

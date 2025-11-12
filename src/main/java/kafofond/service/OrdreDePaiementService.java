@@ -84,16 +84,11 @@ public class OrdreDePaiementService {
         ordreCree = ordreDePaiementRepo.save(ordreCree);
 
         // Enregistrer dans l'historique
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerCreation(
                 "ORDRE_PAIEMENT",
                 ordreCree.getId(),
-                "CREATION",
                 comptable,
-                null,                       // ancienEtat
-                Statut.EN_COURS.name(),     // nouveauEtat
-                null,                       // ancienStatut
-                Statut.EN_COURS.name(),     // nouveauStatut
-                "Créé par " + comptable.getRole().name()
+                Statut.EN_COURS
         );
 
         // Enregistrer dans la table de validation

@@ -74,16 +74,11 @@ public class BonDeCommandeService {
         bonCree = bonDeCommandeRepo.save(bonCree);
 
         // Enregistrer dans l'historique
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerCreation(
                 "BON_COMMANDE",
                 bonCree.getId(),
-                "GENERATION_AUTOMATIQUE",
                 comptable,
-                null,                       // ancienEtat
-                null,                       // nouveauEtat
-                null,                       // ancienStatut
-                Statut.EN_COURS.name(),     // nouveauStatut
-                "Généré automatiquement depuis DA #" + demandeDAchat.getId()
+                Statut.EN_COURS
         );
 
         // Enregistrer dans la table de validation
@@ -185,16 +180,12 @@ public class BonDeCommandeService {
         BonDeCommande bonPersonnalise = bonDeCommandeRepo.save(bon);
 
         // Enregistrer dans l'historique
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerModification(
                 "BON_COMMANDE",
                 id,
-                "PERSONNALISATION",
                 modificateur,
-                null,
-                null,
-                ancienStatut != null ? ancienStatut.name() : null,
-                bon.getStatut() != null ? bon.getStatut().name() : null,
-                null
+                ancienStatut,
+                bon.getStatut()
         );
 
         // Notifier le Responsable si ce n'est pas lui qui modifie

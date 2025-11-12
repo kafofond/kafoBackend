@@ -104,16 +104,12 @@ public class DecisionPrelevementService {
         decisionCreee = decisionDePrelevementRepo.save(decisionCreee);
 
         // Historique : conversion Statut → String
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerCreation(
                 "DECISION_PRELEVEMENT",
                 decisionCreee.getId(),
-                "CREATION",
                 comptable,
-                null, // ancienEtat
-                null, // nouveauEtat
-                null, // ancienStatut
-                Statut.EN_COURS.name(), // nouveauStatut
-                "Décision créée");
+                Statut.EN_COURS
+        );
 
         // Enregistrer dans la table de validation
         tableValidationService.enregistrerCreation(
@@ -284,9 +280,13 @@ public class DecisionPrelevementService {
         DecisionDePrelevement decision = decisionDePrelevementRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Décision de prélèvement introuvable"));
 
-        // Vérifier que la décision est en attente d'approbation
-        if (decision.getStatut() != Statut.APPROUVE) {
-            throw new IllegalArgumentException("La décision n'est pas en attente d'approbation");
+        // Vérifier que le montant dépasse le seuil de validation
+        var seuil = seuilValidationService.obtenirSeuilActif(directeur.getEntreprise());
+        if (seuil == null || decision.getMontant() <= seuil.getMontantSeuil()) {
+            // Si le montant ne dépasse pas le seuil, vérifier que la décision est en attente d'approbation
+            if (decision.getStatut() != Statut.APPROUVE) {
+                throw new IllegalArgumentException("La décision n'est pas en attente d'approbation");
+            }
         }
 
         String ancienStatut = decision.getStatut().name();

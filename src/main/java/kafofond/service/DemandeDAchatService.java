@@ -78,16 +78,12 @@ public class DemandeDAchatService {
         demandeCreee = demandeDAchatRepo.save(demandeCreee);
 
         // Historique corrigé avec 9 arguments
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerCreation(
                 "DEMANDE_ACHAT",
                 demandeCreee.getId(),
-                "CREATION",
                 utilisateur,
-                null,
-                null,
-                null,
-                Statut.EN_COURS.name(),
-                "Créée par " + utilisateur.getRole());
+                Statut.EN_COURS
+        );
 
         // Enregistrer dans la table de validation
         tableValidationService.enregistrerCreation(
@@ -167,6 +163,14 @@ public class DemandeDAchatService {
                 ancienStatut != null ? ancienStatut.name() : null,
                 demande.getStatut() != null ? demande.getStatut().name() : null,
                 "Demande modifiée par " + modificateur.getRole());
+
+        historiqueService.enregistrerModification(
+                "DEMANDE_ACHAT",
+                id,
+                modificateur,
+                ancienStatut,
+                demande.getStatut()
+        );
 
         Utilisateur gestionnaire = trouverGestionnaire(modificateur.getEntreprise());
         if (gestionnaire != null) {
@@ -542,8 +546,7 @@ public class DemandeDAchatService {
     }
 
     /**
-     * Liste toutes les demandes d'achat d'une entreprise (version avec paramètre
-     * ID)
+     * Liste toutes les demandes d'achat d'une entreprise par son ID
      */
     public List<DemandeDAchat> listerParEntrepriseId(Long entrepriseId) {
         return demandeDAchatRepo.findByEntrepriseId(entrepriseId);

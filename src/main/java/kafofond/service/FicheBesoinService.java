@@ -76,16 +76,12 @@ public class FicheBesoinService {
                 ficheCreee = ficheBesoinRepo.save(ficheCreee);
 
                 // Historique
-                historiqueService.enregistrerAction(
-                                "FICHE_BESOIN",
-                                ficheCreee.getId(),
-                                "CREATION",
-                                utilisateur,
-                                null, // ancienEtat
-                                null, // nouveauEtat
-                                null, // ancienStatut
-                                Statut.EN_COURS.name(), // nouveauStatut
-                                "Créée par " + utilisateur.getRole());
+                historiqueService.enregistrerCreation(
+                        "FICHE_BESOIN",
+                        ficheCreee.getId(),
+                        utilisateur,
+                        Statut.EN_COURS
+                );
 
                 // Enregistrer dans la table de validation
                 tableValidationService.enregistrerCreation(
@@ -212,17 +208,14 @@ public class FicheBesoinService {
 
                 FicheDeBesoin ficheModifie = ficheBesoinRepo.save(fiche);
 
-                // Historique
-                historiqueService.enregistrerAction(
-                                "FICHE_BESOIN",
-                                id,
-                                "MODIFICATION",
-                                modificateur,
-                                null, // ancienEtat
-                                null, // nouveauEtat
-                                ancienStatut != null ? ancienStatut.name() : null, // ancienStatut
-                                fiche.getStatut().name(), // nouveauStatut
-                                "Fiche modifiée par " + modificateur.getRole());
+                // Enregistrer dans l'historique
+                historiqueService.enregistrerModification(
+                        "FICHE_BESOIN",
+                        id,
+                        modificateur,
+                        ancienStatut,
+                        fiche.getStatut()
+                );
 
                 Utilisateur gestionnaire = trouverGestionnaire(modificateur.getEntreprise());
                 if (gestionnaire != null) {
