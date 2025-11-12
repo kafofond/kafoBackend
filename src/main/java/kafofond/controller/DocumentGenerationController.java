@@ -33,7 +33,8 @@ import java.util.Map;
  * - GET /api/documents/ordre-paiement/{id}/pdf
  * - GET /api/documents/ligne-credit/{id}/pdf
  * 
- * Ce contrôleur centralise la génération de tous les documents PDF de l'application.
+ * Ce contrôleur centralise la génération de tous les documents PDF de
+ * l'application.
  */
 @RestController
 @RequestMapping("/api/documents")
@@ -51,7 +52,7 @@ public class DocumentGenerationController {
     private final DecisionDePrelevementRepo decisionRepo;
     private final OrdreDePaiementRepo ordreRepo;
     private final LigneCreditRepo ligneCreditRepo;
-    
+
     private final BonDeCommandeService bonDeCommandeService;
     private final BudgetService budgetService;
     private final FicheBesoinService ficheBesoinService;
@@ -59,7 +60,7 @@ public class DocumentGenerationController {
     private final AttestationServiceFaitService attestationServiceFaitService;
     private final DecisionPrelevementService decisionPrelevementService;
     private final OrdreDePaiementService ordreDePaiementService;
-    
+
     private final DocumentService documentService;
     private final UtilisateurService utilisateurService;
 
@@ -67,22 +68,19 @@ public class DocumentGenerationController {
      * Génère un PDF pour un bon de commande spécifique
      */
     @GetMapping("/bon-commande/{id}/pdf")
-    @Operation(
-        summary = "Générer un PDF d'un bon de commande",
-        description = "Génère un document PDF professionnel contenant toutes les informations du bon de commande"
-    )
+    @Operation(summary = "Générer un PDF d'un bon de commande", description = "Génère un document PDF professionnel contenant toutes les informations du bon de commande")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "PDF généré avec succès"),
-        @ApiResponse(responseCode = "404", description = "Bon de commande introuvable"),
-        @ApiResponse(responseCode = "500", description = "Erreur lors de la génération du PDF")
+            @ApiResponse(responseCode = "200", description = "PDF généré avec succès"),
+            @ApiResponse(responseCode = "404", description = "Bon de commande introuvable"),
+            @ApiResponse(responseCode = "500", description = "Erreur lors de la génération du PDF")
     })
     public ResponseEntity<?> genererPdfBonDeCommande(
             @Parameter(description = "ID du bon de commande") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Génération du PDF pour bon de commande ID: {}", id);
-            
+
             // Vérifier l'authentification
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
@@ -92,22 +90,22 @@ public class DocumentGenerationController {
 
             if (!bon.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererBonCommandePdf(bon);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             // Préparer la réponse HTTP
@@ -125,13 +123,12 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors de la génération du PDF pour bon de commande ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/bon-commande/" + id + "/pdf",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/bon-commande/" + id + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
         }
     }
 
@@ -139,17 +136,14 @@ public class DocumentGenerationController {
      * Télécharge le PDF d'un bon de commande
      */
     @GetMapping("/bon-commande/{id}/pdf/download")
-    @Operation(
-        summary = "Télécharger le PDF d'un bon de commande",
-        description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur"
-    )
+    @Operation(summary = "Télécharger le PDF d'un bon de commande", description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur")
     public ResponseEntity<?> telechargerPdfBonDeCommande(
             @Parameter(description = "ID du bon de commande") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Téléchargement du PDF pour bon de commande ID: {}", id);
-            
+
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
@@ -158,22 +152,22 @@ public class DocumentGenerationController {
 
             if (!bon.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererBonCommandePdf(bon);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             HttpHeaders headers = new HttpHeaders();
@@ -187,13 +181,12 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors du téléchargement du PDF pour bon de commande ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/bon-commande/" + id + "/pdf/download",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/bon-commande/" + id + "/pdf/download",
+                            "details", "Veuillez contacter l'administrateur"));
         }
     }
 
@@ -201,19 +194,16 @@ public class DocumentGenerationController {
      * Génère un PDF pour un budget spécifique
      */
     @GetMapping("/budget/{id}/pdf")
-    @Operation(
-        summary = "Générer un PDF d'un budget",
-        description = "Génère un document PDF professionnel contenant toutes les informations du budget"
-    )
+    @Operation(summary = "Générer un PDF d'un budget", description = "Génère un document PDF professionnel contenant toutes les informations du budget")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "PDF généré avec succès"),
-        @ApiResponse(responseCode = "404", description = "Budget introuvable"),
-        @ApiResponse(responseCode = "500", description = "Erreur lors de la génération du PDF")
+            @ApiResponse(responseCode = "200", description = "PDF généré avec succès"),
+            @ApiResponse(responseCode = "404", description = "Budget introuvable"),
+            @ApiResponse(responseCode = "500", description = "Erreur lors de la génération du PDF")
     })
     public ResponseEntity<?> genererPdfBudget(
             @Parameter(description = "ID du budget") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Demande de génération PDF pour budget ID: {}", id);
 
@@ -227,22 +217,22 @@ public class DocumentGenerationController {
 
             if (!budget.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererBudgetPdf(budget);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             // Préparer la réponse HTTP
@@ -260,13 +250,12 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors de la génération du PDF pour budget ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/budget/" + id + "/pdf",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/budget/" + id + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
         }
     }
 
@@ -274,14 +263,11 @@ public class DocumentGenerationController {
      * Télécharge le PDF d'un budget
      */
     @GetMapping("/budget/{id}/pdf/download")
-    @Operation(
-        summary = "Télécharger le PDF d'un budget",
-        description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur"
-    )
+    @Operation(summary = "Télécharger le PDF d'un budget", description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur")
     public ResponseEntity<?> telechargerPdfBudget(
             @Parameter(description = "ID du budget") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
@@ -291,22 +277,22 @@ public class DocumentGenerationController {
 
             if (!budget.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererBudgetPdf(budget);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             HttpHeaders headers = new HttpHeaders();
@@ -320,7 +306,7 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors du téléchargement du PDF pour budget", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "Erreur: " + e.getMessage()));
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
 
@@ -328,14 +314,11 @@ public class DocumentGenerationController {
      * Génère un PDF pour une fiche de besoin spécifique
      */
     @GetMapping("/fiche-besoin/{id}/pdf")
-    @Operation(
-        summary = "Générer un PDF d'une fiche de besoin",
-        description = "Génère un document PDF professionnel contenant toutes les informations de la fiche de besoin"
-    )
+    @Operation(summary = "Générer un PDF d'une fiche de besoin", description = "Génère un document PDF professionnel contenant toutes les informations de la fiche de besoin")
     public ResponseEntity<?> genererPdfFicheBesoin(
             @Parameter(description = "ID de la fiche de besoin") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Demande de génération PDF pour fiche de besoin ID: {}", id);
 
@@ -349,22 +332,22 @@ public class DocumentGenerationController {
 
             if (!fiche.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererFicheDeBesoinPdf(fiche);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             // Préparer la réponse HTTP
@@ -382,13 +365,12 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors de la génération du PDF pour fiche de besoin ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/fiche-besoin/" + id + "/pdf",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/fiche-besoin/" + id + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
         }
     }
 
@@ -396,14 +378,11 @@ public class DocumentGenerationController {
      * Télécharge le PDF d'une fiche de besoin
      */
     @GetMapping("/fiche-besoin/{id}/pdf/download")
-    @Operation(
-        summary = "Télécharger le PDF d'une fiche de besoin",
-        description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur"
-    )
+    @Operation(summary = "Télécharger le PDF d'une fiche de besoin", description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur")
     public ResponseEntity<?> telechargerPdfFicheBesoin(
             @Parameter(description = "ID de la fiche de besoin") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
@@ -413,22 +392,22 @@ public class DocumentGenerationController {
 
             if (!fiche.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererFicheDeBesoinPdf(fiche);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             HttpHeaders headers = new HttpHeaders();
@@ -442,7 +421,7 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors du téléchargement du PDF pour fiche de besoin", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "Erreur: " + e.getMessage()));
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
 
@@ -450,14 +429,11 @@ public class DocumentGenerationController {
      * Génère un PDF pour une demande d'achat spécifique
      */
     @GetMapping("/demande-achat/{id}/pdf")
-    @Operation(
-        summary = "Générer un PDF d'une demande d'achat",
-        description = "Génère un document PDF professionnel contenant toutes les informations de la demande d'achat"
-    )
+    @Operation(summary = "Générer un PDF d'une demande d'achat", description = "Génère un document PDF professionnel contenant toutes les informations de la demande d'achat")
     public ResponseEntity<?> genererPdfDemandeAchat(
             @Parameter(description = "ID de la demande d'achat") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Demande de génération PDF pour demande d'achat ID: {}", id);
 
@@ -471,22 +447,22 @@ public class DocumentGenerationController {
 
             if (!demande.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererDemandeAchatPdf(demande);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             // Préparer la réponse HTTP
@@ -504,13 +480,12 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors de la génération du PDF pour demande d'achat ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/demande-achat/" + id + "/pdf",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/demande-achat/" + id + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
         }
     }
 
@@ -518,14 +493,11 @@ public class DocumentGenerationController {
      * Télécharge le PDF d'une demande d'achat
      */
     @GetMapping("/demande-achat/{id}/pdf/download")
-    @Operation(
-        summary = "Télécharger le PDF d'une demande d'achat",
-        description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur"
-    )
+    @Operation(summary = "Télécharger le PDF d'une demande d'achat", description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur")
     public ResponseEntity<?> telechargerPdfDemandeAchat(
             @Parameter(description = "ID de la demande d'achat") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
@@ -535,22 +507,22 @@ public class DocumentGenerationController {
 
             if (!demande.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererDemandeAchatPdf(demande);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             HttpHeaders headers = new HttpHeaders();
@@ -564,7 +536,7 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors du téléchargement du PDF pour demande d'achat", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "Erreur: " + e.getMessage()));
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
 
@@ -572,14 +544,11 @@ public class DocumentGenerationController {
      * Génère un PDF pour une attestation de service fait spécifique
      */
     @GetMapping("/attestation-service/{id}/pdf")
-    @Operation(
-        summary = "Générer un PDF d'une attestation de service fait",
-        description = "Génère un document PDF professionnel contenant toutes les informations de l'attestation de service fait"
-    )
+    @Operation(summary = "Générer un PDF d'une attestation de service fait", description = "Génère un document PDF professionnel contenant toutes les informations de l'attestation de service fait")
     public ResponseEntity<?> genererPdfAttestationService(
             @Parameter(description = "ID de l'attestation de service fait") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Demande de génération PDF pour attestation de service fait ID: {}", id);
 
@@ -593,22 +562,22 @@ public class DocumentGenerationController {
 
             if (!attestation.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererAttestationServicePdf(attestation);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             // Préparer la réponse HTTP
@@ -617,7 +586,8 @@ public class DocumentGenerationController {
             headers.setContentDispositionFormData("inline", "attestation_service_" + id + ".pdf");
             headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
 
-            log.info("PDF généré avec succès pour attestation de service fait ID: {}. Taille: {} bytes", id, pdfBytes.length);
+            log.info("PDF généré avec succès pour attestation de service fait ID: {}. Taille: {} bytes", id,
+                    pdfBytes.length);
 
             return ResponseEntity.ok()
                     .headers(headers)
@@ -626,13 +596,12 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors de la génération du PDF pour attestation de service fait ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/attestation-service/" + id + "/pdf",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/attestation-service/" + id + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
         }
     }
 
@@ -640,14 +609,11 @@ public class DocumentGenerationController {
      * Télécharge le PDF d'une attestation de service fait
      */
     @GetMapping("/attestation-service/{id}/pdf/download")
-    @Operation(
-        summary = "Télécharger le PDF d'une attestation de service fait",
-        description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur"
-    )
+    @Operation(summary = "Télécharger le PDF d'une attestation de service fait", description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur")
     public ResponseEntity<?> telechargerPdfAttestationService(
             @Parameter(description = "ID de l'attestation de service fait") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
@@ -657,22 +623,22 @@ public class DocumentGenerationController {
 
             if (!attestation.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererAttestationServicePdf(attestation);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             HttpHeaders headers = new HttpHeaders();
@@ -686,7 +652,7 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors du téléchargement du PDF pour attestation de service fait", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "Erreur: " + e.getMessage()));
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
 
@@ -694,14 +660,11 @@ public class DocumentGenerationController {
      * Génère un PDF pour une décision de prélèvement spécifique
      */
     @GetMapping("/decision-prelevement/{id}/pdf")
-    @Operation(
-        summary = "Générer un PDF d'une décision de prélèvement",
-        description = "Génère un document PDF professionnel contenant toutes les informations de la décision de prélèvement"
-    )
+    @Operation(summary = "Générer un PDF d'une décision de prélèvement", description = "Génère un document PDF professionnel contenant toutes les informations de la décision de prélèvement")
     public ResponseEntity<?> genererPdfDecisionPrelevement(
             @Parameter(description = "ID de la décision de prélèvement") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Demande de génération PDF pour décision de prélèvement ID: {}", id);
 
@@ -710,51 +673,42 @@ public class DocumentGenerationController {
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
             // Récupérer la décision avec initialisation des relations
-            DecisionDePrelevement decision = decisionPrelevementService.trouverParIdAvecRelations(id)
+            DecisionDePrelevement decision = decisionPrelevementService.trouverParId(id)
                     .orElseThrow(() -> new RuntimeException("Décision de prélèvement introuvable"));
 
             if (!decision.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererDecisionPrelevementPdf(decision);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
-            // Préparer la réponse HTTP
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("inline", "decision_prelevement_" + id + ".pdf");
-            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
-
-            log.info("PDF généré avec succès pour décision de prélèvement ID: {}. Taille: {} bytes", id, pdfBytes.length);
+            headers.setContentDispositionFormData("attachment", fileName);
+            headers.setContentLength(pdfBytes.length);
 
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(pdfBytes);
 
         } catch (Exception e) {
-            log.error("Erreur lors de la génération du PDF pour décision de prélèvement ID: {}", id, e);
+            log.error("Erreur lors de la génération du PDF: ", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/decision-prelevement/" + id + "/pdf",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of("message", "Erreur lors de la génération du PDF: " + e.getMessage()));
         }
     }
 
@@ -762,14 +716,11 @@ public class DocumentGenerationController {
      * Télécharge le PDF d'une décision de prélèvement
      */
     @GetMapping("/decision-prelevement/{id}/pdf/download")
-    @Operation(
-        summary = "Télécharger le PDF d'une décision de prélèvement",
-        description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur"
-    )
+    @Operation(summary = "Télécharger le PDF d'une décision de prélèvement", description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur")
     public ResponseEntity<?> telechargerPdfDecisionPrelevement(
             @Parameter(description = "ID de la décision de prélèvement") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
@@ -779,22 +730,22 @@ public class DocumentGenerationController {
 
             if (!decision.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererDecisionPrelevementPdf(decision);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             HttpHeaders headers = new HttpHeaders();
@@ -808,7 +759,7 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors du téléchargement du PDF pour décision de prélèvement", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "Erreur: " + e.getMessage()));
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
 
@@ -816,14 +767,11 @@ public class DocumentGenerationController {
      * Génère un PDF pour un ordre de paiement spécifique
      */
     @GetMapping("/ordre-paiement/{id}/pdf")
-    @Operation(
-        summary = "Générer un PDF d'un ordre de paiement",
-        description = "Génère un document PDF professionnel contenant toutes les informations de l'ordre de paiement"
-    )
+    @Operation(summary = "Générer un PDF d'un ordre de paiement", description = "Génère un document PDF professionnel contenant toutes les informations de l'ordre de paiement")
     public ResponseEntity<?> genererPdfOrdrePaiement(
             @Parameter(description = "ID de l'ordre de paiement") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Demande de génération PDF pour ordre de paiement ID: {}", id);
 
@@ -837,22 +785,22 @@ public class DocumentGenerationController {
 
             if (!ordre.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererOrdrePaiementPdf(ordre);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             // Préparer la réponse HTTP
@@ -870,13 +818,12 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors de la génération du PDF pour ordre de paiement ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/ordre-paiement/" + id + "/pdf",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/ordre-paiement/" + id + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
         }
     }
 
@@ -884,14 +831,11 @@ public class DocumentGenerationController {
      * Télécharge le PDF d'un ordre de paiement
      */
     @GetMapping("/ordre-paiement/{id}/pdf/download")
-    @Operation(
-        summary = "Télécharger le PDF d'un ordre de paiement",
-        description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur"
-    )
+    @Operation(summary = "Télécharger le PDF d'un ordre de paiement", description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur")
     public ResponseEntity<?> telechargerPdfOrdrePaiement(
             @Parameter(description = "ID de l'ordre de paiement") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
@@ -901,22 +845,22 @@ public class DocumentGenerationController {
 
             if (!ordre.getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererOrdrePaiementPdf(ordre);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             HttpHeaders headers = new HttpHeaders();
@@ -930,7 +874,7 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors du téléchargement du PDF pour ordre de paiement", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "Erreur: " + e.getMessage()));
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
 
@@ -938,14 +882,11 @@ public class DocumentGenerationController {
      * Génère un PDF pour une ligne de crédit spécifique
      */
     @GetMapping("/ligne-credit/{id}/pdf")
-    @Operation(
-        summary = "Générer un PDF d'une ligne de crédit",
-        description = "Génère un document PDF professionnel contenant toutes les informations de la ligne de crédit"
-    )
+    @Operation(summary = "Générer un PDF d'une ligne de crédit", description = "Génère un document PDF professionnel contenant toutes les informations de la ligne de crédit")
     public ResponseEntity<?> genererPdfLigneCredit(
             @Parameter(description = "ID de la ligne de crédit") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             log.info("Demande de génération PDF pour ligne de crédit ID: {}", id);
 
@@ -959,22 +900,22 @@ public class DocumentGenerationController {
 
             if (!ligne.getBudget().getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererLigneCreditPdf(ligne);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             // Préparer la réponse HTTP
@@ -992,13 +933,12 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors de la génération du PDF pour ligne de crédit ID: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                    "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
-                    "code", "INTERNAL_ERROR",
-                    "timestamp", java.time.LocalDateTime.now().toString(),
-                    "path", "/api/documents/ligne-credit/" + id + "/pdf",
-                    "details", "Veuillez contacter l'administrateur"
-                ));
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/ligne-credit/" + id + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
         }
     }
 
@@ -1006,14 +946,11 @@ public class DocumentGenerationController {
      * Télécharge le PDF d'une ligne de crédit
      */
     @GetMapping("/ligne-credit/{id}/pdf/download")
-    @Operation(
-        summary = "Télécharger le PDF d'une ligne de crédit",
-        description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur"
-    )
+    @Operation(summary = "Télécharger le PDF d'une ligne de crédit", description = "Force le téléchargement du PDF au lieu de l'affichage dans le navigateur")
     public ResponseEntity<?> telechargerPdfLigneCredit(
             @Parameter(description = "ID de la ligne de crédit") @PathVariable Long id,
             Authentication auth) {
-        
+
         try {
             Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
@@ -1023,22 +960,22 @@ public class DocumentGenerationController {
 
             if (!ligne.getBudget().getEntreprise().getId().equals(user.getEntreprise().getId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("message", "Accès interdit"));
+                        .body(Map.of("message", "Accès interdit"));
             }
 
             // Générer le PDF
             String urlPdf = documentService.genererLigneCreditPdf(ligne);
-            
+
             // Lire le fichier PDF généré
             String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
             String filePathStr = "reports/" + fileName;
             java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
-            
+
             // Vérifier si le fichier existe
             if (!java.nio.file.Files.exists(filePath)) {
                 throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
             }
-            
+
             byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
 
             HttpHeaders headers = new HttpHeaders();
@@ -1052,7 +989,7 @@ public class DocumentGenerationController {
         } catch (Exception e) {
             log.error("Erreur lors du téléchargement du PDF pour ligne de crédit", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "Erreur: " + e.getMessage()));
+                    .body(Map.of("message", "Erreur: " + e.getMessage()));
         }
     }
 }

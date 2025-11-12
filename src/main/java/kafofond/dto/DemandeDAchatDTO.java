@@ -51,7 +51,7 @@ public class DemandeDAchatDTO {
                 .fournisseur(demande.getFournisseur())
                 .montantTotal(demande.getMontantTotal())
                 .serviceBeneficiaire(demande.getServiceBeneficiaire())
-                .dateCreation(demande.getDateCreation())
+                .dateCreation(LocalDate.from(demande.getDateCreation()))
                 .dateAttendu(demande.getDateAttendu())
                 .statut(demande.getStatut())
                 .urlFichierJoint(demande.getUrlFichierJoint())

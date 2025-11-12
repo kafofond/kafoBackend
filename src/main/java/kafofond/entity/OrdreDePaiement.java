@@ -31,7 +31,7 @@ public class OrdreDePaiement {
     private String compteOrigine;
     private String compteDestinataire;
     private LocalDate dateExecution;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
 
     @Enumerated(EnumType.STRING)
@@ -62,4 +62,14 @@ public class OrdreDePaiement {
     @JoinColumn(name = "ligne_credit_id")
     private LigneCredit ligneCredit;
 
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+        dateModification = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dateModification = LocalDateTime.now();
+    }
 }

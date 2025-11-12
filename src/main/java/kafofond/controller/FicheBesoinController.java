@@ -44,10 +44,11 @@ public class FicheBesoinController {
      * Crée une nouvelle fiche de besoin (Trésorerie et Gestionnaire)
      */
     @PostMapping
-    public ResponseEntity<?> creerFicheBesoin(@RequestBody FicheBesoinCreateDTO ficheDTO, Authentication authentication) {
+    public ResponseEntity<?> creerFicheBesoin(@RequestBody FicheBesoinCreateDTO ficheDTO,
+            Authentication authentication) {
         try {
             log.info("Création d'une fiche de besoin par {}", authentication.getName());
-            
+
             // Convertir le DTO de création en entité
             FicheDeBesoin fiche = FicheDeBesoin.builder()
                     .serviceBeneficiaire(ficheDTO.getServiceBeneficiaire())
@@ -56,9 +57,9 @@ public class FicheBesoinController {
                     .montantEstime(ficheDTO.getMontantEstime())
                     .dateAttendu(ficheDTO.getDateAttendu())
                     .urlFichierJoint(ficheDTO.getUrlFichierJoint())
-                    .dateCreation(LocalDate.now())
+                    .dateCreation(LocalDate.now().atStartOfDay())
                     .build();
-            
+
             // Si des désignations sont fournies, les lier
             if (ficheDTO.getDesignations() != null && !ficheDTO.getDesignations().isEmpty()) {
                 List<kafofond.entity.Designation> designations = ficheDTO.getDesignations().stream()
@@ -72,15 +73,15 @@ public class FicheBesoinController {
                         .collect(Collectors.toList());
                 fiche.setDesignations(designations);
             }
-            
+
             FicheBesoinDTO ficheCreeeDTO = ficheBesoinService.creerDTO(fiche, authentication.getName());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Fiche de besoin créée avec succès");
             response.put("fiche", ficheCreeeDTO);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la création de la fiche de besoin : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -93,11 +94,11 @@ public class FicheBesoinController {
      * Modifie une fiche de besoin existante (Trésorerie et Gestionnaire)
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> modifierFicheBesoin(@PathVariable Long id, @RequestBody FicheBesoinCreateDTO ficheDTO, 
-                                               Authentication authentication) {
+    public ResponseEntity<?> modifierFicheBesoin(@PathVariable Long id, @RequestBody FicheBesoinCreateDTO ficheDTO,
+            Authentication authentication) {
         try {
             log.info("Modification de la fiche de besoin {} par {}", id, authentication.getName());
-            
+
             // Convertir le DTO de création en entité pour la modification
             FicheDeBesoin fiche = FicheDeBesoin.builder()
                     .serviceBeneficiaire(ficheDTO.getServiceBeneficiaire())
@@ -107,7 +108,7 @@ public class FicheBesoinController {
                     .dateAttendu(ficheDTO.getDateAttendu())
                     .urlFichierJoint(ficheDTO.getUrlFichierJoint())
                     .build();
-            
+
             // Si des désignations sont fournies, les lier
             if (ficheDTO.getDesignations() != null && !ficheDTO.getDesignations().isEmpty()) {
                 List<kafofond.entity.Designation> designations = ficheDTO.getDesignations().stream()
@@ -121,15 +122,15 @@ public class FicheBesoinController {
                         .collect(Collectors.toList());
                 fiche.setDesignations(designations);
             }
-            
+
             FicheBesoinDTO ficheModifieeDTO = ficheBesoinService.modifierDTO(id, fiche, authentication.getName());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Fiche de besoin modifiée avec succès");
             response.put("fiche", ficheModifieeDTO);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la modification de la fiche de besoin : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -145,15 +146,15 @@ public class FicheBesoinController {
     public ResponseEntity<?> validerFicheBesoin(@PathVariable Long id, Authentication authentication) {
         try {
             log.info("Validation de la fiche de besoin {} par {}", id, authentication.getName());
-            
+
             FicheBesoinDTO ficheValideeDTO = ficheBesoinService.validerDTO(id, authentication.getName());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Fiche de besoin validée avec succès");
             response.put("fiche", ficheValideeDTO);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la validation de la fiche de besoin : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -169,15 +170,15 @@ public class FicheBesoinController {
     public ResponseEntity<?> approuverFicheBesoin(@PathVariable Long id, Authentication authentication) {
         try {
             log.info("Approbation de la fiche de besoin {} par {}", id, authentication.getName());
-            
+
             FicheBesoinDTO ficheApprouveeDTO = ficheBesoinService.approuverDTO(id, authentication.getName());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Fiche de besoin approuvée avec succès");
             response.put("fiche", ficheApprouveeDTO);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de l'approbation de la fiche de besoin : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -190,29 +191,29 @@ public class FicheBesoinController {
      * Rejette une fiche de besoin avec commentaire obligatoire
      */
     @PostMapping("/{id}/rejeter")
-    public ResponseEntity<?> rejeterFicheBesoin(@PathVariable Long id, @RequestBody Map<String, String> request, 
-                                              Authentication authentication) {
+    public ResponseEntity<?> rejeterFicheBesoin(@PathVariable Long id, @RequestBody Map<String, String> request,
+            Authentication authentication) {
         try {
             log.info("Rejet de la fiche de besoin {} par {}", id, authentication.getName());
-            
+
             String commentaire = request.get("commentaire");
             if (commentaire == null || commentaire.trim().isEmpty()) {
                 throw new IllegalArgumentException("Un commentaire est obligatoire lors du rejet");
             }
-            
+
             FicheBesoinDTO ficheRejeteeDTO = ficheBesoinService.rejeterDTO(id, authentication.getName(), commentaire);
-            
+
             // Récupérer les commentaires simplifiés pour le DTO
             var commentaires = commentaireService.getCommentairesByDocument(id, TypeDocument.FICHE_BESOIN)
                     .stream().map(commentaireMapper::toSimplifieDTO).toList();
             ficheRejeteeDTO.setCommentaires(commentaires);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Fiche de besoin rejetée avec succès");
             response.put("fiche", ficheRejeteeDTO);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors du rejet de la fiche de besoin : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -228,28 +229,29 @@ public class FicheBesoinController {
     public ResponseEntity<?> listerFichesBesoin(Authentication authentication) {
         try {
             log.info("Liste des fiches de besoin demandée par {}", authentication.getName());
-            
+
             Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
-            
+
             List<FicheBesoinDTO> fichesDTO = ficheBesoinService.listerParEntrepriseDTO(utilisateur.getEntreprise());
-            
+
             // Récupérer les commentaires pour chaque fiche
             List<FicheBesoinDTO> fichesAvecCommentaires = fichesDTO.stream()
                     .map(ficheDTO -> {
-                        var commentaires = commentaireService.getCommentairesByDocument(ficheDTO.getId(), TypeDocument.FICHE_BESOIN)
+                        var commentaires = commentaireService
+                                .getCommentairesByDocument(ficheDTO.getId(), TypeDocument.FICHE_BESOIN)
                                 .stream().map(commentaireMapper::toSimplifieDTO).toList();
                         ficheDTO.setCommentaires(commentaires);
                         return ficheDTO;
                     })
                     .collect(Collectors.toList());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("fiches", fichesAvecCommentaires);
             response.put("total", fichesAvecCommentaires.size());
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des fiches de besoin : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -265,28 +267,83 @@ public class FicheBesoinController {
     public ResponseEntity<?> obtenirFicheBesoin(@PathVariable Long id, Authentication authentication) {
         try {
             log.info("Détails de la fiche de besoin {} demandés par {}", id, authentication.getName());
-            
+
             Utilisateur utilisateur = utilisateurService.trouverParEmailAvecEntreprise(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
-            
+
             Optional<FicheBesoinDTO> ficheDTO = ficheBesoinService.trouverParIdDTO(id);
-            
+
             // Vérifier que la fiche appartient à l'entreprise de l'utilisateur
-            if (ficheDTO.isEmpty() || 
-                (ficheDTO.get().getEntrepriseNom() != null && 
-                 !ficheDTO.get().getEntrepriseNom().equals(utilisateur.getEntreprise().getNom()))) {
+            if (ficheDTO.isEmpty() ||
+                    (ficheDTO.get().getEntrepriseNom() != null &&
+                            !ficheDTO.get().getEntrepriseNom().equals(utilisateur.getEntreprise().getNom()))) {
                 return ResponseEntity.notFound().build();
             }
-            
+
             // Récupérer les commentaires pour la fiche
             var commentaires = commentaireService.getCommentairesByDocument(id, TypeDocument.FICHE_BESOIN)
                     .stream().map(commentaireMapper::toSimplifieDTO).toList();
             ficheDTO.get().setCommentaires(commentaires);
-            
+
             return ResponseEntity.ok(ficheDTO.get());
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la récupération de la fiche de besoin : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Récupère toutes les fiches de besoin créées par un utilisateur
+     */
+    @GetMapping("/utilisateur/{utilisateurId}")
+    public ResponseEntity<?> getFichesBesoinByUtilisateur(@PathVariable Long utilisateurId,
+            Authentication authentication) {
+        try {
+            log.info("Récupération des fiches de besoin de l'utilisateur {} demandée par {}",
+                    utilisateurId, authentication.getName());
+
+            Utilisateur utilisateur = utilisateurService.trouverParId(utilisateurId)
+                    .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+            List<FicheBesoinDTO> fiches = ficheBesoinService.listerParCreateurDTO(utilisateur);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("fiches", fiches);
+            response.put("total", fiches.size());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des fiches de besoin par utilisateur : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Récupère toutes les fiches de besoin d'une entreprise
+     */
+    @GetMapping("/entreprise/{entrepriseId}")
+    public ResponseEntity<?> getFichesBesoinByEntreprise(@PathVariable Long entrepriseId,
+            Authentication authentication) {
+        try {
+            log.info("Récupération des fiches de besoin de l'entreprise {} demandée par {}",
+                    entrepriseId, authentication.getName());
+
+            List<FicheBesoinDTO> fiches = ficheBesoinService.listerParEntrepriseIdDTO(entrepriseId);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("fiches", fiches);
+            response.put("total", fiches.size());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des fiches de besoin par entreprise : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);

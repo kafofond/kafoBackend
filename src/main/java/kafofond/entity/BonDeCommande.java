@@ -35,10 +35,10 @@ public class BonDeCommande {
     private double montantTotal;
     private String serviceBeneficiaire;
     private String modePaiement;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private LocalDate delaiPaiement;
     private LocalDate dateExecution;
-    
+
     @CreationTimestamp
     private LocalDateTime dateModification;
 
@@ -72,4 +72,14 @@ public class BonDeCommande {
     @JsonManagedReference
     private AttestationDeServiceFait attestationDeServiceFait;
 
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+        dateModification = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dateModification = LocalDateTime.now();
+    }
 }

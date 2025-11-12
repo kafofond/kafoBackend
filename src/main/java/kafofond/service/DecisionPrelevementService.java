@@ -1,15 +1,9 @@
 package kafofond.service;
 
+import kafofond.dto.DecisionPrelevementCreateDTO;
 import kafofond.dto.DecisionPrelevementDTO;
-import kafofond.entity.DecisionDePrelevement;
-import kafofond.entity.Statut;
-import kafofond.entity.Utilisateur;
-import kafofond.entity.Entreprise;
-import kafofond.entity.AttestationDeServiceFait;
-import kafofond.repository.DecisionDePrelevementRepo;
-import kafofond.repository.UtilisateurRepo;
-import kafofond.repository.AttestationDeServiceFaitRepo;
-import kafofond.repository.LigneCreditRepo;
+import kafofond.entity.*;
+import kafofond.repository.*;
 import kafofond.mapper.DecisionPrelevementMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,8 +21,9 @@ import java.util.Optional;
 public class DecisionPrelevementService {
 
     private final DecisionDePrelevementRepo decisionDePrelevementRepo;
-    private final UtilisateurRepo utilisateurRepo;
     private final AttestationDeServiceFaitRepo attestationRepo;
+    private final UtilisateurRepo utilisateurRepo;
+    private final EntrepriseRepo entrepriseRepo;
     private final DecisionPrelevementMapper mapper;
     private final NotificationService notificationService;
     private final HistoriqueService historiqueService;
@@ -36,20 +31,23 @@ public class DecisionPrelevementService {
     private final CodeGeneratorService codeGeneratorService;
     private final SeuilValidationService seuilValidationService;
     private final TableValidationService tableValidationService;
+    private final OrdreDePaiementRepo ordreDePaiementRepo;
 
     /**
-     * Crée une décision de prélèvement
+     * Crée une décision de prélèvement à partir du DTO simplifié
      * Cette méthode est appelée depuis le contrôleur avec l'email de l'utilisateur
      */
     @Transactional
-    public DecisionDePrelevement creerDTO(DecisionPrelevementDTO dto, String emailComptable) {
+    public DecisionDePrelevement creerDTO(DecisionPrelevementCreateDTO dto, String emailComptable) {
         log.info("Création d'une décision de prélèvement par {}", emailComptable);
 
-        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy loading
+        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy
+        // loading
         Utilisateur comptable = utilisateurRepo.findByEmail(emailComptable)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
-        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy loading
+        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy
+        // loading
         if (comptable.getEntreprise() != null) {
             comptable.getEntreprise().getNom(); // Force le chargement de l'entreprise
         }
@@ -58,7 +56,7 @@ public class DecisionPrelevementService {
     }
 
     @Transactional
-    public DecisionDePrelevement creer(DecisionPrelevementDTO dto, Utilisateur comptable) {
+    public DecisionDePrelevement creer(DecisionPrelevementCreateDTO dto, Utilisateur comptable) {
         log.info("Création d'une décision de prélèvement par {}", comptable.getEmail());
 
         if (comptable.getRole() != kafofond.entity.Role.COMPTABLE) {
@@ -70,16 +68,12 @@ public class DecisionPrelevementService {
         if (dto.getAttestationId() != null) {
             attestation = attestationRepo.findById(dto.getAttestationId())
                     .orElseThrow(() -> new IllegalArgumentException("Attestation de service fait introuvable"));
-        } else if (dto.getReferenceAttestation() != null) {
-            // Rechercher par référence si l'ID n'est pas fourni
-            attestation = attestationRepo.findByCode(dto.getReferenceAttestation())
-                    .orElseThrow(() -> new IllegalArgumentException("Attestation de service fait introuvable"));
         } else {
-            throw new IllegalArgumentException("L'ID ou la référence de l'attestation de service fait est requise");
+            throw new IllegalArgumentException("L'ID de l'attestation de service fait est requis");
         }
 
+        // Créer une décision de prélèvement à partir du DTO simplifié
         DecisionDePrelevement decision = new DecisionDePrelevement();
-        decision.setReferenceAttestation(dto.getReferenceAttestation());
         decision.setMontant(dto.getMontant());
         decision.setCompteOrigine(dto.getCompteOrigine());
         decision.setCompteDestinataire(dto.getCompteDestinataire());
@@ -89,14 +83,15 @@ public class DecisionPrelevementService {
         decision.setEntreprise(comptable.getEntreprise());
         decision.setAttestationDeServiceFait(attestation);
         decision.setStatut(Statut.EN_COURS);
-        decision.setDateCreation(LocalDate.now());
+        decision.setDateCreation(LocalDate.now().atStartOfDay());
         decision.setDateModification(LocalDateTime.now());
 
         // Sauvegarder d'abord pour obtenir l'ID
         DecisionDePrelevement decisionCreee = decisionDePrelevementRepo.save(decision);
-        
+
         // Générer le code automatiquement
-        String code = codeGeneratorService.generateDecisionPrelevementCode(decisionCreee.getId(), decisionCreee.getDateCreation());
+        String code = codeGeneratorService.generateDecisionPrelevementCode(decisionCreee.getId(),
+                LocalDate.from(decisionCreee.getDateCreation()));
         decisionCreee.setCode(code);
         decisionCreee = decisionDePrelevementRepo.save(decisionCreee);
 
@@ -110,10 +105,10 @@ public class DecisionPrelevementService {
                 null, // nouveauEtat
                 null, // ancienStatut
                 Statut.EN_COURS.name(), // nouveauStatut
-                "Décision créée"
-        );
+                "Décision créée");
 
-        Utilisateur responsable = trouverResponsableDansTransaction(comptable.getEntreprise().getId(), comptable.getEntreprise().getNom());
+        Utilisateur responsable = trouverResponsableDansTransaction(comptable.getEntreprise().getId(),
+                comptable.getEntreprise().getNom());
         if (responsable != null) {
             notificationService.notifierModification("DECISION_PRELEVEMENT", decisionCreee.getId(),
                     comptable, responsable, "créée");
@@ -130,11 +125,13 @@ public class DecisionPrelevementService {
     public DecisionDePrelevement validerDTO(Long id, String emailResponsable) {
         log.info("Validation de la décision de prélèvement {} par {}", id, emailResponsable);
 
-        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy loading
+        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy
+        // loading
         Utilisateur responsable = utilisateurRepo.findByEmail(emailResponsable)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
-        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy loading
+        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy
+        // loading
         if (responsable.getEntreprise() != null) {
             responsable.getEntreprise().getNom(); // Force le chargement de l'entreprise
         }
@@ -154,11 +151,11 @@ public class DecisionPrelevementService {
                 .orElseThrow(() -> new IllegalArgumentException("Décision de prélèvement introuvable"));
 
         String ancienStatut = decision.getStatut().name();
-        
+
         // Vérifier si le montant dépasse le seuil
         double montant = decision.getMontant();
         var seuil = seuilValidationService.obtenirSeuilActif(responsable.getEntreprise());
-        
+
         if (seuil != null && montant > seuil.getMontantSeuil()) {
             // Si le montant dépasse le seuil, mettre en attente d'approbation du directeur
             decision.setStatut(Statut.APPROUVE);
@@ -166,7 +163,7 @@ public class DecisionPrelevementService {
             // Sinon, valider directement
             decision.setStatut(Statut.VALIDE);
         }
-        
+
         decision.setDateModification(LocalDateTime.now());
 
         DecisionDePrelevement decisionValidee = decisionDePrelevementRepo.save(decision);
@@ -176,7 +173,8 @@ public class DecisionPrelevementService {
             var ligne = ligneCreditRepo.findById(decisionValidee.getLigneCredit().getId())
                     .orElse(null);
             if (ligne != null) {
-                double nouveauMontantEngage = Math.max(0d, ligne.getMontantEngager()) + Math.max(0d, decisionValidee.getMontant());
+                double nouveauMontantEngage = Math.max(0d, ligne.getMontantEngager())
+                        + Math.max(0d, decisionValidee.getMontant());
                 ligne.setMontantEngager(nouveauMontantEngage);
                 ligne.setMontantRestant(Math.max(0d, ligne.getMontantAllouer() - nouveauMontantEngage));
                 ligneCreditRepo.save(ligne);
@@ -192,8 +190,7 @@ public class DecisionPrelevementService {
                         null,
                         null,
                         String.format("Engagé=%.2f, Restant=%.2f après validation décision #%d",
-                                ligne.getMontantEngager(), ligne.getMontantRestant(), decisionValidee.getId())
-                );
+                                ligne.getMontantEngager(), ligne.getMontantRestant(), decisionValidee.getId()));
             }
         }
 
@@ -206,10 +203,8 @@ public class DecisionPrelevementService {
                 null, // nouveauEtat
                 ancienStatut, // ancienStatut
                 decision.getStatut().name(), // nouveauStatut
-                decision.getStatut() == Statut.APPROUVE ? 
-                    "Décision en attente d'approbation (montant > seuil)" : 
-                    "Décision validée"
-        );
+                decision.getStatut() == Statut.APPROUVE ? "Décision en attente d'approbation (montant > seuil)"
+                        : "Décision validée");
 
         // Enregistrement dans la table de validation
         tableValidationService.enregistrerValidation(
@@ -217,26 +212,23 @@ public class DecisionPrelevementService {
                 kafofond.entity.TypeDocument.DECISION_PRELEVEMENT,
                 responsable,
                 decision.getStatut() == Statut.APPROUVE ? "APPROUVE" : "VALIDE",
-                decision.getStatut() == Statut.APPROUVE ? 
-                    "Décision en attente d'approbation (montant > seuil)" : 
-                    "Décision validée"
-        );
+                decision.getStatut() == Statut.APPROUVE ? "Décision en attente d'approbation (montant > seuil)"
+                        : "Décision validée");
 
         if (decision.getCreePar() != null) {
             notificationService.notifierValidation("DECISION_PRELEVEMENT", id, responsable,
-                    decision.getCreePar(), 
-                    decision.getStatut() == Statut.APPROUVE ? 
-                        "en attente d'approbation" : 
-                        "validée", 
+                    decision.getCreePar(),
+                    decision.getStatut() == Statut.APPROUVE ? "en attente d'approbation" : "validée",
                     null);
         }
 
         // Si la décision est en attente d'approbation, notifier le directeur
         if (decision.getStatut() == Statut.APPROUVE) {
-            Utilisateur directeur = trouverDirecteurDansTransaction(responsable.getEntreprise().getId(), responsable.getEntreprise().getNom());
+            Utilisateur directeur = trouverDirecteurDansTransaction(responsable.getEntreprise().getId(),
+                    responsable.getEntreprise().getNom());
             if (directeur != null) {
                 notificationService.notifierValidation("DECISION_PRELEVEMENT", id, responsable,
-                        directeur, "requiert votre approbation", 
+                        directeur, "requiert votre approbation",
                         String.format("Montant %.2f dépasse le seuil de %.2f", montant, seuil.getMontantSeuil()));
             }
         }
@@ -252,11 +244,13 @@ public class DecisionPrelevementService {
     public DecisionDePrelevement approuverDTO(Long id, String emailDirecteur) {
         log.info("Approbation de la décision de prélèvement {} par {}", id, emailDirecteur);
 
-        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy loading
+        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy
+        // loading
         Utilisateur directeur = utilisateurRepo.findByEmail(emailDirecteur)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
-        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy loading
+        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy
+        // loading
         if (directeur.getEntreprise() != null) {
             directeur.getEntreprise().getNom(); // Force le chargement de l'entreprise
         }
@@ -277,7 +271,7 @@ public class DecisionPrelevementService {
 
         // Vérifier que la décision est en attente d'approbation
         if (decision.getStatut() != Statut.APPROUVE) {
-            throw new IllegalArgumentException("La décision doit être en attente d'approbation pour être approuvée");
+            throw new IllegalArgumentException("La décision n'est pas en attente d'approbation");
         }
 
         String ancienStatut = decision.getStatut().name();
@@ -286,14 +280,31 @@ public class DecisionPrelevementService {
 
         DecisionDePrelevement decisionApprouvee = decisionDePrelevementRepo.save(decision);
 
-        // Enregistrer dans la table de validation
-        tableValidationService.enregistrerValidation(
-                id,
-                kafofond.entity.TypeDocument.DECISION_PRELEVEMENT,
-                directeur,
-                "APPROUVE",
-                "Décision approuvée par le directeur"
-        );
+        // Mettre à jour les montants de la ligne de crédit liée (engagement du montant)
+        if (decisionApprouvee.getLigneCredit() != null) {
+            var ligne = ligneCreditRepo.findById(decisionApprouvee.getLigneCredit().getId())
+                    .orElse(null);
+            if (ligne != null) {
+                double nouveauMontantEngage = Math.max(0d, ligne.getMontantEngager())
+                        + Math.max(0d, decisionApprouvee.getMontant());
+                ligne.setMontantEngager(nouveauMontantEngage);
+                ligne.setMontantRestant(Math.max(0d, ligne.getMontantAllouer() - nouveauMontantEngage));
+                ligneCreditRepo.save(ligne);
+
+                // Historiser la mise à jour des montants
+                historiqueService.enregistrerAction(
+                        "LIGNE_CREDIT",
+                        ligne.getId(),
+                        "MISE_A_JOUR_MONTANTS",
+                        directeur,
+                        null,
+                        null,
+                        null,
+                        null,
+                        String.format("Engagé=%.2f, Restant=%.2f après approbation décision #%d",
+                                ligne.getMontantEngager(), ligne.getMontantRestant(), decisionApprouvee.getId()));
+            }
+        }
 
         historiqueService.enregistrerAction(
                 "DECISION_PRELEVEMENT",
@@ -303,20 +314,66 @@ public class DecisionPrelevementService {
                 null, // ancienEtat
                 null, // nouveauEtat
                 ancienStatut, // ancienStatut
-                Statut.VALIDE.name(), // nouveauStatut
-                "Décision approuvée par le directeur"
-        );
+                decision.getStatut().name(), // nouveauStatut
+                "Décision approuvée");
+
+        // Enregistrement dans la table de validation
+        tableValidationService.enregistrerValidation(
+                id,
+                kafofond.entity.TypeDocument.DECISION_PRELEVEMENT,
+                directeur,
+                "VALIDE",
+                "Décision approuvée");
 
         if (decision.getCreePar() != null) {
             notificationService.notifierValidation("DECISION_PRELEVEMENT", id, directeur,
                     decision.getCreePar(), "approuvée", null);
         }
 
-        // Notifier le responsable
-        Utilisateur responsable = trouverResponsableDansTransaction(directeur.getEntreprise().getId(), directeur.getEntreprise().getNom());
-        if (responsable != null && !responsable.getId().equals(decision.getCreePar().getId())) {
-            notificationService.notifierValidation("DECISION_PRELEVEMENT", id, directeur,
-                    responsable, "approuvée", null);
+        // Générer automatiquement l'ordre de paiement
+        try {
+            OrdreDePaiement ordreDePaiement = new OrdreDePaiement();
+            ordreDePaiement.setDecisionDePrelevement(decisionApprouvee);
+            ordreDePaiement.setMontant(decisionApprouvee.getMontant());
+            ordreDePaiement.setCompteOrigine(decisionApprouvee.getCompteOrigine());
+            ordreDePaiement.setCompteDestinataire(decisionApprouvee.getCompteDestinataire());
+            ordreDePaiement.setDescription(decisionApprouvee.getMotifPrelevement());
+            ordreDePaiement.setCreePar(directeur);
+            ordreDePaiement.setEntreprise(directeur.getEntreprise());
+            ordreDePaiement.setStatut(Statut.EN_COURS);
+            ordreDePaiement.setDateCreation(LocalDate.now().atStartOfDay());
+            ordreDePaiement.setDateModification(LocalDateTime.now());
+
+            // Sauvegarder l'ordre de paiement
+            OrdreDePaiement ordreCree = ordreDePaiementRepo.save(ordreDePaiement);
+
+            // Générer le code automatiquement
+            String code = codeGeneratorService.generateOrdrePaiementCode(ordreCree.getId(),
+                    LocalDate.from(ordreCree.getDateCreation()));
+            ordreCree.setCode(code);
+            ordreDePaiementRepo.save(ordreCree);
+
+            // Historique : conversion Statut → String
+            historiqueService.enregistrerAction(
+                    "ORDRE_PAIEMENT",
+                    ordreCree.getId(),
+                    "CREATION",
+                    directeur,
+                    null, // ancienEtat
+                    null, // nouveauEtat
+                    null, // ancienStatut
+                    Statut.EN_COURS.name(), // nouveauStatut
+                    "Ordre de paiement créé automatiquement");
+
+            // Notifier le comptable
+            Utilisateur comptable = decision.getCreePar();
+            if (comptable != null) {
+                notificationService.notifierModification("ORDRE_PAIEMENT", ordreCree.getId(),
+                        directeur, comptable, "généré");
+            }
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération de l'ordre de paiement : {}", e.getMessage());
         }
 
         return decisionApprouvee;
@@ -327,33 +384,26 @@ public class DecisionPrelevementService {
      * Cette méthode est appelée depuis le contrôleur avec l'email de l'utilisateur
      */
     @Transactional
-    public DecisionDePrelevement rejeterDTO(Long id, String emailResponsable, String commentaire) {
-        log.info("Rejet de la décision de prélèvement {} par {}", id, emailResponsable);
+    public DecisionDePrelevement rejeterDTO(Long id, String emailUtilisateur, String commentaire) {
+        log.info("Rejet de la décision de prélèvement {} par {}", id, emailUtilisateur);
 
-        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy loading
-        Utilisateur responsable = utilisateurRepo.findByEmail(emailResponsable)
+        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy
+        // loading
+        Utilisateur utilisateur = utilisateurRepo.findByEmail(emailUtilisateur)
                 .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
 
-        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy loading
-        if (responsable.getEntreprise() != null) {
-            responsable.getEntreprise().getNom(); // Force le chargement de l'entreprise
+        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy
+        // loading
+        if (utilisateur.getEntreprise() != null) {
+            utilisateur.getEntreprise().getNom(); // Force le chargement de l'entreprise
         }
 
-        return rejeter(id, responsable, commentaire);
+        return rejeter(id, utilisateur, commentaire);
     }
 
     @Transactional
-    public DecisionDePrelevement rejeter(Long id, Utilisateur responsable, String commentaire) {
-        log.info("Rejet de la décision de prélèvement {} par {}", id, responsable.getEmail());
-
-        if (responsable.getRole() != kafofond.entity.Role.RESPONSABLE && 
-            responsable.getRole() != kafofond.entity.Role.DIRECTEUR) {
-            throw new IllegalArgumentException("Seul le Responsable ou le Directeur peut rejeter une décision de prélèvement");
-        }
-
-        if (commentaire == null || commentaire.trim().isEmpty()) {
-            throw new IllegalArgumentException("Un commentaire est obligatoire lors du rejet");
-        }
+    public DecisionDePrelevement rejeter(Long id, Utilisateur utilisateur, String commentaire) {
+        log.info("Rejet de la décision de prélèvement {} par {}", id, utilisateur.getEmail());
 
         DecisionDePrelevement decision = decisionDePrelevementRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Décision de prélèvement introuvable"));
@@ -364,76 +414,34 @@ public class DecisionPrelevementService {
 
         DecisionDePrelevement decisionRejetee = decisionDePrelevementRepo.save(decision);
 
-        // Enregistrer dans la table de validation
-        tableValidationService.enregistrerValidation(
-                id,
-                kafofond.entity.TypeDocument.DECISION_PRELEVEMENT,
-                responsable,
-                "REJETE",
-                commentaire
-        );
-
         historiqueService.enregistrerAction(
                 "DECISION_PRELEVEMENT",
                 id,
                 "REJET",
-                responsable,
+                utilisateur,
                 null, // ancienEtat
                 null, // nouveauEtat
                 ancienStatut, // ancienStatut
-                Statut.REJETE.name(), // nouveauStatut
-                commentaire
-        );
+                decision.getStatut().name(), // nouveauStatut
+                "Décision rejetée: " + commentaire);
+
+        // Enregistrement dans la table de validation
+        tableValidationService.enregistrerValidation(
+                id,
+                kafofond.entity.TypeDocument.DECISION_PRELEVEMENT,
+                utilisateur,
+                "REJETE",
+                commentaire);
 
         if (decision.getCreePar() != null) {
-            notificationService.notifierValidation("DECISION_PRELEVEMENT", id, responsable,
+            notificationService.notifierValidation("DECISION_PRELEVEMENT", id, utilisateur,
                     decision.getCreePar(), "rejetée", commentaire);
         }
 
         return decisionRejetee;
     }
 
-    /**
-     * Trouve le responsable d'une entreprise
-     */
-    private Utilisateur trouverResponsable(kafofond.entity.Entreprise entreprise) {
-        return utilisateurRepo.findByEmail(
-                        "responsable@" + entreprise.getNom().toLowerCase().replace(" ", "") + ".com")
-                .orElse(null);
-    }
-
-    /**
-     * Trouve le directeur d'une entreprise
-     */
-    private Utilisateur trouverDirecteur(kafofond.entity.Entreprise entreprise) {
-        return utilisateurRepo.findByEmail(
-                        "directeur@" + entreprise.getNom().toLowerCase().replace(" ", "") + ".com")
-                .orElse(null);
-    }
-
-    /**
-     * Trouve le responsable d'une entreprise dans une transaction
-     * Cette méthode est utilisée pour éviter les problèmes de lazy loading
-     */
-    @Transactional
-    public Utilisateur trouverResponsableDansTransaction(Long entrepriseId, String entrepriseNom) {
-        // Utiliser le nom de l'entreprise pour trouver le responsable
-        return utilisateurRepo.findByEmail("responsable@" + entrepriseNom.toLowerCase().replace(" ", "") + ".com")
-                .orElse(null);
-    }
-
-    /**
-     * Trouve le directeur d'une entreprise dans une transaction
-     * Cette méthode est utilisée pour éviter les problèmes de lazy loading
-     */
-    @Transactional
-    public Utilisateur trouverDirecteurDansTransaction(Long entrepriseId, String entrepriseNom) {
-        // Utiliser le nom de l'entreprise pour trouver le directeur
-        return utilisateurRepo.findByEmail("directeur@" + entrepriseNom.toLowerCase().replace(" ", "") + ".com")
-                .orElse(null);
-    }
-
-    public List<DecisionDePrelevement> listerParEntreprise(kafofond.entity.Entreprise entreprise) {
+    public List<DecisionDePrelevement> listerParEntreprise(Entreprise entreprise) {
         return decisionDePrelevementRepo.findByEntreprise(entreprise);
     }
 
@@ -441,40 +449,66 @@ public class DecisionPrelevementService {
         return decisionDePrelevementRepo.findById(id);
     }
 
-    public DecisionPrelevementDTO toDTO(DecisionDePrelevement decision) {
-        return mapper.toDTO(decision);
+    public Optional<DecisionDePrelevement> trouverParIdDTO(Long id) {
+        return decisionDePrelevementRepo.findById(id);
     }
-    
-    /**
-     * Trouve une décision de prélèvement par ID avec initialisation des relations
-     * Utilisé pour éviter les problèmes de lazy loading
-     */
-    @Transactional(readOnly = true)
-    public Optional<DecisionDePrelevement> trouverParIdAvecRelations(Long id) {
-        return decisionDePrelevementRepo.findById(id)
-                .map(decision -> {
-                    // Initialiser les relations pour éviter les problèmes de lazy loading
-                    if (decision.getCreePar() != null) {
-                        decision.getCreePar().getNom();
-                        decision.getCreePar().getPrenom();
-                        decision.getCreePar().getEmail();
-                        if (decision.getCreePar().getEntreprise() != null) {
-                            decision.getCreePar().getEntreprise().getNom();
-                        }
-                    }
-                    if (decision.getEntreprise() != null) {
-                        decision.getEntreprise().getNom();
-                    }
-                    if (decision.getAttestationDeServiceFait() != null) {
-                        decision.getAttestationDeServiceFait().getId();
-                    }
-                    if (decision.getLigneCredit() != null) {
-                        decision.getLigneCredit().getId();
-                    }
-                    if (decision.getOrdreDePaiement() != null) {
-                        decision.getOrdreDePaiement().getId(); // Force le chargement de l'ordre
-                    }
-                    return decision;
-                });
+
+    private Utilisateur trouverResponsableDansTransaction(Long entrepriseId, String nomEntreprise) {
+        try {
+            // Rechercher le responsable dans l'entreprise
+            Optional<Entreprise> entrepriseOpt = entrepriseRepo.findById(entrepriseId);
+            if (entrepriseOpt.isPresent()) {
+                Optional<Utilisateur> responsableOpt = utilisateurRepo.findByEntrepriseAndRole(entrepriseOpt.get(),
+                        kafofond.entity.Role.RESPONSABLE);
+                if (responsableOpt.isPresent()) {
+                    return responsableOpt.get();
+                }
+            }
+
+            // Si aucun responsable trouvé, rechercher dans l'entreprise par nom
+            Optional<Entreprise> entrepriseParNomOpt = entrepriseRepo.findByNom(nomEntreprise);
+            if (entrepriseParNomOpt.isPresent()) {
+                Optional<Utilisateur> responsableOpt = utilisateurRepo.findByEntrepriseAndRole(
+                        entrepriseParNomOpt.get(),
+                        kafofond.entity.Role.RESPONSABLE);
+                if (responsableOpt.isPresent()) {
+                    return responsableOpt.get();
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("Erreur lors de la recherche du responsable : {}", e.getMessage());
+            return null;
+        }
+    }
+
+    private Utilisateur trouverDirecteurDansTransaction(Long entrepriseId, String nomEntreprise) {
+        try {
+            // Rechercher le directeur dans l'entreprise
+            Optional<Entreprise> entrepriseOpt = entrepriseRepo.findById(entrepriseId);
+            if (entrepriseOpt.isPresent()) {
+                Optional<Utilisateur> directeurOpt = utilisateurRepo.findByEntrepriseAndRole(entrepriseOpt.get(),
+                        kafofond.entity.Role.DIRECTEUR);
+                if (directeurOpt.isPresent()) {
+                    return directeurOpt.get();
+                }
+            }
+
+            // Si aucun directeur trouvé, rechercher dans l'entreprise par nom
+            Optional<Entreprise> entrepriseParNomOpt = entrepriseRepo.findByNom(nomEntreprise);
+            if (entrepriseParNomOpt.isPresent()) {
+                Optional<Utilisateur> directeurOpt = utilisateurRepo.findByEntrepriseAndRole(entrepriseParNomOpt.get(),
+                        kafofond.entity.Role.DIRECTEUR);
+                if (directeurOpt.isPresent()) {
+                    return directeurOpt.get();
+                }
+            }
+
+            return null;
+        } catch (Exception e) {
+            log.error("Erreur lors de la recherche du directeur : {}", e.getMessage());
+            return null;
+        }
     }
 }

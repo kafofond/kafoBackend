@@ -32,7 +32,7 @@ public class DemandeDAchat {
     // Suppression des champs quantite et prixUnitaire inutiles
     private double montantTotal;
     private String serviceBeneficiaire;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private LocalDate dateAttendu;
     private LocalDateTime dateModification;
 
@@ -66,4 +66,14 @@ public class DemandeDAchat {
     @JsonManagedReference
     private BonDeCommande bonDeCommande;
 
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+        dateModification = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dateModification = LocalDateTime.now();
+    }
 }

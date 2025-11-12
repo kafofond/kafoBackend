@@ -3,8 +3,10 @@ package kafofond.repository;
 import kafofond.entity.Entreprise;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,4 +46,22 @@ public interface EntrepriseRepo extends JpaRepository<Entreprise, Long> {
      * Trouve toutes les entreprises inactives
      */
     List<Entreprise> findByEtatFalse();
+
+    /**
+     * Compte les entreprises actives
+     */
+    long countByEtatTrue();
+
+    /**
+     * Compte les entreprises inactives
+     */
+    long countByEtatFalse();
+
+    // Méthodes pour les statistiques par date
+    @Query("SELECT COUNT(e) FROM Entreprise e WHERE e.dateCreation >= :startDate AND e.dateCreation < :endDate")
+    long countByDateCreationBetween(@Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+
+    @Query("SELECT COUNT(e) FROM Entreprise e WHERE e.dateCreation >= :startDate")
+    long countByDateCreationAfter(@Param("startDate") LocalDateTime startDate);
 }

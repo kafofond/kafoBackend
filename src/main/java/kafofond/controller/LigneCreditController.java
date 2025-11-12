@@ -1,5 +1,6 @@
 package kafofond.controller;
 
+import kafofond.dto.LigneCreditCreateDTO;
 import kafofond.dto.LigneCreditDTO;
 import kafofond.entity.LigneCredit;
 import kafofond.entity.Utilisateur;
@@ -41,17 +42,29 @@ public class LigneCreditController {
     private final UtilisateurService utilisateurService;
     private final LigneCreditMapper ligneCreditMapper;
 
-    @Operation(summary = "Créer une ligne de crédit",
-            description = "Crée une nouvelle ligne de crédit. Accessible aux Responsable et Directeur.")
+    @Operation(summary = "Créer une ligne de crédit", description = "Crée une nouvelle ligne de crédit. Accessible aux Responsable et Directeur.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Ligne de crédit créée avec succès"),
             @ApiResponse(responseCode = "400", description = "Données invalides"),
             @ApiResponse(responseCode = "403", description = "Accès refusé - droits insuffisants")
     })
     @PostMapping
-    public ResponseEntity<?> creerLigneCredit(@RequestBody LigneCreditDTO ligneDTO, Authentication authentication) {
+    public ResponseEntity<?> creerLigneCredit(@RequestBody LigneCreditCreateDTO ligneCreateDTO,
+            Authentication authentication) {
         try {
-            LigneCredit ligne = ligneCreditMapper.toEntity(ligneDTO);
+            // Convertir le DTO simplifié en entité LigneCredit
+            LigneCredit ligne = new LigneCredit();
+            ligne.setIntituleLigne(ligneCreateDTO.getIntituleLigne());
+            ligne.setDescription(ligneCreateDTO.getDescription());
+            ligne.setMontantAllouer(ligneCreateDTO.getMontantAllouer());
+
+            // Associer le budget si l'ID est fourni
+            if (ligneCreateDTO.getBudgetId() != null) {
+                kafofond.entity.Budget budget = new kafofond.entity.Budget();
+                budget.setId(ligneCreateDTO.getBudgetId());
+                ligne.setBudget(budget);
+            }
+
             LigneCreditDTO ligneCreeeDTO = ligneCreditService.creerDTO(ligne, authentication.getName());
 
             Map<String, Object> response = new HashMap<>();
@@ -67,7 +80,8 @@ public class LigneCreditController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> modifierLigneCredit(@PathVariable Long id, @RequestBody LigneCreditDTO ligneDTO, Authentication authentication) {
+    public ResponseEntity<?> modifierLigneCredit(@PathVariable Long id, @RequestBody LigneCreditDTO ligneDTO,
+            Authentication authentication) {
         try {
             LigneCredit ligne = ligneCreditMapper.toEntity(ligneDTO);
             LigneCreditDTO ligneModifieeDTO = ligneCreditService.modifierDTO(id, ligne, authentication.getName());
@@ -102,7 +116,8 @@ public class LigneCreditController {
     }
 
     @PostMapping("/{id}/rejeter")
-    public ResponseEntity<?> rejeterLigneCredit(@PathVariable Long id, @RequestBody Map<String, String> request, Authentication authentication) {
+    public ResponseEntity<?> rejeterLigneCredit(@PathVariable Long id, @RequestBody Map<String, String> request,
+            Authentication authentication) {
         try {
             String commentaire = request.get("commentaire");
             if (commentaire == null || commentaire.trim().isEmpty()) {
@@ -187,9 +202,8 @@ public class LigneCreditController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-    
-    @Operation(summary = "Lister les lignes de crédit par budget",
-            description = "Liste toutes les lignes de crédit d'un budget spécifique")
+
+    @Operation(summary = "Lister les lignes de crédit par budget", description = "Liste toutes les lignes de crédit d'un budget spécifique")
     @GetMapping("/budget/{budgetId}")
     public ResponseEntity<?> listerParBudget(@PathVariable Long budgetId, Authentication authentication) {
         try {
@@ -206,11 +220,11 @@ public class LigneCreditController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-    
-    @Operation(summary = "Lister les lignes de crédit par statut",
-            description = "Liste toutes les lignes de crédit avec un statut donné (EN_COURS, VALIDE, REJETE)")
+
+    @Operation(summary = "Lister les lignes de crédit par statut", description = "Liste toutes les lignes de crédit avec un statut donné (EN_COURS, VALIDE, REJETE)")
     @GetMapping("/statut/{statut}")
-    public ResponseEntity<?> listerParStatut(@PathVariable kafofond.entity.Statut statut, Authentication authentication) {
+    public ResponseEntity<?> listerParStatut(@PathVariable kafofond.entity.Statut statut,
+            Authentication authentication) {
         try {
             List<LigneCreditDTO> lignesDTO = ligneCreditService.listerParStatutDTO(statut, authentication.getName());
 
@@ -226,9 +240,8 @@ public class LigneCreditController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-    
-    @Operation(summary = "Lister les lignes de crédit actives",
-            description = "Liste toutes les lignes de crédit actives de l'entreprise")
+
+    @Operation(summary = "Lister les lignes de crédit actives", description = "Liste toutes les lignes de crédit actives de l'entreprise")
     @GetMapping("/actives")
     public ResponseEntity<?> listerActives(Authentication authentication) {
         try {
@@ -245,9 +258,8 @@ public class LigneCreditController {
             return ResponseEntity.badRequest().body(error);
         }
     }
-    
-    @Operation(summary = "Lister les lignes de crédit inactives",
-            description = "Liste toutes les lignes de crédit inactives de l'entreprise")
+
+    @Operation(summary = "Lister les lignes de crédit inactives", description = "Liste toutes les lignes de crédit inactives de l'entreprise")
     @GetMapping("/inactives")
     public ResponseEntity<?> listerInactives(Authentication authentication) {
         try {

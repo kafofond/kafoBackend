@@ -6,6 +6,7 @@ import kafofond.entity.Designation;
 import kafofond.entity.FicheDeBesoin;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -49,7 +50,7 @@ public class FicheBesoinMapper {
                 .description(fiche.getDescription())
                 .montantEstime(fiche.getMontantEstime())
                 .dateAttendu(fiche.getDateAttendu())
-                .dateCreation(fiche.getDateCreation())
+                .dateCreation(LocalDate.from(fiche.getDateCreation()))
                 .statut(fiche.getStatut())
                 .createurNom(fiche.getCreePar() != null ? 
                     fiche.getCreePar().getPrenom() + " " + fiche.getCreePar().getNom() : null)
@@ -75,7 +76,7 @@ public class FicheBesoinMapper {
                 .description(ficheDTO.getDescription())
                 .montantEstime(ficheDTO.getMontantEstime())
                 .dateAttendu(ficheDTO.getDateAttendu())
-                .dateCreation(ficheDTO.getDateCreation())
+                .dateCreation(ficheDTO.getDateCreation().atStartOfDay())
                 .statut(ficheDTO.getStatut())
                 .designations(new ArrayList<>())
                 .build();

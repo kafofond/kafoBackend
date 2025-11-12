@@ -6,6 +6,7 @@ import kafofond.entity.Commentaire;
 import kafofond.entity.LigneCredit;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +32,7 @@ public class LigneCreditMapper {
                 .montantAllouer(ligne.getMontantAllouer())
                 .montantEngager(ligne.getMontantEngager())
                 .montantRestant(ligne.getMontantRestant())
-                .dateCreation(ligne.getDateCreation())
+                .dateCreation(LocalDate.from(ligne.getDateCreation()))
                 .dateModification(ligne.getDateModification())
                 .statut(ligne.getStatut())
                 .actif(ligne.isEtat())
@@ -54,7 +55,7 @@ public class LigneCreditMapper {
                 .montantAllouer(dto.getMontantAllouer())
                 .montantEngager(dto.getMontantEngager())
                 .montantRestant(dto.getMontantRestant())
-                .dateCreation(dto.getDateCreation())
+                .dateCreation(dto.getDateCreation().atStartOfDay())
                 .dateModification(dto.getDateModification())
                 .statut(dto.getStatut())
                 .etat(dto.isActif());

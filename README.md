@@ -99,6 +99,8 @@ src/main/java/kafofond/
 ├── config/           # Configurations de l'application
 ├── controller/       # Contrôleurs REST
 ├── dto/              # Objets de transfert de données
+│   ├── BudgetCreateDTO.java  # DTO simplifié pour création budget
+│   └── ...           # Autres DTOs
 ├── entity/           # Entités JPA
 ├── exception/        # Gestion des exceptions
 ├── mapper/           # Mappers DTO/Entity

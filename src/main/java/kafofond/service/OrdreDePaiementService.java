@@ -69,14 +69,14 @@ public class OrdreDePaiementService {
         ordre.setCreePar(comptable);
         ordre.setEntreprise(comptable.getEntreprise());
         ordre.setStatut(Statut.EN_COURS);
-        ordre.setDateCreation(LocalDate.now());
+        ordre.setDateCreation(LocalDate.now().atStartOfDay());
         ordre.setDateModification(LocalDateTime.now());
 
         // Sauvegarder d'abord pour obtenir l'ID
         OrdreDePaiement ordreCree = ordreDePaiementRepo.save(ordre);
         
         // Générer le code automatiquement
-        String code = codeGeneratorService.generateOrdrePaiementCode(ordreCree.getId(), ordreCree.getDateCreation());
+        String code = codeGeneratorService.generateOrdrePaiementCode(ordreCree.getId(), LocalDate.from(ordreCree.getDateCreation()));
         ordreCree.setCode(code);
         ordreCree = ordreDePaiementRepo.save(ordreCree);
 

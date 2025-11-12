@@ -4,6 +4,8 @@ import kafofond.dto.BonDeCommandeDTO;
 import kafofond.entity.BonDeCommande;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 /**
  * Mapper pour l'entité BonDeCommande
  * Convertit entre entité et DTO
@@ -29,7 +31,7 @@ public class BonDeCommandeMapper {
                 .montantTotal(bon.getMontantTotal())
                 .serviceBeneficiaire(bon.getServiceBeneficiaire())
                 .modePaiement(bon.getModePaiement())
-                .dateCreation(bon.getDateCreation())
+                .dateCreation(LocalDate.from(bon.getDateCreation()))
                 .delaiPaiement(bon.getDelaiPaiement())
                 .dateExecution(bon.getDateExecution())
                 .statut(bon.getStatut())
@@ -67,7 +69,7 @@ public class BonDeCommandeMapper {
                 .montantTotal(bonDTO.getMontantTotal())
                 .serviceBeneficiaire(bonDTO.getServiceBeneficiaire())
                 .modePaiement(bonDTO.getModePaiement())
-                .dateCreation(bonDTO.getDateCreation())
+                .dateCreation(bonDTO.getDateCreation().atStartOfDay())
                 .delaiPaiement(bonDTO.getDelaiPaiement())
                 .dateExecution(bonDTO.getDateExecution())
                 .statut(bonDTO.getStatut())

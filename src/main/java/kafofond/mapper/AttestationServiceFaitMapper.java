@@ -6,6 +6,8 @@ import kafofond.entity.BonDeCommande;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 /**
  * Mapper pour l'entité AttestationDeServiceFait
  * Convertit entre entité et DTO
@@ -34,7 +36,7 @@ public class AttestationServiceFaitMapper {
                 .titre(attestation.getTitre())
                 .constat(attestation.getConstat())
                 .dateLivraison(attestation.getDateLivraison())
-                .dateCreation(attestation.getDateCreation())
+                .dateCreation(LocalDate.from(attestation.getDateCreation()))
                 .urlFichierJoint(attestation.getUrlFichierJoint())
                 .createurNom(attestation.getCreePar() != null ? 
                     attestation.getCreePar().getPrenom() + " " + attestation.getCreePar().getNom() : null)
@@ -60,7 +62,7 @@ public class AttestationServiceFaitMapper {
                 .titre(attestationDTO.getTitre())
                 .constat(attestationDTO.getConstat())
                 .dateLivraison(attestationDTO.getDateLivraison())
-                .dateCreation(attestationDTO.getDateCreation())
+                .dateCreation(attestationDTO.getDateCreation().atStartOfDay())
                 .urlFichierJoint(attestationDTO.getUrlFichierJoint());
         
         // Si un bonDeCommandeId est fourni, le lier

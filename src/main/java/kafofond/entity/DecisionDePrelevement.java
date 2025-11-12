@@ -31,7 +31,7 @@ public class DecisionDePrelevement {
     private String compteOrigine;
     private String compteDestinataire;
     private String motifPrelevement;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private LocalDateTime dateModification;
 
     @Enumerated(EnumType.STRING)
@@ -47,7 +47,8 @@ public class DecisionDePrelevement {
 
     /**
      * Relation OneToOne vers AttestationDeServiceFait
-     * Une DecisionDePrelevement est générée à partir d'une seule AttestationDeServiceFait
+     * Une DecisionDePrelevement est générée à partir d'une seule
+     * AttestationDeServiceFait
      */
     @OneToOne
     @JoinColumn(name = "attestation_service_fait_id", unique = true)
@@ -70,4 +71,14 @@ public class DecisionDePrelevement {
     @JsonManagedReference
     private OrdreDePaiement ordreDePaiement;
 
+    @PrePersist
+    protected void onCreate() {
+        dateCreation = LocalDateTime.now();
+        dateModification = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        dateModification = LocalDateTime.now();
+    }
 }

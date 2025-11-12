@@ -55,13 +55,13 @@ public class BudgetService {
         budget.setEntreprise(createur.getEntreprise());
         budget.setStatut(Statut.EN_COURS);
         budget.setEtat(false); // Inactif jusqu'à validation
-        budget.setDateCreation(LocalDate.now());
+        budget.setDateCreation(LocalDate.now().atStartOfDay());
         budget.setDateModification(LocalDateTime.now());
 
         Budget budgetCree = budgetRepo.save(budget);
         
         // Générer le code unique automatiquement
-        String code = codeGeneratorService.generateBudgetCode(budgetCree.getId(), budgetCree.getDateCreation());
+        String code = codeGeneratorService.generateBudgetCode(budgetCree.getId(), LocalDate.from(budgetCree.getDateCreation()));
         budgetCree.setCode(code);
         budgetCree = budgetRepo.save(budgetCree);
 
