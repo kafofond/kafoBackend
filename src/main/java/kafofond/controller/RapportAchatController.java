@@ -1,6 +1,7 @@
 package kafofond.controller;
 
 import kafofond.dto.RapportAchatDTO;
+import kafofond.dto.RapportAchatCreationDTO;
 import kafofond.entity.RapportAchat;
 import kafofond.entity.Utilisateur;
 import kafofond.mapper.RapportAchatMapper;
@@ -38,15 +39,44 @@ public class RapportAchatController {
 
     @PostMapping
     @Operation(summary = "Créer un rapport d'achat")
-    public ResponseEntity<?> creer(@RequestBody RapportAchatDTO dto, Authentication auth) {
+    public ResponseEntity<?> creer(@RequestBody RapportAchatCreationDTO creationDTO, Authentication auth) {
         try {
-            Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
+            Utilisateur user = utilisateurService.trouverParEmailAvecEntreprise(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-            RapportAchat rapport = mapper.toEntity(dto);
+            // Convertir le DTO de création en entité
+            RapportAchat rapport = RapportAchat.builder()
+                    .nom(creationDTO.getNom())
+                    .ficheBesoin(creationDTO.getFicheBesoin())
+                    .demandeAchat(creationDTO.getDemandeAchat())
+                    .bonCommande(creationDTO.getBonCommande())
+                    .attestationServiceFait(creationDTO.getAttestationServiceFait())
+                    .decisionPrelevement(creationDTO.getDecisionPrelevement())
+                    .ordrePaiement(creationDTO.getOrdrePaiement())
+                    .build();
+                    
+            // Définir l'entreprise à partir de l'utilisateur authentifié
+            rapport.setEntreprise(user.getEntreprise());
+            
             RapportAchat rapportCree = rapportService.creer(rapport, user);
-            return ResponseEntity.ok(mapper.toDTO(rapportCree));
+            
+            // Créer manuellement le DTO pour éviter les problèmes de proxy
+            RapportAchatDTO rapportCreeDTO = RapportAchatDTO.builder()
+                    .id(rapportCree.getId())
+                    .nom(rapportCree.getNom())
+                    .ficheBesoin(rapportCree.getFicheBesoin())
+                    .demandeAchat(rapportCree.getDemandeAchat())
+                    .bonCommande(rapportCree.getBonCommande())
+                    .attestationServiceFait(rapportCree.getAttestationServiceFait())
+                    .decisionPrelevement(rapportCree.getDecisionPrelevement())
+                    .ordrePaiement(rapportCree.getOrdrePaiement())
+                    .dateAjout(rapportCree.getDateAjout())
+                    .entrepriseNom(user.getEntreprise().getNom()) // Utiliser le nom de l'entreprise de l'utilisateur
+                    .build();
+                    
+            return ResponseEntity.ok(rapportCreeDTO);
         } catch (Exception e) {
+            log.error("Erreur lors de la création du rapport d'achat : {}", e.getMessage(), e);
             Map<String, String> err = new HashMap<>();
             err.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(err);
@@ -57,18 +87,34 @@ public class RapportAchatController {
     @Operation(summary = "Lister tous les rapports d'achat d'une entreprise")
     public ResponseEntity<?> lister(Authentication auth) {
         try {
-            Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
+            Utilisateur user = utilisateurService.trouverParEmailAvecEntreprise(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-            List<RapportAchatDTO> list = rapportService.listerParEntreprise(user.getEntreprise())
-                    .stream().map(mapper::toDTO).collect(Collectors.toList());
+            List<RapportAchat> rapports = rapportService.listerParEntreprise(user.getEntreprise());
+            
+            // Créer manuellement les DTOs pour éviter les problèmes de proxy
+            List<RapportAchatDTO> rapportsDTO = rapports.stream()
+                    .map(rapport -> RapportAchatDTO.builder()
+                            .id(rapport.getId())
+                            .nom(rapport.getNom())
+                            .ficheBesoin(rapport.getFicheBesoin())
+                            .demandeAchat(rapport.getDemandeAchat())
+                            .bonCommande(rapport.getBonCommande())
+                            .attestationServiceFait(rapport.getAttestationServiceFait())
+                            .decisionPrelevement(rapport.getDecisionPrelevement())
+                            .ordrePaiement(rapport.getOrdrePaiement())
+                            .dateAjout(rapport.getDateAjout())
+                            .entrepriseNom(user.getEntreprise().getNom()) // Utiliser le nom de l'entreprise de l'utilisateur
+                            .build())
+                    .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
-            response.put("total", list.size());
-            response.put("rapports", list);
+            response.put("total", rapportsDTO.size());
+            response.put("rapports", rapportsDTO);
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error("Erreur lors de la récupération des rapports d'achat : {}", e.getMessage(), e);
             Map<String, String> err = new HashMap<>();
             err.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(err);
@@ -79,7 +125,7 @@ public class RapportAchatController {
     @Operation(summary = "Obtenir un rapport d'achat")
     public ResponseEntity<?> obtenir(@PathVariable Long id, Authentication auth) {
         try {
-            Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
+            Utilisateur user = utilisateurService.trouverParEmailAvecEntreprise(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
             Optional<RapportAchat> rapport = rapportService.trouverParId(id);
@@ -89,8 +135,23 @@ public class RapportAchatController {
                 return ResponseEntity.notFound().build();
             }
             
-            return ResponseEntity.ok(mapper.toDTO(rapport.get()));
+            // Créer manuellement le DTO pour éviter les problèmes de proxy
+            RapportAchatDTO rapportDTO = RapportAchatDTO.builder()
+                    .id(rapport.get().getId())
+                    .nom(rapport.get().getNom())
+                    .ficheBesoin(rapport.get().getFicheBesoin())
+                    .demandeAchat(rapport.get().getDemandeAchat())
+                    .bonCommande(rapport.get().getBonCommande())
+                    .attestationServiceFait(rapport.get().getAttestationServiceFait())
+                    .decisionPrelevement(rapport.get().getDecisionPrelevement())
+                    .ordrePaiement(rapport.get().getOrdrePaiement())
+                    .dateAjout(rapport.get().getDateAjout())
+                    .entrepriseNom(user.getEntreprise().getNom()) // Utiliser le nom de l'entreprise de l'utilisateur
+                    .build();
+            
+            return ResponseEntity.ok(rapportDTO);
         } catch (Exception e) {
+            log.error("Erreur lors de la récupération du rapport d'achat : {}", e.getMessage(), e);
             Map<String, String> err = new HashMap<>();
             err.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(err);
@@ -101,18 +162,34 @@ public class RapportAchatController {
     @Operation(summary = "Lister les rapports par document")
     public ResponseEntity<?> listerParDocument(@RequestParam String document, Authentication auth) {
         try {
-            Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
+            Utilisateur user = utilisateurService.trouverParEmailAvecEntreprise(auth.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
             // Filtrer les rapports par entreprise de l'utilisateur
-            List<RapportAchatDTO> list = rapportService.listerParDocumentEtEntreprise(document, user.getEntreprise())
-                    .stream().map(mapper::toDTO).collect(Collectors.toList());
+            List<RapportAchat> rapports = rapportService.listerParDocumentEtEntreprise(document, user.getEntreprise());
+            
+            // Créer manuellement les DTOs pour éviter les problèmes de proxy
+            List<RapportAchatDTO> rapportsDTO = rapports.stream()
+                    .map(rapport -> RapportAchatDTO.builder()
+                            .id(rapport.getId())
+                            .nom(rapport.getNom())
+                            .ficheBesoin(rapport.getFicheBesoin())
+                            .demandeAchat(rapport.getDemandeAchat())
+                            .bonCommande(rapport.getBonCommande())
+                            .attestationServiceFait(rapport.getAttestationServiceFait())
+                            .decisionPrelevement(rapport.getDecisionPrelevement())
+                            .ordrePaiement(rapport.getOrdrePaiement())
+                            .dateAjout(rapport.getDateAjout())
+                            .entrepriseNom(user.getEntreprise().getNom()) // Utiliser le nom de l'entreprise de l'utilisateur
+                            .build())
+                    .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
-            response.put("total", list.size());
-            response.put("rapports", list);
+            response.put("total", rapportsDTO.size());
+            response.put("rapports", rapportsDTO);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            log.error("Erreur lors de la récupération des rapports d'achat par document : {}", e.getMessage(), e);
             Map<String, String> err = new HashMap<>();
             err.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(err);

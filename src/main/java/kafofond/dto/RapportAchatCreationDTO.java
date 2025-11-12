@@ -10,24 +10,24 @@ import lombok.*;
 @Schema(description = "Données nécessaires pour créer un rapport d'achat")
 public class RapportAchatCreationDTO {
 
-    @Schema(description = "Nom du rapport d'achat", example = "Rapport achat fournitures")
+    @Schema(description = "Nom du rapport d'achat", example = "Rapport Achat Informatique")
     private String nom;
 
-    @Schema(description = "ID de la fiche de besoin", example = "1")
-    private Long ficheBesoinId;
+    @Schema(description = "Code de la fiche de besoin", example = "FB-0001-11-2025")
+    private String ficheBesoin;
 
-    @Schema(description = "ID de la demande d'achat", example = "2")
-    private Long demandeAchatId;
+    @Schema(description = "Code de la demande d'achat", example = "DA-0001-11-2025")
+    private String demandeAchat;
 
-    @Schema(description = "ID du bon de commande", example = "3")
-    private Long bonCommandeId;
+    @Schema(description = "Code du bon de commande", example = "BC-0001-11-2025")
+    private String bonCommande;
 
-    @Schema(description = "ID de l'attestation de service fait", example = "4")
-    private Long attestationServiceFaitId;
+    @Schema(description = "Code de l'attestation de service fait", example = "ASF-0001-11-2025")
+    private String attestationServiceFait;
 
-    @Schema(description = "ID de la décision de prélèvement", example = "5")
-    private Long decisionPrelevementId;
+    @Schema(description = "Code de la décision de prélèvement", example = "DP-0001-11-2025")
+    private String decisionPrelevement;
 
-    @Schema(description = "ID de l'ordre de paiement", example = "6")
-    private Long ordrePaiementId;
+    @Schema(description = "Code de l'ordre de paiement", example = "OP-0001-11-2025")
+    private String ordrePaiement;
 }

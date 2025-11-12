@@ -41,7 +41,7 @@ public class RapportAchatService {
         }
 
         rapport.setDateAjout(LocalDate.now());
-        rapport.setEntreprise(comptable.getEntreprise());
+        // L'entreprise est déjà définie dans le contrôleur
 
         RapportAchat rapportCree = rapportAchatRepo.save(rapport);
 
@@ -59,17 +59,23 @@ public class RapportAchatService {
         );
 
         // Notification au directeur de l'entreprise
-        Utilisateur directeur = utilisateurRepo.findByEntrepriseAndRole(rapportCree.getEntreprise(), Role.DIRECTEUR)
-                .orElse(null);
+        // Utiliser une approche qui évite les problèmes de proxy
+        try {
+            Long entrepriseId = rapportCree.getEntreprise().getId();
+            Utilisateur directeur = utilisateurRepo.findByEntrepriseIdAndRole(entrepriseId, Role.DIRECTEUR)
+                    .orElse(null);
 
-        if (directeur != null) {
-            notificationService.notifierModification(
-                    "RAPPORT_ACHAT",
-                    rapportCree.getId(),
-                    comptable,
-                    directeur,
-                    "Nouveau rapport d'achat créé"
-            );
+            if (directeur != null) {
+                notificationService.notifierModification(
+                        "RAPPORT_ACHAT",
+                        rapportCree.getId(),
+                        comptable,
+                        directeur,
+                        "Nouveau rapport d'achat créé"
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Impossible de notifier le directeur : {}", e.getMessage());
         }
 
         return rapportCree;
@@ -78,6 +84,7 @@ public class RapportAchatService {
     /**
      * Liste tous les rapports d'achat d'une entreprise
      */
+    @Transactional(readOnly = true)
     public List<RapportAchat> listerParEntreprise(Entreprise entreprise) {
         return rapportAchatRepo.findByEntreprise(entreprise);
     }
@@ -85,6 +92,7 @@ public class RapportAchatService {
     /**
      * Récupère les détails d'un rapport d'achat
      */
+    @Transactional(readOnly = true)
     public Optional<RapportAchat> trouverParId(Long id) {
         return rapportAchatRepo.findById(id);
     }
@@ -92,6 +100,7 @@ public class RapportAchatService {
     /**
      * Récupère tous les rapports contenant un document spécifique
      */
+    @Transactional(readOnly = true)
     public List<RapportAchat> listerParDocument(String document) {
         List<RapportAchat> result = rapportAchatRepo.findByBonCommande(document);
         result.addAll(rapportAchatRepo.findByFicheBesoin(document));
@@ -105,6 +114,7 @@ public class RapportAchatService {
     /**
      * Récupère tous les rapports contenant un document spécifique pour une entreprise donnée
      */
+    @Transactional(readOnly = true)
     public List<RapportAchat> listerParDocumentEtEntreprise(String document, Entreprise entreprise) {
         List<RapportAchat> tousRapports = listerParDocument(document);
         return tousRapports.stream()

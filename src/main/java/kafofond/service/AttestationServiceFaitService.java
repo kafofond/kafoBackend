@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +35,7 @@ public class AttestationServiceFaitService {
     private final NotificationService notificationService;
     private final HistoriqueService historiqueService;
     private final TableValidationService tableValidationService;
+    private final CodeGeneratorService codeGeneratorService;
 
     /**
      * Crée une nouvelle attestation de service fait (Trésorerie et Gestionnaire)
@@ -51,7 +53,7 @@ public class AttestationServiceFaitService {
 
         attestation.setCreePar(utilisateur);
         attestation.setEntreprise(utilisateur.getEntreprise());
-        attestation.setDateCreation(LocalDate.now().atStartOfDay());
+        attestation.setDateCreation(LocalDateTime.now());
 
         // Si un bon de commande est lié, le récupérer avec son entreprise pour éviter
         // les problèmes de proxy
@@ -64,16 +66,24 @@ public class AttestationServiceFaitService {
                 // S'assurer que l'entreprise de l'attestation correspond à celle du bon de
                 // commande
                 attestation.setEntreprise(bonDeCommande.getEntreprise());
+                
+                // Mettre à jour la référence du bon de commande si elle n'est pas déjà définie
+                if (attestation.getReferenceBonCommande() == null || attestation.getReferenceBonCommande().isEmpty()) {
+                    attestation.setReferenceBonCommande(bonDeCommande.getCode());
+                }
             }
         }
 
-        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy
-        // loading
-        if (utilisateur.getEntreprise() != null) {
-            utilisateur.getEntreprise().getNom(); // Force le chargement de l'entreprise
+        // Sauvegarder d'abord pour obtenir l'ID
+        AttestationDeServiceFait attestationTemp = attestationDeServiceFaitRepo.save(attestation);
+        
+        // Générer le code automatiquement si ce n'est pas déjà fait
+        if (attestationTemp.getCode() == null || attestationTemp.getCode().isEmpty()) {
+            String code = codeGeneratorService.generateAttestationServiceFaitCode(attestationTemp.getId(), LocalDate.now());
+            attestationTemp.setCode(code);
         }
-
-        AttestationDeServiceFait attestationCreee = attestationDeServiceFaitRepo.save(attestation);
+        
+        AttestationDeServiceFait attestationCreee = attestationDeServiceFaitRepo.save(attestationTemp);
 
         // Historique
         historiqueService.enregistrerAction(
@@ -86,6 +96,13 @@ public class AttestationServiceFaitService {
                 null, // ancienStatut
                 null, // nouveauStatut (pas de statut)
                 "Créée par " + utilisateur.getRole() // commentaire
+        );
+
+        // Enregistrer dans la table de validation
+        tableValidationService.enregistrerCreation(
+                attestationCreee.getId(),
+                kafofond.entity.TypeDocument.ATTESTATION_SERVICE_FAIT,
+                utilisateur
         );
 
         // Notifier le Gestionnaire

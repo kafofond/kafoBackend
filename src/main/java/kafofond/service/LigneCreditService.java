@@ -88,6 +88,13 @@ public class LigneCreditService {
                 "Ligne de crédit créée"
         );
 
+        // Enregistrer dans la table de validation
+        tableValidationService.enregistrerCreation(
+                ligneCreee.getId(),
+                kafofond.entity.TypeDocument.LIGNE_CREDIT,
+                createur
+        );
+
         Utilisateur directeur = trouverDirecteur(createur.getEntreprise());
         if (directeur != null)
             notificationService.notifierModification("LIGNE_CREDIT", ligneCreee.getId(), createur, directeur, "créée");

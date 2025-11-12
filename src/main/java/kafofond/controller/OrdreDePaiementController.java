@@ -1,6 +1,7 @@
 package kafofond.controller;
 
 import kafofond.dto.OrdreDePaiementDTO;
+import kafofond.dto.OrdreDePaiementCreationDTO;
 import kafofond.entity.OrdreDePaiement;
 import kafofond.entity.Utilisateur;
 import kafofond.mapper.OrdreDePaiementMapper;
@@ -40,11 +41,25 @@ public class OrdreDePaiementController {
      * Crée un nouvel ordre de paiement (Comptable uniquement)
      */
     @PostMapping
-    public ResponseEntity<?> creerOrdreDePaiement(@RequestBody OrdreDePaiementDTO ordreDTO, Authentication authentication) {
+    public ResponseEntity<?> creerOrdreDePaiement(@RequestBody OrdreDePaiementCreationDTO ordreCreationDTO, Authentication authentication) {
         try {
             log.info("Création d'un ordre de paiement par {}", authentication.getName());
             
-            OrdreDePaiement ordre = ordreDePaiementMapper.toEntity(ordreDTO);
+            // Convertir le DTO de création en entité
+            OrdreDePaiement ordre = OrdreDePaiement.builder()
+                    .montant(ordreCreationDTO.getMontant())
+                    .description(ordreCreationDTO.getDescription())
+                    .compteOrigine(ordreCreationDTO.getCompteOrigine())
+                    .compteDestinataire(ordreCreationDTO.getCompteDestinataire())
+                    .build();
+            
+            // Si une décision est référencée, la lier
+            if (ordreCreationDTO.getDecisionId() != null) {
+                kafofond.entity.DecisionDePrelevement decision = new kafofond.entity.DecisionDePrelevement();
+                decision.setId(ordreCreationDTO.getDecisionId());
+                ordre.setDecisionDePrelevement(decision);
+            }
+            
             OrdreDePaiement ordreCree = ordreDePaiementService.creerDTO(ordre, authentication.getName());
             OrdreDePaiementDTO ordreCreeDTO = ordreDePaiementMapper.toDTO(ordreCree);
             

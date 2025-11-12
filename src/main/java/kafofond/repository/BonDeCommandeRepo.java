@@ -36,6 +36,12 @@ public interface BonDeCommandeRepo extends JpaRepository<BonDeCommande, Long> {
     List<BonDeCommande> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
 
     /**
+     * Trouve tous les bons de commande approuvés qui ne sont pas encore associés à une attestation de service fait
+     */
+    @Query("SELECT b FROM BonDeCommande b WHERE b.statut = kafofond.entity.Statut.APPROUVE AND b.attestationDeServiceFait IS NULL")
+    List<BonDeCommande> findApprovedWithoutAttestation();
+
+    /**
      * Trouve un bon de commande par demande d'achat
      */
     BonDeCommande findByDemandeDAchat(DemandeDAchat demandeDAchat);

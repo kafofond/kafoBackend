@@ -35,6 +35,9 @@ public interface UtilisateurRepo extends JpaRepository<Utilisateur, Long> {
 
     // ✅ Méthode pour récupérer le directeur d'une entreprise
     Optional<Utilisateur> findByEntrepriseAndRole(Entreprise entreprise, Role role);
+    
+    // ✅ Méthode pour récupérer un utilisateur par ID d'entreprise et rôle
+    Optional<Utilisateur> findByEntrepriseIdAndRole(Long entrepriseId, Role role);
 
     // Si besoin, tous les utilisateurs d'une entreprise
     List<Utilisateur> findByEntreprise(Entreprise entreprise);

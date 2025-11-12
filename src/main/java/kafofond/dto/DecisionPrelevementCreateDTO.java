@@ -13,6 +13,9 @@ public class DecisionPrelevementCreateDTO {
     @Schema(description = "ID de l'attestation de service fait", example = "1")
     private Long attestationId;
 
+    @Schema(description = "ID de la ligne de crédit", example = "1")
+    private Long ligneCreditId;
+
     @Schema(description = "Montant de la décision de prélèvement", example = "5000000")
     private double montant;
 
