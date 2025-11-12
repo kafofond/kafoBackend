@@ -226,23 +226,24 @@ public class FicheBesoinController {
      * Liste toutes les fiches de besoin d'une entreprise spécifique
      */
     @GetMapping("/entreprise/{entrepriseId}")
-    public ResponseEntity<?> listerFichesBesoinParEntreprise(@PathVariable Long entrepriseId, Authentication authentication) {
+    public ResponseEntity<?> listerFichesBesoinParEntreprise(@PathVariable Long entrepriseId,
+            Authentication authentication) {
         try {
-            log.info("Liste des fiches de besoin de l'entreprise {} demandée par {}", 
+            log.info("Liste des fiches de besoin de l'entreprise {} demandée par {}",
                     entrepriseId, authentication.getName());
-            
+
             // Vérifier que l'utilisateur a le droit d'accéder à cette entreprise
             Utilisateur utilisateur = utilisateurService.trouverParEmailAvecEntreprise(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
-            
+
             // Vérifier que l'utilisateur appartient à l'entreprise ou est admin
-            if (!utilisateur.getEntreprise().getId().equals(entrepriseId) && 
-                utilisateur.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
+            if (!utilisateur.getEntreprise().getId().equals(entrepriseId) &&
+                    utilisateur.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
                 Map<String, String> error = new HashMap<>();
                 error.put("message", "Accès non autorisé à cette entreprise");
                 return ResponseEntity.status(403).body(error);
             }
-            
+
             // Récupérer l'entreprise
             kafofond.entity.Entreprise entreprise = utilisateur.getEntreprise();
             if (entreprise == null) {
@@ -250,26 +251,27 @@ public class FicheBesoinController {
                 error.put("message", "Entreprise introuvable");
                 return ResponseEntity.badRequest().body(error);
             }
-            
+
             List<FicheBesoinDTO> fichesDTO = ficheBesoinService.listerParEntrepriseDTO(entreprise);
-            
+
             // Récupérer les commentaires pour chaque fiche
             List<FicheBesoinDTO> fichesAvecCommentaires = fichesDTO.stream()
                     .map(ficheDTO -> {
-                        var commentaires = commentaireService.getCommentairesByDocument(ficheDTO.getId(), TypeDocument.FICHE_BESOIN)
+                        var commentaires = commentaireService
+                                .getCommentairesByDocument(ficheDTO.getId(), TypeDocument.FICHE_BESOIN)
                                 .stream().map(commentaireMapper::toSimplifieDTO).toList();
                         ficheDTO.setCommentaires(commentaires);
                         return ficheDTO;
                     })
                     .collect(Collectors.toList());
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("fiches", fichesAvecCommentaires);
             response.put("total", fichesAvecCommentaires.size());
             response.put("entrepriseId", entrepriseId);
-            
+
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des fiches de besoin par entreprise : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
@@ -374,32 +376,6 @@ public class FicheBesoinController {
 
         } catch (Exception e) {
             log.error("Erreur lors de la récupération des fiches de besoin par utilisateur : {}", e.getMessage());
-            Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
-    }
-
-    /**
-     * Récupère toutes les fiches de besoin d'une entreprise
-     */
-    @GetMapping("/entreprise/{entrepriseId}")
-    public ResponseEntity<?> getFichesBesoinByEntreprise(@PathVariable Long entrepriseId,
-            Authentication authentication) {
-        try {
-            log.info("Récupération des fiches de besoin de l'entreprise {} demandée par {}",
-                    entrepriseId, authentication.getName());
-
-            List<FicheBesoinDTO> fiches = ficheBesoinService.listerParEntrepriseIdDTO(entrepriseId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("fiches", fiches);
-            response.put("total", fiches.size());
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de la récupération des fiches de besoin par entreprise : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);

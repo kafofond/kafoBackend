@@ -35,15 +35,34 @@ public interface DemandeDAchatRepo extends JpaRepository<DemandeDAchat, Long> {
         List<DemandeDAchat> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
 
         /**
-         * Trouve toutes les demandes créées par un utilisateur
-         */
-        List<DemandeDAchat> findByCreePar(Utilisateur utilisateur);
-
-        /**
          * Trouve toutes les demandes d'une entreprise par ID
          */
         @Query("SELECT d FROM DemandeDAchat d WHERE d.entreprise.id = :entrepriseId")
         List<DemandeDAchat> findByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+        /**
+         * Compte le nombre de demandes d'achat créées par un utilisateur
+         */
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.creePar.id = :utilisateurId")
+        long countByCreeParId(@Param("utilisateurId") Long utilisateurId);
+
+        /**
+         * Compte le nombre de demandes d'achat créées par un utilisateur avec un statut
+         * spécifique
+         */
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.creePar.id = :utilisateurId AND d.statut = :statut")
+        long countByCreeParIdAndStatut(@Param("utilisateurId") Long utilisateurId, @Param("statut") Statut statut);
+
+        /**
+         * Trouve toutes les demandes d'achat créées par un utilisateur
+         */
+        List<DemandeDAchat> findByCreePar(Utilisateur utilisateur);
+
+        /**
+         * Trouve toutes les demandes d'achat créées par un utilisateur avec un statut
+         * spécifique
+         */
+        List<DemandeDAchat> findByCreeParAndStatut(Utilisateur utilisateur, Statut statut);
 
         // Méthodes pour les statistiques par date
         @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.dateCreation >= :startDate AND d.dateCreation < :endDate")

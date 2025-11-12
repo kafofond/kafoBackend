@@ -35,15 +35,34 @@ public interface FicheBesoinRepo extends JpaRepository<FicheDeBesoin, Long> {
         List<FicheDeBesoin> findByEntrepriseAndStatut(Entreprise entreprise, Statut statut);
 
         /**
-         * Trouve toutes les fiches créées par un utilisateur
-         */
-        List<FicheDeBesoin> findByCreePar(Utilisateur utilisateur);
-
-        /**
          * Trouve toutes les fiches d'une entreprise par ID
          */
         @Query("SELECT f FROM FicheDeBesoin f WHERE f.entreprise.id = :entrepriseId")
         List<FicheDeBesoin> findByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+
+        /**
+         * Compte le nombre de fiches de besoin créées par un utilisateur
+         */
+        @Query("SELECT COUNT(f) FROM FicheDeBesoin f WHERE f.creePar.id = :utilisateurId")
+        long countByCreeParId(@Param("utilisateurId") Long utilisateurId);
+
+        /**
+         * Compte le nombre de fiches de besoin créées par un utilisateur avec un statut
+         * spécifique
+         */
+        @Query("SELECT COUNT(f) FROM FicheDeBesoin f WHERE f.creePar.id = :utilisateurId AND f.statut = :statut")
+        long countByCreeParIdAndStatut(@Param("utilisateurId") Long utilisateurId, @Param("statut") Statut statut);
+
+        /**
+         * Trouve toutes les fiches de besoin créées par un utilisateur
+         */
+        List<FicheDeBesoin> findByCreePar(Utilisateur utilisateur);
+
+        /**
+         * Trouve toutes les fiches de besoin créées par un utilisateur avec un statut
+         * spécifique
+         */
+        List<FicheDeBesoin> findByCreeParAndStatut(Utilisateur utilisateur, Statut statut);
 
         // Méthodes pour les statistiques par date
         @Query("SELECT COUNT(f) FROM FicheDeBesoin f WHERE f.dateCreation >= :startDate AND f.dateCreation < :endDate")
