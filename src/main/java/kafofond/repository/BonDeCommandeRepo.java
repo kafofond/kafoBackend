@@ -67,4 +67,8 @@ public interface BonDeCommandeRepo extends JpaRepository<BonDeCommande, Long> {
     @Query("SELECT COUNT(b) FROM BonDeCommande b WHERE b.entreprise.id = :entrepriseId AND b.dateCreation >= :startDate AND b.dateCreation < :endDate")
     long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
             @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+            
+    // Méthodes pour les statistiques par statut
+    @Query("SELECT COUNT(b) FROM BonDeCommande b WHERE b.entreprise.id = :entrepriseId AND b.statut = kafofond.entity.Statut.EN_COURS")
+    long countByEntrepriseIdAndStatutEnAttente(@Param("entrepriseId") Long entrepriseId);
 }

@@ -67,4 +67,23 @@ public interface LigneCreditRepo extends JpaRepository<LigneCredit, Long> {
         // Méthodes pour les statistiques du directeur
         @Query("SELECT COUNT(l) FROM LigneCredit l WHERE l.budget.entreprise.id = :entrepriseId AND l.statut = 'EN_COURS'")
         long countByEntrepriseIdAndStatutEnAttente(@Param("entrepriseId") Long entrepriseId);
+        
+        // Méthodes pour les statistiques du responsable
+        @Query("SELECT COALESCE(SUM(l.montantAllouer), 0) FROM LigneCredit l WHERE l.budget.entreprise.id = :entrepriseId")
+        double sumMontantAllouerByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
+        
+        @Query("SELECT COALESCE(SUM(l.montantAllouer), 0) FROM LigneCredit l WHERE l.budget.entreprise.id = :entrepriseId AND l.statut = 'APPROUVE'")
+        double sumMontantAllouerByEntrepriseIdAndStatut(@Param("entrepriseId") Long entrepriseId);
+        
+        @Query("SELECT COALESCE(SUM(l.montantAllouer), 0) FROM LigneCredit l WHERE l.statut = 'APPROUVE'")
+        double sumMontantAllouer();
+        
+        @Query("SELECT COALESCE(SUM(l.montantAllouer), 0) FROM LigneCredit l WHERE l.statut = 'APPROUVE' AND DATE(l.dateCreation) = :date")
+        double sumMontantAllouerByDate(@Param("date") java.time.LocalDate date);
+        
+        @Query("SELECT COALESCE(SUM(l.montantAllouer), 0) FROM LigneCredit l WHERE l.statut = 'APPROUVE' AND l.dateCreation >= :startDate AND l.dateCreation < :endDate")
+        double sumMontantAllouerBetweenDates(@Param("startDate") java.time.LocalDate startDate, @Param("endDate") java.time.LocalDate endDate);
+        
+        @Query("SELECT COALESCE(SUM(l.montantAllouer), 0) FROM LigneCredit l WHERE l.statut = 'APPROUVE' AND DATE(l.dateCreation) = :date AND HOUR(l.dateCreation) = :heure")
+        double sumMontantAllouerByDateAndHeure(@Param("date") java.time.LocalDate date, @Param("heure") int heure);
 }
