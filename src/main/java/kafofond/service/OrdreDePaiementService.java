@@ -1,5 +1,6 @@
 package kafofond.service;
 
+import kafofond.dto.OrdreDePaiementModificationDTO;
 import kafofond.entity.OrdreDePaiement;
 import kafofond.entity.DecisionDePrelevement;
 import kafofond.entity.Utilisateur;
@@ -116,6 +117,100 @@ public class OrdreDePaiementService {
         }
 
         return ordreCree;
+    }
+
+    /**
+     * Modifie un ordre de paiement (Comptable uniquement)
+     * Cette méthode est appelée depuis le contrôleur avec l'email de l'utilisateur
+     */
+    @Transactional
+    public OrdreDePaiement modifierDTO(Long id, OrdreDePaiementModificationDTO dto, String emailComptable) {
+        log.info("Modification de l'ordre de paiement {} par {}", id, emailComptable);
+
+        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy loading
+        Utilisateur comptable = utilisateurRepo.findByEmail(emailComptable)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy loading
+        if (comptable.getEntreprise() != null) {
+            comptable.getEntreprise().getNom(); // Force le chargement de l'entreprise
+        }
+
+        return modifier(id, dto, comptable);
+    }
+
+    /**
+     * Modifie un ordre de paiement (Comptable uniquement)
+     */
+    @Transactional
+    public OrdreDePaiement modifier(Long id, OrdreDePaiementModificationDTO dto, Utilisateur comptable) {
+        log.info("Modification de l'ordre de paiement {} par {}", id, comptable.getEmail());
+
+        if (comptable.getRole() != kafofond.entity.Role.COMPTABLE) {
+            throw new IllegalArgumentException("Seul le Comptable peut modifier des ordres de paiement");
+        }
+
+        OrdreDePaiement ordre = ordreDePaiementRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Ordre de paiement introuvable"));
+
+        // Vérifier que l'ordre appartient à l'entreprise du comptable
+        if (!ordre.getEntreprise().getId().equals(comptable.getEntreprise().getId())) {
+            throw new IllegalArgumentException("Vous n'avez pas le droit de modifier cet ordre de paiement");
+        }
+
+        // Vérifier que l'ordre est encore en cours (pas validé/approuvé/rejeté)
+        if (ordre.getStatut() != Statut.EN_COURS) {
+            throw new IllegalArgumentException("Cet ordre de paiement ne peut plus être modifié car il a été traité");
+        }
+
+        // Sauvegarder les anciennes valeurs pour l'historique
+        String ancienMontant = String.valueOf(ordre.getMontant());
+        String ancienneDescription = ordre.getDescription();
+        String ancienCompteOrigine = ordre.getCompteOrigine();
+        String ancienCompteDestinataire = ordre.getCompteDestinataire();
+
+        // Mettre à jour les champs modifiables
+        ordre.setMontant(dto.getMontant());
+        ordre.setDescription(dto.getDescription());
+        ordre.setCompteOrigine(dto.getCompteOrigine());
+        ordre.setCompteDestinataire(dto.getCompteDestinataire());
+        ordre.setDateModification(LocalDateTime.now());
+
+        OrdreDePaiement ordreModifie = ordreDePaiementRepo.save(ordre);
+
+        // Historique des modifications
+        historiqueService.enregistrerAction(
+                "ORDRE_PAIEMENT",
+                id,
+                "MODIFICATION",
+                comptable,
+                null, // ancienEtat
+                null, // nouveauEtat
+                ordre.getStatut().name(), // ancienStatut
+                ordre.getStatut().name(), // nouveauStatut
+                String.format("Montant: %s → %.2f, Description: %s → %s, Compte origine: %s → %s, Compte destinataire: %s → %s",
+                        ancienMontant, ordre.getMontant(),
+                        ancienneDescription != null ? ancienneDescription : "null", ordre.getDescription(),
+                        ancienCompteOrigine, ordre.getCompteOrigine(),
+                        ancienCompteDestinataire, ordre.getCompteDestinataire()));
+
+        // Notifier le responsable ou le directeur selon le seuil
+        boolean depasseSeuil = validationService.verifierSeuilValidation(ordre.getMontant(), comptable.getEntreprise());
+        if (depasseSeuil) {
+            Utilisateur directeur = trouverDirecteur(comptable.getEntreprise());
+            if (directeur != null) {
+                notificationService.notifierModification("ORDRE_PAIEMENT", ordreModifie.getId(),
+                        comptable, directeur, "modifié (montant >= seuil)");
+            }
+        } else {
+            Utilisateur responsable = trouverResponsable(comptable.getEntreprise());
+            if (responsable != null) {
+                notificationService.notifierModification("ORDRE_PAIEMENT", ordreModifie.getId(),
+                        comptable, responsable, "modifié");
+            }
+        }
+
+        return ordreModifie;
     }
 
     /**

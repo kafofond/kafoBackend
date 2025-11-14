@@ -2,6 +2,7 @@ package kafofond.service;
 
 import kafofond.dto.DecisionPrelevementCreateDTO;
 import kafofond.dto.DecisionPrelevementDTO;
+import kafofond.dto.DecisionPrelevementModificationDTO;
 import kafofond.entity.*;
 import kafofond.repository.*;
 import kafofond.mapper.DecisionPrelevementMapper;
@@ -126,6 +127,89 @@ public class DecisionPrelevementService {
         }
 
         return decisionCreee;
+    }
+
+    /**
+     * Modifie une décision de prélèvement (Comptable uniquement)
+     * Cette méthode est appelée depuis le contrôleur avec l'email de l'utilisateur
+     */
+    @Transactional
+    public DecisionDePrelevement modifierDTO(Long id, DecisionPrelevementModificationDTO dto, String emailComptable) {
+        log.info("Modification de la décision de prélèvement {} par {}", id, emailComptable);
+
+        // Récupérer l'utilisateur dans la transaction pour éviter les problèmes de lazy loading
+        Utilisateur comptable = utilisateurRepo.findByEmail(emailComptable)
+                .orElseThrow(() -> new IllegalArgumentException("Utilisateur introuvable"));
+
+        // Forcer le chargement de l'entreprise pour éviter les problèmes de lazy loading
+        if (comptable.getEntreprise() != null) {
+            comptable.getEntreprise().getNom(); // Force le chargement de l'entreprise
+        }
+
+        return modifier(id, dto, comptable);
+    }
+
+    @Transactional
+    public DecisionDePrelevement modifier(Long id, DecisionPrelevementModificationDTO dto, Utilisateur comptable) {
+        log.info("Modification de la décision de prélèvement {} par {}", id, comptable.getEmail());
+
+        if (comptable.getRole() != kafofond.entity.Role.COMPTABLE) {
+            throw new IllegalArgumentException("Seul le Comptable peut modifier des décisions de prélèvement");
+        }
+
+        DecisionDePrelevement decision = decisionDePrelevementRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Décision de prélèvement introuvable"));
+
+        // Vérifier que la décision appartient à l'entreprise du comptable
+        if (!decision.getEntreprise().getId().equals(comptable.getEntreprise().getId())) {
+            throw new IllegalArgumentException("Vous n'avez pas le droit de modifier cette décision de prélèvement");
+        }
+
+        // Vérifier que la décision est encore en cours (pas validée/approuvée/rejetée)
+        if (decision.getStatut() != Statut.EN_COURS) {
+            throw new IllegalArgumentException("Cette décision de prélèvement ne peut plus être modifiée car elle a été traitée");
+        }
+
+        // Sauvegarder les anciennes valeurs pour l'historique
+        String ancienMontant = String.valueOf(decision.getMontant());
+        String ancienCompteOrigine = decision.getCompteOrigine();
+        String ancienCompteDestinataire = decision.getCompteDestinataire();
+        String ancienMotif = decision.getMotifPrelevement();
+
+        // Mettre à jour les champs modifiables
+        decision.setMontant(dto.getMontant());
+        decision.setCompteOrigine(dto.getCompteOrigine());
+        decision.setCompteDestinataire(dto.getCompteDestinataire());
+        decision.setMotifPrelevement(dto.getMotifPrelevement());
+        decision.setDateModification(LocalDateTime.now());
+
+        DecisionDePrelevement decisionModifiee = decisionDePrelevementRepo.save(decision);
+
+        // Historique des modifications
+        historiqueService.enregistrerAction(
+                "DECISION_PRELEVEMENT",
+                id,
+                "MODIFICATION",
+                comptable,
+                null, // ancienEtat
+                null, // nouveauEtat
+                decision.getStatut().name(), // ancienStatut
+                decision.getStatut().name(), // nouveauStatut
+                String.format("Montant: %s → %.2f, Compte origine: %s → %s, Compte destinataire: %s → %s, Motif: %s → %s",
+                        ancienMontant, decision.getMontant(),
+                        ancienCompteOrigine, decision.getCompteOrigine(),
+                        ancienCompteDestinataire, decision.getCompteDestinataire(),
+                        ancienMotif, decision.getMotifPrelevement()));
+
+        // Notifier le responsable
+        Utilisateur responsable = trouverResponsableDansTransaction(comptable.getEntreprise().getId(),
+                comptable.getEntreprise().getNom());
+        if (responsable != null) {
+            notificationService.notifierModification("DECISION_PRELEVEMENT", decisionModifiee.getId(),
+                    comptable, responsable, "modifiée");
+        }
+
+        return decisionModifiee;
     }
 
     /**

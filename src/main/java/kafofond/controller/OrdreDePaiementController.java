@@ -2,6 +2,7 @@ package kafofond.controller;
 
 import kafofond.dto.OrdreDePaiementDTO;
 import kafofond.dto.OrdreDePaiementCreationDTO;
+import kafofond.dto.OrdreDePaiementModificationDTO;
 import kafofond.entity.OrdreDePaiement;
 import kafofond.entity.Utilisateur;
 import kafofond.mapper.OrdreDePaiementMapper;
@@ -71,6 +72,33 @@ public class OrdreDePaiementController {
             
         } catch (Exception e) {
             log.error("Erreur lors de la création de l'ordre de paiement : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Modifie un ordre de paiement (Comptable uniquement)
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> modifierOrdreDePaiement(@PathVariable Long id, 
+                                                   @RequestBody OrdreDePaiementModificationDTO ordreModificationDTO,
+                                                   Authentication authentication) {
+        try {
+            log.info("Modification de l'ordre de paiement {} par {}", id, authentication.getName());
+            
+            OrdreDePaiement ordreModifie = ordreDePaiementService.modifierDTO(id, ordreModificationDTO, authentication.getName());
+            OrdreDePaiementDTO ordreModifieDTO = ordreDePaiementMapper.toDTO(ordreModifie);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Ordre de paiement modifié avec succès");
+            response.put("ordre", ordreModifieDTO);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la modification de l'ordre de paiement : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);

@@ -128,6 +128,20 @@ public class AttestationServiceFaitService {
     }
 
     /**
+     * Liste toutes les attestations de service fait créées par un utilisateur spécifique
+     */
+    public List<AttestationDeServiceFait> listerParUtilisateur(Long utilisateurId) {
+        return attestationDeServiceFaitRepo.findByCreeParId(utilisateurId);
+    }
+    
+    /**
+     * Liste toutes les attestations de service fait créées par un utilisateur spécifique dans une entreprise
+     */
+    public List<AttestationDeServiceFait> listerParUtilisateurEtEntreprise(Long utilisateurId, Long entrepriseId) {
+        return attestationDeServiceFaitRepo.findByCreeParIdAndEntrepriseId(utilisateurId, entrepriseId);
+    }
+
+    /**
      * Trouve une attestation de service fait par ID
      */
     public Optional<AttestationDeServiceFait> trouverParId(Long id) {

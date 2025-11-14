@@ -44,4 +44,12 @@ public interface AttestationDeServiceFaitRepo extends JpaRepository<AttestationD
     @Query("SELECT COUNT(a) FROM AttestationDeServiceFait a WHERE a.entreprise.id = :entrepriseId AND a.dateCreation >= :startDate AND a.dateCreation < :endDate")
     long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
             @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+            
+    // Méthode pour lister les attestations créées par un utilisateur spécifique
+    @Query("SELECT a FROM AttestationDeServiceFait a WHERE a.creePar.id = :utilisateurId")
+    List<AttestationDeServiceFait> findByCreeParId(@Param("utilisateurId") Long utilisateurId);
+            
+    // Méthode pour lister les attestations créées par un utilisateur spécifique dans une entreprise
+    @Query("SELECT a FROM AttestationDeServiceFait a WHERE a.creePar.id = :utilisateurId AND a.entreprise.id = :entrepriseId")
+    List<AttestationDeServiceFait> findByCreeParIdAndEntrepriseId(@Param("utilisateurId") Long utilisateurId, @Param("entrepriseId") Long entrepriseId);
 }
