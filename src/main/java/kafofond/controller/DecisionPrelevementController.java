@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import kafofond.dto.DecisionPrelevementCreateDTO;
 import kafofond.dto.DecisionPrelevementDTO;
+import kafofond.dto.DecisionPrelevementModificationDTO;
 import kafofond.entity.DecisionDePrelevement;
 import kafofond.entity.Utilisateur;
 import kafofond.mapper.DecisionPrelevementMapper;
@@ -78,6 +79,43 @@ public class DecisionPrelevementController {
 
         } catch (Exception e) {
             log.error("Erreur lors de la création de la décision de prélèvement : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
+     * Modifie une décision de prélèvement (Comptable uniquement)
+     */
+    @Operation(summary = "Modifier une décision de prélèvement", description = "Modifie une décision de prélèvement existante. Accessible uniquement au Comptable.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Décision de prélèvement modifiée avec succès"),
+            @ApiResponse(responseCode = "400", description = "Données invalides ou décision non modifiable"),
+            @ApiResponse(responseCode = "403", description = "Accès refusé - Comptable requis"),
+            @ApiResponse(responseCode = "404", description = "Décision de prélèvement introuvable")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<?> modifierDecisionPrelevement(
+            @Parameter(description = "ID de la décision de prélèvement à modifier") @PathVariable Long id,
+            @RequestBody DecisionPrelevementModificationDTO decisionModificationDTO,
+            Authentication authentication) {
+        try {
+            log.info("Modification de la décision de prélèvement {} par {}", id, authentication.getName());
+
+            // Utiliser la méthode DTO pour éviter les problèmes de lazy loading
+            DecisionDePrelevement decisionModifiee = decisionPrelevementService.modifierDTO(id, decisionModificationDTO,
+                    authentication.getName());
+            DecisionPrelevementDTO decisionModifieeDTO = decisionPrelevementMapper.toDTO(decisionModifiee);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Décision de prélèvement modifiée avec succès");
+            response.put("decision", decisionModifieeDTO);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la modification de la décision de prélèvement : {}", e.getMessage());
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);

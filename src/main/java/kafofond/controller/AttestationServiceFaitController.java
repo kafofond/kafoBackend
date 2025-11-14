@@ -237,6 +237,88 @@ public class AttestationServiceFaitController {
     }
 
     /**
+     * Liste toutes les attestations de service fait créées par un utilisateur spécifique
+     */
+    @Operation(summary = "Lister les attestations de service fait par utilisateur", 
+               description = "Liste toutes les attestations de service fait créées par un utilisateur donné.")
+    @GetMapping("/utilisateur/{utilisateurId}")
+    public ResponseEntity<?> listerAttestationsServiceFaitParUtilisateur(
+            @Parameter(description = "ID de l'utilisateur") @PathVariable Long utilisateurId,
+            Authentication authentication) {
+        try {
+            log.info("Liste des attestations de service fait de l'utilisateur {} demandée par {}", 
+                    utilisateurId, authentication.getName());
+            
+            // Vérifier que l'utilisateur a le droit d'accéder à ces informations
+            Utilisateur utilisateurCourant = utilisateurService.trouverParEmailAvecEntreprise(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+            
+            // Récupérer l'utilisateur cible
+            Optional<Utilisateur> utilisateurCibleOpt = utilisateurService.trouverParId(utilisateurId);
+            if (utilisateurCibleOpt.isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Utilisateur introuvable");
+                return ResponseEntity.status(404).body(error);
+            }
+            
+            Utilisateur utilisateurCible = utilisateurCibleOpt.get();
+            
+            // Vérifier que les deux utilisateurs appartiennent à la même entreprise ou que l'utilisateur courant est admin
+            if (!utilisateurCourant.getEntreprise().getId().equals(utilisateurCible.getEntreprise().getId()) && 
+                utilisateurCourant.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Accès non autorisé aux attestations de cet utilisateur");
+                return ResponseEntity.status(403).body(error);
+            }
+            
+            // Utiliser la méthode du service pour récupérer les attestations de service fait
+            List<AttestationDeServiceFait> attestations = attestationServiceFaitService.listerParUtilisateur(utilisateurId);
+            
+            // Créer manuellement les DTOs pour éviter les problèmes de proxy
+            List<AttestationServiceFaitDTO> attestationsDTO = attestations.stream()
+                    .map(attestation -> {
+                        try {
+                            return AttestationServiceFaitDTO.builder()
+                                    .id(attestation.getId())
+                                    .code(attestation.getCode())
+                                    .referenceBonCommande(attestation.getReferenceBonCommande())
+                                    .fournisseur(attestation.getFournisseur())
+                                    .titre(attestation.getTitre())
+                                    .constat(attestation.getConstat())
+                                    .dateLivraison(attestation.getDateLivraison())
+                                    .dateCreation(LocalDate.from(attestation.getDateCreation()))
+                                    .urlFichierJoint(attestation.getUrlFichierJoint())
+                                    .createurNom(attestation.getCreePar() != null ? 
+                                        attestation.getCreePar().getPrenom() + " " + attestation.getCreePar().getNom() : null)
+                                    .createurEmail(attestation.getCreePar() != null ? attestation.getCreePar().getEmail() : null)
+                                    // Éviter l'accès direct au bonDeCommande pour éviter les problèmes de proxy
+                                    .bonDeCommandeId(attestation.getBonDeCommande() != null ? attestation.getBonDeCommande().getId() : null)
+                                    .build();
+                        } catch (Exception e) {
+                            log.error("Erreur lors de la conversion de l'attestation en DTO : {}", e.getMessage());
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("attestations", attestationsDTO);
+            response.put("total", attestationsDTO.size());
+            response.put("utilisateurId", utilisateurId);
+            response.put("utilisateurNom", utilisateurCible.getPrenom() + " " + utilisateurCible.getNom());
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des attestations de service fait par utilisateur : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
+    /**
      * Récupère les détails d'une attestation de service fait
      */
     @Operation(summary = "Obtenir une attestation de service fait", 
