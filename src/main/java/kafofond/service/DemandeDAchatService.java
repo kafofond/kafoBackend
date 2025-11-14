@@ -82,15 +82,13 @@ public class DemandeDAchatService {
                 "DEMANDE_ACHAT",
                 demandeCreee.getId(),
                 utilisateur,
-                Statut.EN_COURS
-        );
+                Statut.EN_COURS);
 
         // Enregistrer dans la table de validation
         tableValidationService.enregistrerCreation(
                 demandeCreee.getId(),
                 kafofond.entity.TypeDocument.DEMANDE_ACHAT,
-                utilisateur
-        );
+                utilisateur);
 
         Utilisateur gestionnaire = trouverGestionnaire(utilisateur.getEntreprise());
         if (gestionnaire != null) {
@@ -169,8 +167,7 @@ public class DemandeDAchatService {
                 id,
                 modificateur,
                 ancienStatut,
-                demande.getStatut()
-        );
+                demande.getStatut());
 
         Utilisateur gestionnaire = trouverGestionnaire(modificateur.getEntreprise());
         if (gestionnaire != null) {
@@ -444,12 +441,13 @@ public class DemandeDAchatService {
 
         // Sauvegarder d'abord pour obtenir l'ID
         BonDeCommande bonCree = bonDeCommandeRepo.save(bonDeCommande);
-        
+
         // Générer le code automatiquement
-        String code = codeGeneratorService.generateBonCommandeCode(bonCree.getId(), LocalDate.from(bonCree.getDateCreation()));
+        String code = codeGeneratorService.generateBonCommandeCode(bonCree.getId(),
+                LocalDate.from(bonCree.getDateCreation()));
         bonCree.setCode(code);
         bonCree = bonDeCommandeRepo.save(bonCree);
-        
+
         return bonCree;
     }
 
@@ -472,7 +470,8 @@ public class DemandeDAchatService {
     }
 
     /**
-     * Compte le nombre de demandes d'achat créées par un utilisateur avec un statut spécifique
+     * Compte le nombre de demandes d'achat créées par un utilisateur avec un statut
+     * spécifique
      */
     public long compterParUtilisateurEtStatut(Long utilisateurId, Statut statut) {
         return demandeDAchatRepo.countByCreeParIdAndStatut(utilisateurId, statut);
@@ -488,7 +487,8 @@ public class DemandeDAchatService {
     }
 
     /**
-     * Récupère toutes les demandes d'achat créées par un utilisateur avec un statut spécifique
+     * Récupère toutes les demandes d'achat créées par un utilisateur avec un statut
+     * spécifique
      */
     public List<DemandeDAchat> listerParUtilisateurEtStatut(Long utilisateurId, Statut statut) {
         return utilisateurRepo.findById(utilisateurId)
@@ -502,29 +502,29 @@ public class DemandeDAchatService {
      */
     public java.util.Map<String, Long> obtenirStatistiquesParUtilisateur(Long utilisateurId) {
         java.util.Map<String, Long> statistiques = new java.util.HashMap<>();
-        
+
         statistiques.put("total", compterParUtilisateur(utilisateurId));
         statistiques.put("en_cours", compterParUtilisateurEtStatut(utilisateurId, Statut.EN_COURS));
         statistiques.put("valide", compterParUtilisateurEtStatut(utilisateurId, Statut.VALIDE));
         statistiques.put("approuve", compterParUtilisateurEtStatut(utilisateurId, Statut.APPROUVE));
         statistiques.put("rejete", compterParUtilisateurEtStatut(utilisateurId, Statut.REJETE));
-        
+
         return statistiques;
     }
 
     @Transactional(readOnly = true)
     public kafofond.dto.StatistiquesDemandesDTO getStatistiquesParUtilisateur(Long utilisateurId) {
         log.info("Récupération des statistiques des demandes d'achat pour l'utilisateur #{}", utilisateurId);
-        
+
         // Compter le nombre total de demandes
         long total = demandeDAchatRepo.countByCreeParId(utilisateurId);
-        
+
         // Compter le nombre de demandes par statut
         long enCours = demandeDAchatRepo.countByCreeParIdAndStatut(utilisateurId, kafofond.entity.Statut.EN_COURS);
         long validees = demandeDAchatRepo.countByCreeParIdAndStatut(utilisateurId, kafofond.entity.Statut.VALIDE);
         long approuvees = demandeDAchatRepo.countByCreeParIdAndStatut(utilisateurId, kafofond.entity.Statut.APPROUVE);
         long rejetees = demandeDAchatRepo.countByCreeParIdAndStatut(utilisateurId, kafofond.entity.Statut.REJETE);
-        
+
         return kafofond.dto.StatistiquesDemandesDTO.builder()
                 .total(total)
                 .enCours(enCours)
