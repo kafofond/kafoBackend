@@ -79,4 +79,10 @@ public interface FicheBesoinRepo extends JpaRepository<FicheDeBesoin, Long> {
         @Query("SELECT COUNT(f) FROM FicheDeBesoin f WHERE f.entreprise.id = :entrepriseId AND f.dateCreation >= :startDate AND f.dateCreation < :endDate")
         long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
                         @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+        /**
+         * Trouve toutes les fiches de besoin approuvées sans demande d'achat associée
+         */
+        @Query("SELECT f FROM FicheDeBesoin f LEFT JOIN f.demandeDAchat d WHERE f.statut = kafofond.entity.Statut.APPROUVE AND d.id IS NULL")
+        List<FicheDeBesoin> findApprovedWithoutDemandeDAchat();
 }

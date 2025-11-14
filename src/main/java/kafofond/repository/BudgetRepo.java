@@ -49,10 +49,10 @@ public interface BudgetRepo extends JpaRepository<Budget, Long> {
         long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
                         @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-        // Méthodes pour les statistiques du directeur
-        @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId")
-        long countBudgetByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
-
-        @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId AND (b.statut = 'EN_COURS' OR b.statut = 'APPROUVE')")
+        @Query("SELECT COUNT(b) FROM Budget b WHERE b.entreprise.id = :entrepriseId AND b.statut = 'EN_COURS'")
         long countByEntrepriseIdAndStatutEnCours(@Param("entrepriseId") Long entrepriseId);
+
+        // Méthodes pour les statistiques du directeur
+        @Query("SELECT COALESCE(SUM(b.montantBudget), 0) FROM Budget b WHERE b.entreprise.id = :entrepriseId")
+        double sumMontantBudgetByEntrepriseId(@Param("entrepriseId") Long entrepriseId);
 }

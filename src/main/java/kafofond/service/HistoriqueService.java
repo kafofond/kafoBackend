@@ -3,6 +3,7 @@ package kafofond.service;
 import kafofond.entity.HistoriqueAction;
 import kafofond.entity.Utilisateur;
 import kafofond.entity.Entreprise;
+import kafofond.entity.Statut;
 import kafofond.repository.HistoriqueActionRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +55,103 @@ public class HistoriqueService {
                 .build();
 
         return historiqueActionRepo.save(historique);
+    }
+
+    /**
+     * Enregistre une action de création pour un document
+     */
+    @Transactional
+    public HistoriqueAction enregistrerCreation(
+            String typeDocument,
+            Long idDocument,
+            Utilisateur utilisateur,
+            Statut statut
+    ) {
+        return enregistrerAction(
+                typeDocument,
+                idDocument,
+                "CREATION",
+                utilisateur,
+                null,
+                null,
+                null,
+                statut != null ? statut.name() : null,
+                "Document créé"
+        );
+    }
+
+    /**
+     * Enregistre une action de création pour une entité avec état
+     */
+    @Transactional
+    public HistoriqueAction enregistrerCreation(
+            String typeDocument,
+            Long idDocument,
+            Utilisateur utilisateur,
+            boolean etat,
+            Statut statut
+    ) {
+        return enregistrerAction(
+                typeDocument,
+                idDocument,
+                "CREATION",
+                utilisateur,
+                null,
+                etat ? "ACTIF" : "INACTIF",
+                null,
+                statut != null ? statut.name() : null,
+                "Entité créée"
+        );
+    }
+
+    /**
+     * Enregistre une action de modification pour un document
+     */
+    @Transactional
+    public HistoriqueAction enregistrerModification(
+            String typeDocument,
+            Long idDocument,
+            Utilisateur utilisateur,
+            Statut ancienStatut,
+            Statut nouveauStatut
+    ) {
+        return enregistrerAction(
+                typeDocument,
+                idDocument,
+                "MODIFICATION",
+                utilisateur,
+                null,
+                null,
+                ancienStatut != null ? ancienStatut.name() : null,
+                nouveauStatut != null ? nouveauStatut.name() : null,
+                "Document modifié"
+        );
+    }
+
+    /**
+     * Enregistre une action de modification pour une entité avec état
+     */
+    @Transactional
+    public HistoriqueAction enregistrerModification(
+            String typeDocument,
+            Long idDocument,
+            Utilisateur utilisateur,
+            boolean ancienEtat,
+            boolean nouveauEtat,
+            Statut ancienStatut,
+            Statut nouveauStatut
+    ) {
+        return enregistrerAction(
+                typeDocument,
+                idDocument,
+                "MODIFICATION",
+                utilisateur,
+                ancienEtat ? "ACTIF" : "INACTIF",
+                nouveauEtat ? "ACTIF" : "INACTIF",
+                ancienStatut != null ? ancienStatut.name() : null,
+                nouveauStatut != null ? nouveauStatut.name() : null,
+                "Entité modifiée"
+        );
     }
 
     public List<HistoriqueAction> consulterHistorique(String typeDocument, Long idDocument) {

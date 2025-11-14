@@ -76,23 +76,17 @@ public class FicheBesoinService {
                 ficheCreee = ficheBesoinRepo.save(ficheCreee);
 
                 // Historique
-                historiqueService.enregistrerAction(
+                historiqueService.enregistrerCreation(
                                 "FICHE_BESOIN",
                                 ficheCreee.getId(),
-                                "CREATION",
                                 utilisateur,
-                                null, // ancienEtat
-                                null, // nouveauEtat
-                                null, // ancienStatut
-                                Statut.EN_COURS.name(), // nouveauStatut
-                                "Créée par " + utilisateur.getRole());
+                                Statut.EN_COURS);
 
                 // Enregistrer dans la table de validation
                 tableValidationService.enregistrerCreation(
                                 ficheCreee.getId(),
                                 kafofond.entity.TypeDocument.FICHE_BESOIN,
-                                utilisateur
-                );
+                                utilisateur);
 
                 Utilisateur gestionnaire = trouverGestionnaire(utilisateur.getEntreprise());
                 if (gestionnaire != null) {
@@ -212,17 +206,13 @@ public class FicheBesoinService {
 
                 FicheDeBesoin ficheModifie = ficheBesoinRepo.save(fiche);
 
-                // Historique
-                historiqueService.enregistrerAction(
+                // Enregistrer dans l'historique
+                historiqueService.enregistrerModification(
                                 "FICHE_BESOIN",
                                 id,
-                                "MODIFICATION",
                                 modificateur,
-                                null, // ancienEtat
-                                null, // nouveauEtat
-                                ancienStatut != null ? ancienStatut.name() : null, // ancienStatut
-                                fiche.getStatut().name(), // nouveauStatut
-                                "Fiche modifiée par " + modificateur.getRole());
+                                ancienStatut,
+                                fiche.getStatut());
 
                 Utilisateur gestionnaire = trouverGestionnaire(modificateur.getEntreprise());
                 if (gestionnaire != null) {
@@ -943,5 +933,77 @@ public class FicheBesoinService {
                                         }
                                         return fiche;
                                 });
+        }
+
+        /**
+         * Trouve toutes les fiches de besoin approuvées sans demande d'achat associée
+         */
+        public List<FicheDeBesoin> findApprovedWithoutDemandeDAchat() {
+                return ficheBesoinRepo.findApprovedWithoutDemandeDAchat();
+        }
+
+        /**
+         * Trouve toutes les fiches de besoin approuvées sans demande d'achat associée
+         * et retourne les DTOs
+         */
+        @Transactional(readOnly = true)
+        public List<kafofond.dto.FicheBesoinDTO> findApprovedWithoutDemandeDAchatDTO() {
+                List<FicheDeBesoin> fiches = ficheBesoinRepo.findApprovedWithoutDemandeDAchat();
+                return fiches.stream()
+                                .map(fiche -> {
+                                        // Forcer le chargement des relations lazy
+                                        if (fiche.getDesignations() != null && !fiche.getDesignations().isEmpty()) {
+                                                fiche.getDesignations().size();
+                                                fiche.getDesignations().forEach(d -> d.getProduit());
+                                        }
+                                        if (fiche.getCreePar() != null) {
+                                                fiche.getCreePar().getNom();
+                                        }
+                                        if (fiche.getEntreprise() != null) {
+                                                fiche.getEntreprise().getNom();
+                                        }
+
+                                        // Mapper vers DTO dans la transaction
+                                        return kafofond.dto.FicheBesoinDTO.builder()
+                                                        .id(fiche.getId())
+                                                        .code(fiche.getCode())
+                                                        .serviceBeneficiaire(fiche.getServiceBeneficiaire())
+                                                        .objet(fiche.getObjet())
+                                                        .description(fiche.getDescription())
+                                                        .montantEstime(fiche.getMontantEstime())
+                                                        .dateAttendu(fiche.getDateAttendu())
+                                                        .dateCreation(LocalDate.from(fiche.getDateCreation()))
+                                                        .statut(fiche.getStatut())
+                                                        .createurNom(fiche.getCreePar() != null
+                                                                        ? fiche.getCreePar().getPrenom() + " "
+                                                                                        + fiche.getCreePar().getNom()
+                                                                        : null)
+                                                        .createurEmail(fiche.getCreePar() != null
+                                                                        ? fiche.getCreePar().getEmail()
+                                                                        : null)
+                                                        .entrepriseNom(fiche.getEntreprise() != null
+                                                                        ? fiche.getEntreprise().getNom()
+                                                                        : null)
+                                                        .designations(fiche.getDesignations() != null
+                                                                        && !fiche.getDesignations().isEmpty()
+                                                                                        ? fiche.getDesignations()
+                                                                                                        .stream()
+                                                                                                        .map(d -> kafofond.dto.DesignationDTO
+                                                                                                                        .builder()
+                                                                                                                        .id(d.getId())
+                                                                                                                        .produit(d.getProduit())
+                                                                                                                        .quantite(d.getQuantite())
+                                                                                                                        .prixUnitaire(d.getPrixUnitaire())
+                                                                                                                        .montantTotal(d.getMontantTotal())
+                                                                                                                        .date(d.getDate())
+                                                                                                                        .ficheBesoinId(fiche
+                                                                                                                                        .getId())
+                                                                                                                        .build())
+                                                                                                        .collect(java.util.stream.Collectors
+                                                                                                                        .toList())
+                                                                                        : null)
+                                                        .build();
+                                })
+                                .collect(java.util.stream.Collectors.toList());
         }
 }

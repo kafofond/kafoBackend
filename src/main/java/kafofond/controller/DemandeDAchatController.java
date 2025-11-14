@@ -362,4 +362,54 @@ public class DemandeDAchatController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    /**
+     * Liste toutes les demandes d'achat d'une entreprise spécifique
+     */
+    @GetMapping("/entreprise/{entrepriseId}")
+    public ResponseEntity<?> listerDemandesAchatParEntreprise(@PathVariable Long entrepriseId, Authentication authentication) {
+        try {
+            log.info("Liste des demandes d'achat de l'entreprise {} demandée par {}", entrepriseId, authentication.getName());
+
+            // Vérifier que l'utilisateur a le droit d'accéder à cette entreprise
+            Utilisateur utilisateur = utilisateurService.trouverParEmailAvecEntreprise(authentication.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+            // Vérifier que l'utilisateur appartient à l'entreprise ou est admin
+            if (!utilisateur.getEntreprise().getId().equals(entrepriseId) && 
+                utilisateur.getRole() != kafofond.entity.Role.SUPER_ADMIN) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Accès non autorisé à cette entreprise");
+                return ResponseEntity.status(403).body(error);
+            }
+
+            // Utiliser la méthode du service pour récupérer les demandes d'achat
+            List<DemandeDAchat> demandes = demandeDAchatService.listerParEntrepriseId(entrepriseId);
+
+            // Convertir en DTOs et récupérer les commentaires simplifiés pour chaque demande
+            List<DemandeDAchatDTO> dtos = demandes.stream()
+                    .map(demande -> {
+                        DemandeDAchatDTO dto = demandeDAchatMapper.toDTO(demande);
+                        var commentaires = commentaireService
+                                .getCommentairesByDocument(demande.getId(), TypeDocument.DEMANDE_ACHAT)
+                                .stream().map(commentaireMapper::toSimplifieDTO).toList();
+                        dto.setCommentaires(commentaires);
+                        return dto;
+                    })
+                    .toList();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("demandes", dtos);
+            response.put("total", dtos.size());
+            response.put("entrepriseId", entrepriseId);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des demandes d'achat par entreprise : {}", e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
 }

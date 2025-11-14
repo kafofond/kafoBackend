@@ -381,4 +381,30 @@ public class FicheBesoinController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    /**
+     * Récupère toutes les fiches de besoin approuvées sans demande d'achat associée
+     */
+    @GetMapping("/approuvees/sans-demande")
+    public ResponseEntity<?> getFichesBesoinApprouveesSansDemande(Authentication authentication) {
+        try {
+            log.info("Récupération des fiches de besoin approuvées sans demande d'achat demandée par {}",
+                    authentication.getName());
+
+            List<FicheBesoinDTO> fiches = ficheBesoinService.findApprovedWithoutDemandeDAchatDTO();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("fiches", fiches);
+            response.put("total", fiches.size());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des fiches de besoin approuvées sans demande d'achat : {}",
+                    e.getMessage());
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
 }

@@ -66,16 +66,12 @@ public class BudgetService {
         budgetCree = budgetRepo.save(budgetCree);
 
         // Enregistrer dans l'historique
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerCreation(
                 "BUDGET",
                 budgetCree.getId(),
-                "CREATION",
                 createur,
-                null,                       // ancienEtat
-                "INACTIF",                  // nouveauEtat (etat = false)
-                null,                       // ancienStatut
-                Statut.EN_COURS.name(),     // nouveauStatut
-                "Créé par " + createur.getRole().name()
+                false, // etat = false (INACTIF)
+                Statut.EN_COURS
         );
 
         // Enregistrer dans la table de validation
@@ -146,16 +142,14 @@ public class BudgetService {
         Budget budgetModifiee = budgetRepo.save(budget);
 
         // Enregistrer dans l'historique
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerModification(
                 "BUDGET",
                 id,
-                "MODIFICATION",
                 modificateur,
-                budget.getEtat() != null && budget.getEtat() ? "ACTIF" : "INACTIF",      // ancienEtat
-                budget.getEtat() != null && budget.getEtat() ? "ACTIF" : "INACTIF",      // nouveauEtat
-                ancienStatut != null ? ancienStatut.name() : null,  // ancienStatut
-                budget.getStatut() != null ? budget.getStatut().name() : null,  // nouveauStatut
-                "Modification du budget"
+                budget.getEtat() != null && budget.getEtat(), // ancienEtat
+                budget.getEtat() != null && budget.getEtat(), // nouveauEtat
+                ancienStatut,
+                budget.getStatut()
         );
 
         // Notifier le Directeur si ce n'est pas lui qui modifie

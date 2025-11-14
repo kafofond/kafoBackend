@@ -1,11 +1,18 @@
 package kafofond.controller;
 
+import kafofond.dto.ComptableDashboardStats;
+import kafofond.dto.ComptableChartDataDTO;
 import kafofond.dto.DirecteurDashboardStats;
 import kafofond.dto.DsiDashboardStats;
+import kafofond.dto.ResponsableDashboardStatsDTO;
+import kafofond.dto.ResponsableChartDataDTO;
 import kafofond.entity.Role;
 import kafofond.entity.Utilisateur;
 import kafofond.service.StatistiqueService;
 import kafofond.service.UtilisateurService;
+import kafofond.service.ResponsableStatistiquesService;
+import kafofond.repository.LigneCreditRepo;
+import kafofond.repository.OrdreDePaiementRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -25,6 +32,9 @@ public class StatistiqueController {
 
         private final StatistiqueService statistiqueService;
         private final UtilisateurService utilisateurService;
+        private final ResponsableStatistiquesService responsableStatistiquesService;
+        private final LigneCreditRepo ligneCreditRepo;
+        private final OrdreDePaiementRepo ordreDePaiementRepo;
 
         @GetMapping("/dashboard")
         public ResponseEntity<Map<String, Object>> getStatistiquesDashboard() {
@@ -291,6 +301,177 @@ public class StatistiqueController {
                         response.put("labels", new String[0]);
                         response.put("datasets", datasets);
                         return ResponseEntity.ok(response);
+                }
+        }
+        
+        // Nouveaux endpoints pour le dashboard responsable
+        @GetMapping("/responsable/dashboard")
+        public ResponseEntity<ResponsableDashboardStatsDTO> getStatistiquesDashboardResponsable(
+                        Authentication authentication) {
+                try {
+                        // Récupérer l'utilisateur authentifié
+                        Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
+                                        .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                        // Vérifier que l'utilisateur a le rôle RESPONSABLE
+                        if (utilisateur.getRole() != Role.RESPONSABLE) {
+                                return ResponseEntity.status(403).build();
+                        }
+
+                        Long entrepriseId = utilisateur.getEntreprise().getId();
+                        
+                        // Récupérer les statistiques dynamiques du service
+                        ResponsableDashboardStatsDTO stats = responsableStatistiquesService.getDashboardStats(entrepriseId);
+
+                        return ResponseEntity.ok(stats);
+                } catch (Exception e) {
+                        // En cas d'erreur, retourner des statistiques par défaut
+                        ResponsableDashboardStatsDTO defaultStats = ResponsableDashboardStatsDTO.builder()
+                                        .creditsAffectes(0.0)
+                                        .creditsUtilises(0.0)
+                                        .creditsRestants(0.0)
+                                        .pourcentageBudget(0.0)
+                                        .pourcentageUtilisation(0.0)
+                                        .pourcentageRestant(0.0)
+                                        .build();
+                        return ResponseEntity.ok(defaultStats);
+                }
+        }
+
+        // Nouvel endpoint pour les graphiques responsable
+        @GetMapping("/responsable/chart")
+        public ResponseEntity<ResponsableChartDataDTO> getStatistiquesChartResponsable(
+                        @RequestParam(defaultValue = "semaine") String periode,
+                        Authentication authentication) {
+                try {
+                        // Récupérer l'utilisateur authentifié
+                        Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
+                                        .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                        // Vérifier que l'utilisateur a le rôle RESPONSABLE
+                        if (utilisateur.getRole() != Role.RESPONSABLE) {
+                                return ResponseEntity.status(403).build();
+                        }
+
+                        Long entrepriseId = utilisateur.getEntreprise().getId();
+                        
+                        // Récupérer les données pour les graphiques
+                        ResponsableChartDataDTO chartData = responsableStatistiquesService.getChartData(periode, entrepriseId);
+
+                        return ResponseEntity.ok(chartData);
+                } catch (Exception e) {
+                        // En cas d'erreur, retourner des données vides
+                        ResponsableChartDataDTO emptyData = ResponsableChartDataDTO.builder()
+                                        .labels(List.of())
+                                        .datasets(Map.of())
+                                        .build();
+                        return ResponseEntity.ok(emptyData);
+                }
+        }
+
+        // Nouvel endpoint pour le dashboard comptable
+        @GetMapping("/comptable/dashboard")
+        public ResponseEntity<ComptableDashboardStats> getStatistiquesDashboardComptable(
+                        Authentication authentication) {
+                try {
+                        // Récupérer l'utilisateur authentifié
+                        Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
+                                        .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                        // Vérifier que l'utilisateur a le rôle COMPTABLE
+                        if (utilisateur.getRole() != Role.COMPTABLE) {
+                                return ResponseEntity.status(403).build();
+                        }
+
+                        Long entrepriseId = utilisateur.getEntreprise().getId();
+
+                        ComptableDashboardStats stats = new ComptableDashboardStats();
+
+                        // Récupérer les statistiques
+                        int totalDemandesAchat = Math.toIntExact(statistiqueService.getTotalDemandesAchatByEntrepriseId(entrepriseId));
+                        int totalBonsCommande = Math.toIntExact(statistiqueService.getTotalBonsCommandeByEntrepriseId(entrepriseId));
+                        int totalOrdresPaiement = Math.toIntExact(statistiqueService.getTotalOrdresPaiementByEntrepriseId(entrepriseId));
+                        
+                        int demandesEnAttente = Math.toIntExact(statistiqueService.getDemandesAchatEnAttenteByEntrepriseId(entrepriseId));
+                        int bonsEnAttente = Math.toIntExact(statistiqueService.getBonsCommandeEnAttenteByEntrepriseId(entrepriseId));
+                        int ordresEnAttente = Math.toIntExact(statistiqueService.getOrdresPaiementEnAttenteByEntrepriseId(entrepriseId));
+                        
+                        // Calculer les pourcentages
+                        double pourcentageDemandesTraitees = totalDemandesAchat > 0 
+                                ? ((double) (totalDemandesAchat - demandesEnAttente) / totalDemandesAchat) * 100 
+                                : 0.0;
+                                
+                        double pourcentageBonsValides = totalBonsCommande > 0 
+                                ? ((double) (totalBonsCommande - bonsEnAttente) / totalBonsCommande) * 100 
+                                : 0.0;
+
+                        // Configurer les statistiques
+                        stats.setTotalDemandesAchat(totalDemandesAchat);
+                        stats.setTotalBonsCommande(totalBonsCommande);
+                        stats.setTotalOrdresPaiement(totalOrdresPaiement);
+                        stats.setDemandesEnAttente(demandesEnAttente);
+                        stats.setBonsEnAttente(bonsEnAttente);
+                        stats.setOrdresEnAttente(ordresEnAttente);
+                        stats.setPourcentageDemandesTraitees(Math.round(pourcentageDemandesTraitees * 100.0) / 100.0);
+                        stats.setPourcentageBonsValides(Math.round(pourcentageBonsValides * 100.0) / 100.0);
+
+                        return ResponseEntity.ok(stats);
+                } catch (Exception e) {
+                        // En cas d'erreur, retourner des statistiques par défaut
+                        ComptableDashboardStats defaultStats = new ComptableDashboardStats();
+                        defaultStats.setTotalDemandesAchat(0);
+                        defaultStats.setTotalBonsCommande(0);
+                        defaultStats.setTotalOrdresPaiement(0);
+                        defaultStats.setDemandesEnAttente(0);
+                        defaultStats.setBonsEnAttente(0);
+                        defaultStats.setOrdresEnAttente(0);
+                        defaultStats.setPourcentageDemandesTraitees(0.0);
+                        defaultStats.setPourcentageBonsValides(0.0);
+                        return ResponseEntity.ok(defaultStats);
+                }
+        }
+
+        // Nouvel endpoint pour les graphiques comptable
+        @GetMapping("/comptable/chart")
+        public ResponseEntity<ComptableChartDataDTO> getStatistiquesChartComptable(
+                        @RequestParam(defaultValue = "semaine") String periode,
+                        Authentication authentication) {
+                try {
+                        // Récupérer l'utilisateur authentifié
+                        Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
+                                        .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                        // Vérifier que l'utilisateur a le rôle COMPTABLE
+                        if (utilisateur.getRole() != Role.COMPTABLE) {
+                                return ResponseEntity.status(403).build();
+                        }
+
+                        Long entrepriseId = utilisateur.getEntreprise().getId();
+                        
+                        // Récupérer les données pour les graphiques
+                        List<String> labels = statistiqueService.getLabelsParPeriode(periode);
+                        List<Integer> demandesAchat = statistiqueService.getDemandesAchatParPeriodeEtEntreprise(periode, entrepriseId);
+                        List<Integer> bonsCommande = statistiqueService.getBonsCommandeParPeriodeEtEntreprise(periode, entrepriseId);
+                        List<Integer> ordresPaiement = statistiqueService.getOrdresPaiementParPeriodeEtEntreprise(periode, entrepriseId);
+                        
+                        Map<String, List<Integer>> datasets = new HashMap<>();
+                        datasets.put("demandesAchat", demandesAchat);
+                        datasets.put("bonsCommande", bonsCommande);
+                        datasets.put("ordresPaiement", ordresPaiement);
+
+                        ComptableChartDataDTO chartData = ComptableChartDataDTO.builder()
+                                        .labels(labels)
+                                        .datasets(datasets)
+                                        .build();
+
+                        return ResponseEntity.ok(chartData);
+                } catch (Exception e) {
+                        // En cas d'erreur, retourner des données vides
+                        ComptableChartDataDTO emptyData = ComptableChartDataDTO.builder()
+                                        .labels(List.of())
+                                        .datasets(Map.of())
+                                        .build();
+                        return ResponseEntity.ok(emptyData);
                 }
         }
 }

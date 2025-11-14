@@ -86,16 +86,11 @@ public class AttestationServiceFaitService {
         AttestationDeServiceFait attestationCreee = attestationDeServiceFaitRepo.save(attestationTemp);
 
         // Historique
-        historiqueService.enregistrerAction(
+        historiqueService.enregistrerCreation(
                 "ATTESTATION_SERVICE_FAIT",
                 attestationCreee.getId(),
-                "CREATION",
                 utilisateur,
-                null, // ancienEtat (pas utilisé)
-                null, // nouveauEtat (pas utilisé)
-                null, // ancienStatut
-                null, // nouveauStatut (pas de statut)
-                "Créée par " + utilisateur.getRole() // commentaire
+                null // Pas de statut pour les attestations de service fait
         );
 
         // Enregistrer dans la table de validation

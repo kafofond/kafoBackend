@@ -79,4 +79,8 @@ public interface DemandeDAchatRepo extends JpaRepository<DemandeDAchat, Long> {
         @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.entreprise.id = :entrepriseId AND d.dateCreation >= :startDate AND d.dateCreation < :endDate")
         long countByEntrepriseIdAndDateCreationBetween(@Param("entrepriseId") Long entrepriseId,
                         @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+        
+        // Méthodes pour les statistiques par statut
+        @Query("SELECT COUNT(d) FROM DemandeDAchat d WHERE d.entreprise.id = :entrepriseId AND d.statut = kafofond.entity.Statut.EN_COURS")
+        long countByEntrepriseIdAndStatutEnAttente(@Param("entrepriseId") Long entrepriseId);
 }

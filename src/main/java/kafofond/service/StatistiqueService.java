@@ -783,4 +783,205 @@ public class StatistiqueService {
 
         return resultats;
     }
+    
+    // Nouvelles méthodes pour les statistiques du directeur (crédits affectés, utilisés, restants)
+    public double getTotalMontantBudgetByEntrepriseId(Long entrepriseId) {
+        return budgetRepo.sumMontantBudgetByEntrepriseId(entrepriseId);
+    }
+    
+    public double getTotalMontantLignesCreditByEntrepriseId(Long entrepriseId) {
+        return ligneCreditRepo.sumMontantAllouerByEntrepriseId(entrepriseId);
+    }
+    
+    public double getTotalDepensesValideesByEntrepriseId(Long entrepriseId) {
+        return ordreDePaiementRepo.sumMontantTotalByEntrepriseId(entrepriseId);
+    }
+
+    // Méthodes pour les statistiques du comptable
+    public long getTotalDemandesAchatByEntrepriseId(Long entrepriseId) {
+        return demandeDAchatRepo.countByEntrepriseId(entrepriseId);
+    }
+
+    public long getTotalBonsCommandeByEntrepriseId(Long entrepriseId) {
+        return bonDeCommandeRepo.countByEntrepriseId(entrepriseId);
+    }
+
+    public long getTotalOrdresPaiementByEntrepriseId(Long entrepriseId) {
+        return ordreDePaiementRepo.countByEntrepriseId(entrepriseId);
+    }
+
+    public long getDemandesAchatEnAttenteByEntrepriseId(Long entrepriseId) {
+        return demandeDAchatRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
+    }
+
+    public long getBonsCommandeEnAttenteByEntrepriseId(Long entrepriseId) {
+        return bonDeCommandeRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
+    }
+
+    public long getOrdresPaiementEnAttenteByEntrepriseId(Long entrepriseId) {
+        return ordreDePaiementRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
+    }
+
+    // Méthodes pour les graphiques du comptable
+    public List<Integer> getDemandesAchatParPeriodeEtEntreprise(String periode, Long entrepriseId) {
+        List<Integer> resultats = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+                        long count = demandeDAchatRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = demandeDAchatRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                        long count = demandeDAchatRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = demandeDAchatRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur dans getDemandesAchatParPeriodeEtEntreprise: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        return resultats;
+    }
+
+    public List<Integer> getBonsCommandeParPeriodeEtEntreprise(String periode, Long entrepriseId) {
+        List<Integer> resultats = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+                        long count = bonDeCommandeRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = bonDeCommandeRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                        long count = bonDeCommandeRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = bonDeCommandeRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur dans getBonsCommandeParPeriodeEtEntreprise: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        return resultats;
+    }
+
+    public List<Integer> getOrdresPaiementParPeriodeEtEntreprise(String periode, Long entrepriseId) {
+        List<Integer> resultats = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+                        long count = ordreDePaiementRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = ordreDePaiementRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                        long count = ordreDePaiementRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = ordreDePaiementRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur dans getOrdresPaiementParPeriodeEtEntreprise: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        return resultats;
+    }
 }
