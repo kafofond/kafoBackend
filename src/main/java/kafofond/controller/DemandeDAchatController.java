@@ -342,7 +342,7 @@ public class DemandeDAchatController {
     /**
      * Récupère les statistiques des demandes d'achat d'un utilisateur par statut
      */
-    @GetMapping("/statistiques/{utilisateurId}")
+    @GetMapping("/utilisateur/{utilisateurId}/statistiques")
     public ResponseEntity<?> getStatistiquesParUtilisateur(@PathVariable Long utilisateurId) {
         try {
             log.info("Récupération des statistiques des demandes d'achat pour l'utilisateur #{}", utilisateurId);

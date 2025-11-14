@@ -1,0 +1,51 @@
+2025-11-14T10:37:42.276Z  INFO 22360 --- [kafobackend] [main] kafofond.KafobackendApplication          : Starting KafobackendApplication using Java 17.0.12 with PID 22360 (D:\Projects\Brouillon\kafoBackend\target\classes started by DELL in D:\Projects\Brouillon\kafoBackend)
+2025-11-14T10:37:42.281Z  INFO 22360 --- [kafobackend] [main] kafofond.KafobackendApplication          : The following 2 profiles are active: "prod", "secrets"
+2025-11-14T10:37:46.073Z  INFO 22360 --- [kafobackend] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-11-14T10:37:46.283Z  INFO 22360 --- [kafobackend] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 191 ms. Found 17 JPA repository interfaces.
+2025-11-14T10:37:48.712Z  INFO 22360 --- [kafobackend] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2025-11-14T10:37:48.826Z  INFO 22360 --- [kafobackend] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-11-14T10:37:48.827Z  INFO 22360 --- [kafobackend] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.46]
+2025-11-14T10:37:49.026Z  INFO 22360 --- [kafobackend] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-11-14T10:37:49.027Z  INFO 22360 --- [kafobackend] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 6678 ms
+2025-11-14T10:37:49.174Z  INFO 22360 --- [kafobackend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-11-14T10:37:50.379Z  INFO 22360 --- [kafobackend] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@ba4f370
+2025-11-14T10:37:50.382Z  INFO 22360 --- [kafobackend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-11-14T10:37:50.535Z  INFO 22360 --- [kafobackend] [main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2025-11-14T10:37:50.655Z  INFO 22360 --- [kafobackend] [main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.29.Final
+2025-11-14T10:37:50.715Z  INFO 22360 --- [kafobackend] [main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2025-11-14T10:37:51.089Z  INFO 22360 --- [kafobackend] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-11-14T10:37:51.202Z  WARN 22360 --- [kafobackend] [main] org.hibernate.dialect.Dialect            : HHH000511: The 5.5.5 version for [org.hibernate.dialect.MySQLDialect] is no longer supported, hence certain features may not work properly. The minimum supported version is 8.0.0. Check the community dialects project for available legacy versions.
+2025-11-14T10:37:51.226Z  INFO 22360 --- [kafobackend] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 5.5.5
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2025-11-14T10:37:54.676Z  INFO 22360 --- [kafobackend] [main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2025-11-14T10:37:55.947Z  INFO 22360 --- [kafobackend] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-11-14T10:37:56.778Z  INFO 22360 --- [kafobackend] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-11-14T10:38:00.146Z DEBUG 22360 --- [kafobackend] [main] s.w.s.m.m.a.RequestMappingHandlerMapping : 156 mappings in 'requestMappingHandlerMapping'
+2025-11-14T10:38:00.354Z DEBUG 22360 --- [kafobackend] [main] o.s.w.s.handler.SimpleUrlHandlerMapping  : Patterns [/webjars/**, /**, /uploads/**, /swagger-ui/swagger-ui*/*swagger-initializer.js, /swagger-ui/swagger-ui*/**] in 'resourceHandlerMapping'
+2025-11-14T10:38:00.400Z  INFO 22360 --- [kafobackend] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name customUserDetailsService
+2025-11-14T10:38:00.662Z  INFO 22360 --- [kafobackend] [main] o.s.v.b.OptionalValidatorFactoryBean     : Failed to set up a Bean Validation provider: jakarta.validation.NoProviderFoundException: Unable to create a Configuration, because no Jakarta Bean Validation provider could be found. Add a provider like Hibernate Validator (RI) to your classpath.
+2025-11-14T10:38:00.721Z DEBUG 22360 --- [kafobackend] [main] s.w.s.m.m.a.RequestMappingHandlerAdapter : ControllerAdvice beans: 0 @ModelAttribute, 0 @InitBinder, 1 RequestBodyAdvice, 1 ResponseBodyAdvice
+2025-11-14T10:38:00.808Z DEBUG 22360 --- [kafobackend] [main] .m.m.a.ExceptionHandlerExceptionResolver : ControllerAdvice beans: 2 @ExceptionHandler, 1 ResponseBodyAdvice
+2025-11-14T10:38:02.651Z  INFO 22360 --- [kafobackend] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+2025-11-14T10:38:02.664Z  INFO 22360 --- [kafobackend] [main] kafofond.KafobackendApplication          : Started KafobackendApplication in 22.557 seconds (process running for 24.227)
+2025-11-14T10:38:02.670Z  INFO 22360 --- [kafobackend] [main] kafofond.config.DataInitializer          : Initialisation des données de l'application...
+2025-11-14T10:38:02.751Z DEBUG 22360 --- [kafobackend] [main] org.hibernate.SQL                        : 
+    select
+        count(*) 
+    from
+        entreprises e1_0
+2025-11-14T10:38:02.772Z  INFO 22360 --- [kafobackend] [main] kafofond.config.DataInitializer          : Des entreprises existent déjà, vérification de l'existence d'un super admin...
+2025-11-14T10:38:02.866Z DEBUG 22360 --- [kafobackend] [main] org.hibernate.SQL                        : 
+    select
+        count(u1_0.id) 
+    from
+        utilisateurs u1_0 
+    where
+        u1_0.role=?
+2025-11-14T10:38:02.883Z  INFO 22360 --- [kafobackend] [main] kafofond.config.DataInitializer          : Initialisation des données terminée.
