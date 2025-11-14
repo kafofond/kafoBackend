@@ -1,20 +1,23 @@
 package kafofond.controller;
 
-import kafofond.dto.RapportAchatDTO;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import kafofond.dto.RapportAchatCreationDTO;
+import kafofond.dto.RapportAchatDTO;
 import kafofond.entity.RapportAchat;
 import kafofond.entity.Utilisateur;
+import kafofond.entity.Role;
 import kafofond.mapper.RapportAchatMapper;
 import kafofond.service.RapportAchatService;
 import kafofond.service.UtilisateurService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 import java.util.HashMap;
 import java.util.List;
@@ -152,6 +155,60 @@ public class RapportAchatController {
             return ResponseEntity.ok(rapportDTO);
         } catch (Exception e) {
             log.error("Erreur lors de la récupération du rapport d'achat : {}", e.getMessage(), e);
+            Map<String, String> err = new HashMap<>();
+            err.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(err);
+        }
+    }
+
+    @GetMapping("/entreprise/{entrepriseId}")
+    @Operation(summary = "Lister tous les rapports d'achat d'une entreprise spécifique (réservé aux administrateurs)")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<?> listerParEntreprise(@PathVariable Long entrepriseId, Authentication auth) {
+        try {
+            Utilisateur user = utilisateurService.trouverParEmailAvecEntreprise(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+            // Vérifier que l'utilisateur est admin ou super admin
+            if (user.getRole() != Role.ADMIN && user.getRole() != Role.SUPER_ADMIN) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    Map.of("message", "Accès refusé. Seuls les administrateurs peuvent accéder à cette ressource.")
+                );
+            }
+
+            // Pour les super admins, ils peuvent accéder à toutes les entreprises
+            // Pour les admins, ils ne peuvent accéder qu'à leur propre entreprise
+            if (user.getRole() == Role.ADMIN && !user.getEntreprise().getId().equals(entrepriseId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                    Map.of("message", "Accès refusé. Vous ne pouvez accéder qu'aux rapports de votre entreprise.")
+                );
+            }
+
+            List<RapportAchat> rapports = rapportService.listerParEntrepriseId(entrepriseId);
+            
+            // Créer manuellement les DTOs pour éviter les problèmes de proxy
+            List<RapportAchatDTO> rapportsDTO = rapports.stream()
+                    .map(rapport -> RapportAchatDTO.builder()
+                            .id(rapport.getId())
+                            .nom(rapport.getNom())
+                            .ficheBesoin(rapport.getFicheBesoin())
+                            .demandeAchat(rapport.getDemandeAchat())
+                            .bonCommande(rapport.getBonCommande())
+                            .attestationServiceFait(rapport.getAttestationServiceFait())
+                            .decisionPrelevement(rapport.getDecisionPrelevement())
+                            .ordrePaiement(rapport.getOrdrePaiement())
+                            .dateAjout(rapport.getDateAjout())
+                            .entrepriseNom(rapport.getEntreprise().getNom())
+                            .build())
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("total", rapportsDTO.size());
+            response.put("rapports", rapportsDTO);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération des rapports d'achat : {}", e.getMessage(), e);
             Map<String, String> err = new HashMap<>();
             err.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(err);

@@ -90,6 +90,14 @@ public class RapportAchatService {
     }
 
     /**
+     * Liste tous les rapports d'achat d'une entreprise par son ID
+     */
+    @Transactional(readOnly = true)
+    public List<RapportAchat> listerParEntrepriseId(Long entrepriseId) {
+        return rapportAchatRepo.findByEntrepriseId(entrepriseId);
+    }
+
+    /**
      * Récupère les détails d'un rapport d'achat
      */
     @Transactional(readOnly = true)

@@ -797,21 +797,12 @@ public class StatistiqueService {
         return ordreDePaiementRepo.sumMontantTotalByEntrepriseId(entrepriseId);
     }
 
-    // Méthodes pour les statistiques du comptable
-    public long getTotalDemandesAchatByEntrepriseId(Long entrepriseId) {
-        return demandeDAchatRepo.countByEntrepriseId(entrepriseId);
-    }
-
     public long getTotalBonsCommandeByEntrepriseId(Long entrepriseId) {
         return bonDeCommandeRepo.countByEntrepriseId(entrepriseId);
     }
 
     public long getTotalOrdresPaiementByEntrepriseId(Long entrepriseId) {
         return ordreDePaiementRepo.countByEntrepriseId(entrepriseId);
-    }
-
-    public long getDemandesAchatEnAttenteByEntrepriseId(Long entrepriseId) {
-        return demandeDAchatRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
     }
 
     public long getBonsCommandeEnAttenteByEntrepriseId(Long entrepriseId) {
@@ -983,5 +974,143 @@ public class StatistiqueService {
         }
 
         return resultats;
+    }
+    
+    public long getLignesCreditEnCoursByEntrepriseId(Long entrepriseId) {
+        return ligneCreditRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
+    }
+    
+    public long getTotalFichesBesoinByEntrepriseId(Long entrepriseId) {
+        return ficheBesoinRepo.countByEntrepriseId(entrepriseId);
+    }
+    
+    public long getFichesBesoinEnAttenteByEntrepriseId(Long entrepriseId) {
+        return ficheBesoinRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
+    }
+    
+    public long getTotalDemandesAchatByEntrepriseId(Long entrepriseId) {
+        return demandeDAchatRepo.countByEntrepriseId(entrepriseId);
+    }
+    
+    public long getDemandesAchatEnAttenteByEntrepriseId(Long entrepriseId) {
+        return demandeDAchatRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
+    }
+    
+    // Méthodes pour les graphiques du gestionnaire
+    public List<Integer> getLignesCreditParPeriodeEtEntreprise(String periode, Long entrepriseId) {
+        List<Integer> resultats = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+                        long count = ligneCreditRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = ligneCreditRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                        long count = ligneCreditRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = ligneCreditRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur dans getLignesCreditParPeriodeEtEntreprise: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        return resultats;
+    }
+    
+    public List<Integer> getFichesBesoinParPeriodeEtEntreprise(String periode, Long entrepriseId) {
+        List<Integer> resultats = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+
+        try {
+            switch (periode.toLowerCase()) {
+                case "jour":
+                    // Données par heure pour aujourd'hui
+                    for (int i = 0; i < 24; i += 2) { // Toutes les 2 heures
+                        LocalDateTime start = now.with(LocalTime.of(i, 0));
+                        LocalDateTime end = (i + 2 < 24) ? now.with(LocalTime.of(i + 2, 0)) : now.with(LocalTime.MAX);
+                        long count = ficheBesoinRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "semaine":
+                    // Données par jour pour cette semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = ficheBesoinRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                case "mois":
+                    // Données par semaine pour ce mois (4 semaines)
+                    for (int i = 3; i >= 0; i--) {
+                        LocalDateTime start = now.minusWeeks(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusWeeks(i).with(LocalTime.MAX);
+                        long count = ficheBesoinRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+                    break;
+
+                default:
+                    // Par défaut, données par jour pour la semaine
+                    for (int i = 6; i >= 0; i--) {
+                        LocalDateTime start = now.minusDays(i).with(LocalTime.MIDNIGHT);
+                        LocalDateTime end = now.minusDays(i).with(LocalTime.MAX);
+                        long count = ficheBesoinRepo.countByEntrepriseIdAndDateCreationBetween(entrepriseId, start, end);
+                        resultats.add((int) count);
+                    }
+            }
+        } catch (Exception e) {
+            System.err.println("Erreur dans getFichesBesoinParPeriodeEtEntreprise: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
+
+        return resultats;
+    }
+    
+    // Méthodes pour les statistiques du gestionnaire - suite
+    public long getFichesBesoinByEntrepriseIdAndStatutEnAttente(Long entrepriseId) {
+        return ficheBesoinRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
+    }
+    
+    public long getDemandesAchatByEntrepriseIdAndStatutEnAttente(Long entrepriseId) {
+        return demandeDAchatRepo.countByEntrepriseIdAndStatutEnAttente(entrepriseId);
     }
 }

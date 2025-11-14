@@ -6,6 +6,8 @@ import kafofond.dto.DirecteurDashboardStats;
 import kafofond.dto.DsiDashboardStats;
 import kafofond.dto.ResponsableDashboardStatsDTO;
 import kafofond.dto.ResponsableChartDataDTO;
+import kafofond.dto.GestionnaireDashboardStatsDTO;
+import kafofond.dto.GestionnaireChartDataDTO;
 import kafofond.entity.Role;
 import kafofond.entity.Utilisateur;
 import kafofond.service.StatistiqueService;
@@ -362,6 +364,116 @@ public class StatistiqueController {
                 } catch (Exception e) {
                         // En cas d'erreur, retourner des données vides
                         ResponsableChartDataDTO emptyData = ResponsableChartDataDTO.builder()
+                                        .labels(List.of())
+                                        .datasets(Map.of())
+                                        .build();
+                        return ResponseEntity.ok(emptyData);
+                }
+        }
+        
+        // Nouveaux endpoints pour le dashboard gestionnaire
+        @GetMapping("/gestionnaire/dashboard")
+        public ResponseEntity<GestionnaireDashboardStatsDTO> getStatistiquesDashboardGestionnaire(
+                        Authentication authentication) {
+                try {
+                        // Récupérer l'utilisateur authentifié
+                        Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
+                                        .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                        // Vérifier que l'utilisateur a le rôle GESTIONNAIRE
+                        if (utilisateur.getRole() != Role.GESTIONNAIRE) {
+                                return ResponseEntity.status(403).build();
+                        }
+
+                        Long entrepriseId = utilisateur.getEntreprise().getId();
+                        
+                        // Récupérer les statistiques pour le gestionnaire
+                        int totalLignesCredit = Math.toIntExact(statistiqueService.getTotalLignesCreditByEntrepriseId(entrepriseId));
+                        int lignesCreditEnCours = Math.toIntExact(statistiqueService.getLignesCreditEnCoursByEntrepriseId(entrepriseId));
+                        
+                        int totalFichesBesoin = Math.toIntExact(statistiqueService.getTotalFichesBesoinByEntrepriseId(entrepriseId));
+                        int fichesBesoinEnAttente = Math.toIntExact(statistiqueService.getFichesBesoinEnAttenteByEntrepriseId(entrepriseId));
+                        
+                        int totalDemandesAchat = Math.toIntExact(statistiqueService.getTotalDemandesAchatByEntrepriseId(entrepriseId));
+                        int demandesAchatEnAttente = Math.toIntExact(statistiqueService.getDemandesAchatEnAttenteByEntrepriseId(entrepriseId));
+                        
+                        // Calcul des pourcentages
+                        double pourcentageLignesCreditTraitees = totalLignesCredit > 0 ? 
+                            ((double)(totalLignesCredit - lignesCreditEnCours) / totalLignesCredit) * 100 : 0;
+                        
+                        double pourcentageFichesBesoinTraitees = totalFichesBesoin > 0 ? 
+                            ((double)(totalFichesBesoin - fichesBesoinEnAttente) / totalFichesBesoin) * 100 : 0;
+                        
+                        double pourcentageDemandesAchatTraitees = totalDemandesAchat > 0 ? 
+                            ((double)(totalDemandesAchat - demandesAchatEnAttente) / totalDemandesAchat) * 100 : 0;
+
+                        GestionnaireDashboardStatsDTO stats = GestionnaireDashboardStatsDTO.builder()
+                                        .totalLignesCredit(totalLignesCredit)
+                                        .lignesCreditEnCours(lignesCreditEnCours)
+                                        .totalFichesBesoin(totalFichesBesoin)
+                                        .fichesBesoinEnAttente(fichesBesoinEnAttente)
+                                        .totalDemandesAchat(totalDemandesAchat)
+                                        .demandesAchatEnAttente(demandesAchatEnAttente)
+                                        .pourcentageLignesCreditTraitees(Math.round(pourcentageLignesCreditTraitees * 100.0) / 100.0)
+                                        .pourcentageFichesBesoinTraitees(Math.round(pourcentageFichesBesoinTraitees * 100.0) / 100.0)
+                                        .pourcentageDemandesAchatTraitees(Math.round(pourcentageDemandesAchatTraitees * 100.0) / 100.0)
+                                        .build();
+
+                        return ResponseEntity.ok(stats);
+                } catch (Exception e) {
+                        // En cas d'erreur, retourner des statistiques par défaut
+                        GestionnaireDashboardStatsDTO defaultStats = GestionnaireDashboardStatsDTO.builder()
+                                        .totalLignesCredit(0)
+                                        .lignesCreditEnCours(0)
+                                        .totalFichesBesoin(0)
+                                        .fichesBesoinEnAttente(0)
+                                        .totalDemandesAchat(0)
+                                        .demandesAchatEnAttente(0)
+                                        .pourcentageLignesCreditTraitees(0.0)
+                                        .pourcentageFichesBesoinTraitees(0.0)
+                                        .pourcentageDemandesAchatTraitees(0.0)
+                                        .build();
+                        return ResponseEntity.ok(defaultStats);
+                }
+        }
+
+        // Nouvel endpoint pour les graphiques gestionnaire
+        @GetMapping("/gestionnaire/chart")
+        public ResponseEntity<GestionnaireChartDataDTO> getStatistiquesChartGestionnaire(
+                        @RequestParam(defaultValue = "semaine") String periode,
+                        Authentication authentication) {
+                try {
+                        // Récupérer l'utilisateur authentifié
+                        Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
+                                        .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+                        // Vérifier que l'utilisateur a le rôle GESTIONNAIRE
+                        if (utilisateur.getRole() != Role.GESTIONNAIRE) {
+                                return ResponseEntity.status(403).build();
+                        }
+
+                        Long entrepriseId = utilisateur.getEntreprise().getId();
+                        
+                        // Récupérer les données pour les graphiques
+                        List<String> labels = statistiqueService.getLabelsParPeriode(periode);
+                        List<Integer> lignesCredit = statistiqueService.getLignesCreditParPeriodeEtEntreprise(periode, entrepriseId);
+                        List<Integer> fichesBesoin = statistiqueService.getFichesBesoinParPeriodeEtEntreprise(periode, entrepriseId);
+                        List<Integer> demandesAchat = statistiqueService.getDemandesAchatParPeriodeEtEntreprise(periode, entrepriseId);
+                        
+                        Map<String, List<Integer>> datasets = new HashMap<>();
+                        datasets.put("lignesCredit", lignesCredit);
+                        datasets.put("fichesBesoin", fichesBesoin);
+                        datasets.put("demandesAchat", demandesAchat);
+
+                        GestionnaireChartDataDTO chartData = GestionnaireChartDataDTO.builder()
+                                        .labels(labels)
+                                        .datasets(datasets)
+                                        .build();
+
+                        return ResponseEntity.ok(chartData);
+                } catch (Exception e) {
+                        // En cas d'erreur, retourner des données vides
+                        GestionnaireChartDataDTO emptyData = GestionnaireChartDataDTO.builder()
                                         .labels(List.of())
                                         .datasets(Map.of())
                                         .build();

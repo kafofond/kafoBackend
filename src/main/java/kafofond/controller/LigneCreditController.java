@@ -1,30 +1,31 @@
 package kafofond.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import kafofond.dto.LigneCreditCreateDTO;
 import kafofond.dto.LigneCreditDTO;
 import kafofond.entity.LigneCredit;
 import kafofond.entity.Utilisateur;
-import kafofond.entity.Commentaire;
+import kafofond.entity.Role;
 import kafofond.mapper.LigneCreditMapper;
 import kafofond.service.LigneCreditService;
 import kafofond.service.UtilisateurService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Controller pour la gestion des lignes de crédit
@@ -261,11 +262,12 @@ public class LigneCreditController {
         }
     }
 
-    @Operation(summary = "Lister les lignes de crédit inactives", description = "Liste toutes les lignes de crédit inactives de l'entreprise")
-    @GetMapping("/inactives")
-    public ResponseEntity<?> listerInactives(Authentication authentication) {
+    @Operation(summary = "Lister les lignes de crédit validées et actives d'une entreprise", 
+               description = "Liste toutes les lignes de crédit d'une entreprise donnée avec le statut VALIDE et l'état actif")
+    @GetMapping("/entreprise/{entrepriseId}/validees-actives")
+    public ResponseEntity<?> listerValideesEtActives(@PathVariable Long entrepriseId, Authentication authentication) {
         try {
-            List<LigneCreditDTO> lignesDTO = ligneCreditService.listerInactivesDTO(authentication.getName());
+            List<LigneCreditDTO> lignesDTO = ligneCreditService.listerValideesEtActivesDTO(entrepriseId);
 
             Map<String, Object> response = new HashMap<>();
             response.put("lignes", lignesDTO);

@@ -67,7 +67,11 @@ public interface LigneCreditRepo extends JpaRepository<LigneCredit, Long> {
         // Méthodes pour les statistiques du directeur
         @Query("SELECT COUNT(l) FROM LigneCredit l WHERE l.budget.entreprise.id = :entrepriseId AND l.statut = 'EN_COURS'")
         long countByEntrepriseIdAndStatutEnAttente(@Param("entrepriseId") Long entrepriseId);
-        
+
+        @Query("SELECT l FROM LigneCredit l WHERE l.budget.entreprise.id = :entrepriseId AND l.statut = :statut AND l.etat = :etat")
+        List<LigneCredit> findByEntrepriseIdAndStatutAndEtat(@Param("entrepriseId") Long entrepriseId,
+                    @Param("statut") Statut statut, @Param("etat") boolean etat);
+
         // Méthodes pour les statistiques du responsable
         @Query("SELECT COALESCE(SUM(l.montantAllouer), 0) FROM LigneCredit l WHERE l.budget.entreprise.id = :entrepriseId")
         double sumMontantAllouerByEntrepriseId(@Param("entrepriseId") Long entrepriseId);

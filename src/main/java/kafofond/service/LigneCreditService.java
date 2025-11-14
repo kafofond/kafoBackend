@@ -622,4 +622,34 @@ public class LigneCreditService {
     public List<LigneCreditDTO> listerInactivesDTO(String emailUtilisateur) {
         return listerParEtatDTO(false, emailUtilisateur);
     }
+
+    /**
+     * Liste les lignes de crédit d'une entreprise donnée avec le statut VALIDE et l'état actif
+     */
+    @Transactional(readOnly = true)
+    public List<LigneCreditDTO> listerValideesEtActivesDTO(Long entrepriseId) {
+        // Récupérer les lignes de crédit validées et actives
+        List<LigneCredit> lignes = ligneCreditRepo.findByEntrepriseIdAndStatutAndEtat(
+                entrepriseId, Statut.VALIDE, true);
+        
+        return lignes.stream()
+                .map(l -> {
+                    // Forcer le chargement des relations
+                    if (l.getCreePar() != null) {
+                        l.getCreePar().getNom();
+                        if (l.getCreePar().getEntreprise() != null) {
+                            l.getCreePar().getEntreprise().getNom();
+                        }
+                    }
+                    if (l.getBudget() != null) {
+                        l.getBudget().getIntituleBudget();
+                        if (l.getBudget().getEntreprise() != null) {
+                            l.getBudget().getEntreprise().getNom();
+                        }
+                    }
+                    List<Commentaire> commentaires = getCommentaires(l);
+                    return mapper.toDTO(l, commentaires);
+                })
+                .toList();
+    }
 }
