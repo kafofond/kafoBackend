@@ -1,8 +1,11 @@
 package kafofond.controller;
 
+import kafofond.dto.EntrepriseDTO;
 import kafofond.dto.HistoriqueDTO;
+import kafofond.entity.Entreprise;
 import kafofond.entity.HistoriqueAction;
 import kafofond.entity.Utilisateur;
+import kafofond.repository.EntrepriseRepo;
 import kafofond.service.HistoriqueService;
 import kafofond.service.UtilisateurService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ public class HistoriqueController {
 
     private final HistoriqueService historiqueService;
     private final UtilisateurService utilisateurService;
+    private final EntrepriseRepo entrepriseRepo;
 
     /**
      * Consulte l'historique d'un document spécifique
@@ -73,12 +77,19 @@ public class HistoriqueController {
             Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-            List<HistoriqueAction> historique = historiqueService.consulterHistoriqueEntreprise(utilisateur.getEntreprise());
+            // Récupérer l'entreprise gérée par la session pour éviter les problèmes de proxy
+            Entreprise entreprise = entrepriseRepo.findById(utilisateur.getEntreprise().getId())
+                    .orElseThrow(() -> new RuntimeException("Entreprise introuvable"));
+
+            List<HistoriqueAction> historique = historiqueService.consulterHistoriqueEntreprise(entreprise);
 
             // Convertir en DTO pour éviter les problèmes de sérialisation
             List<HistoriqueDTO> historiqueDTO = historique.stream()
                     .map(HistoriqueDTO::fromEntity)
                     .collect(Collectors.toList());
+            
+            // Enrichir les DTO avec les codes des documents et les noms
+            historiqueService.enrichirHistoriqueDTO(historiqueDTO, entreprise);
 
             Map<String, Object> response = new HashMap<>();
             response.put("historique", historiqueDTO);
@@ -108,13 +119,20 @@ public class HistoriqueController {
             Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
+            // Récupérer l'entreprise gérée par la session pour éviter les problèmes de proxy
+            Entreprise entreprise = entrepriseRepo.findById(utilisateur.getEntreprise().getId())
+                    .orElseThrow(() -> new RuntimeException("Entreprise introuvable"));
+
             List<HistoriqueAction> historique = historiqueService.consulterHistoriqueParType(
-                    utilisateur.getEntreprise(), typeDocument);
+                    entreprise, typeDocument);
 
             // Convertir en DTO pour éviter les problèmes de sérialisation
             List<HistoriqueDTO> historiqueDTO = historique.stream()
                     .map(HistoriqueDTO::fromEntity)
                     .collect(Collectors.toList());
+            
+            // Enrichir les DTO avec les codes des documents et les noms
+            historiqueService.enrichirHistoriqueDTO(historiqueDTO, entreprise);
 
             Map<String, Object> response = new HashMap<>();
             response.put("historique", historiqueDTO);
@@ -141,12 +159,19 @@ public class HistoriqueController {
             Utilisateur utilisateur = utilisateurService.trouverParEmail(authentication.getName())
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
+            // Récupérer l'entreprise gérée par la session pour éviter les problèmes de proxy
+            Entreprise entreprise = entrepriseRepo.findById(utilisateur.getEntreprise().getId())
+                    .orElseThrow(() -> new RuntimeException("Entreprise introuvable"));
+
             List<HistoriqueAction> historique = historiqueService.consulterHistoriqueUtilisateur(utilisateur);
 
             // Convertir en DTO pour éviter les problèmes de sérialisation
             List<HistoriqueDTO> historiqueDTO = historique.stream()
                     .map(HistoriqueDTO::fromEntity)
                     .collect(Collectors.toList());
+            
+            // Enrichir les DTO avec les codes des documents et les noms
+            historiqueService.enrichirHistoriqueDTO(historiqueDTO, entreprise);
 
             Map<String, Object> response = new HashMap<>();
             response.put("historique", historiqueDTO);

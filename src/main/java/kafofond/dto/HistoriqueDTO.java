@@ -21,6 +21,7 @@ public class HistoriqueDTO {
     private Long id;
     private String typeDocument;
     private Long idDocument;
+    private String documentCode; // Nouveau champ pour le code du document
     private String action;
     private String ancienStatut;
     private String nouveauStatut;
@@ -28,8 +29,9 @@ public class HistoriqueDTO {
     private String nouveauEtat;
     private LocalDateTime dateAction;
     private Long utilisateurId;
-    private String utilisateurNomComplet;
+    private String utilisateurNomComplet; // Nom de l'utilisateur qui a effectué l'action
     private String utilisateurEmail;
+    private String utilisateurConcerneNom; // Nom de l'utilisateur concerné par l'action (pour les actions de type UTILISATEUR)
     private Long entrepriseId;
     private String entrepriseNom;
     
@@ -57,6 +59,7 @@ public class HistoriqueDTO {
             dto.setUtilisateurNomComplet(
                 historique.getUtilisateur().getPrenom() + " " + historique.getUtilisateur().getNom()
             );
+            // Pour les actions sur les utilisateurs, on gardera le nom de l'utilisateur concerné dans utilisateurConcerneNom
         }
         
         // Gérer l'entreprise de manière sécurisée

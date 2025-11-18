@@ -1,17 +1,16 @@
 package kafofond.service;
 
-import kafofond.entity.HistoriqueAction;
-import kafofond.entity.Utilisateur;
-import kafofond.entity.Entreprise;
-import kafofond.entity.Statut;
-import kafofond.repository.HistoriqueActionRepo;
+import kafofond.dto.EntrepriseDTO;
+import kafofond.entity.*;
+import kafofond.repository.*;
+import kafofond.dto.HistoriqueDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +19,16 @@ import java.util.List;
 public class HistoriqueService {
 
     private final HistoriqueActionRepo historiqueActionRepo;
+    private final BudgetRepo budgetRepo;
+    private final LigneCreditRepo ligneCreditRepo;
+    private final FicheBesoinRepo ficheBesoinRepo;
+    private final DemandeDAchatRepo demandeDAchatRepo;
+    private final BonDeCommandeRepo bonDeCommandeRepo;
+    private final AttestationDeServiceFaitRepo attestationDeServiceFaitRepo;
+    private final DecisionDePrelevementRepo decisionDePrelevementRepo;
+    private final OrdreDePaiementRepo ordreDePaiementRepo;
+    private final EntrepriseRepo entrepriseRepo;
+    private final UtilisateurRepo utilisateurRepo;
 
     /**
      * Enregistre une action pour les documents ou entités
@@ -200,6 +209,136 @@ public class HistoriqueService {
             }
             if (action.getEntreprise() != null) {
                 action.getEntreprise().getId(); // Force l'initialisation du proxy
+            }
+        }
+    }
+    
+    /**
+     * Enrichit les DTO d'historique avec les codes des documents et les noms des entreprises/utilisateurs
+     * @param historiqueDTO Liste des DTO à enrichir
+     * @param entreprise L'entreprise concernée
+     */
+    public void enrichirHistoriqueDTO(List<HistoriqueDTO> historiqueDTO, Entreprise entreprise) {
+        // Récupérer tous les documents nécessaires par type
+        Map<Long, String> budgetCodes = new HashMap<>();
+        Map<Long, String> ligneCreditCodes = new HashMap<>();
+        Map<Long, String> ficheBesoinCodes = new HashMap<>();
+        Map<Long, String> demandeAchatCodes = new HashMap<>();
+        Map<Long, String> bonCommandeCodes = new HashMap<>();
+        Map<Long, String> attestationServiceCodes = new HashMap<>();
+        Map<Long, String> decisionPrelevementCodes = new HashMap<>();
+        Map<Long, String> ordrePaiementCodes = new HashMap<>();
+        Map<Long, String> entrepriseNoms = new HashMap<>();
+        Map<Long, String> utilisateurNoms = new HashMap<>();
+        
+        // Récupérer les budgets
+        List<Budget> budgets = budgetRepo.findByEntreprise(entreprise);
+        for (Budget budget : budgets) {
+            budgetCodes.put(budget.getId(), budget.getCode());
+        }
+        
+        // Récupérer les lignes de crédit
+        List<LigneCredit> lignesCredit = ligneCreditRepo.findByBudgetEntreprise(entreprise);
+        for (LigneCredit ligne : lignesCredit) {
+            ligneCreditCodes.put(ligne.getId(), ligne.getCode());
+        }
+        
+        // Récupérer les fiches de besoin
+        List<FicheDeBesoin> fichesBesoin = ficheBesoinRepo.findByEntreprise(entreprise);
+        for (FicheDeBesoin fiche : fichesBesoin) {
+            ficheBesoinCodes.put(fiche.getId(), fiche.getCode());
+        }
+        
+        // Récupérer les demandes d'achat
+        List<DemandeDAchat> demandesAchat = demandeDAchatRepo.findByEntreprise(entreprise);
+        for (DemandeDAchat demande : demandesAchat) {
+            demandeAchatCodes.put(demande.getId(), demande.getCode());
+        }
+        
+        // Récupérer les bons de commande
+        List<BonDeCommande> bonsCommande = bonDeCommandeRepo.findByEntreprise(entreprise);
+        for (BonDeCommande bon : bonsCommande) {
+            bonCommandeCodes.put(bon.getId(), bon.getCode());
+        }
+        
+        // Récupérer les attestations de service fait
+        List<AttestationDeServiceFait> attestations = attestationDeServiceFaitRepo.findByEntreprise(entreprise);
+        for (AttestationDeServiceFait attestation : attestations) {
+            attestationServiceCodes.put(attestation.getId(), attestation.getCode());
+        }
+        
+        // Récupérer les décisions de prélèvement
+        List<DecisionDePrelevement> decisions = decisionDePrelevementRepo.findByEntreprise(entreprise);
+        for (DecisionDePrelevement decision : decisions) {
+            decisionPrelevementCodes.put(decision.getId(), decision.getCode());
+        }
+        
+        // Récupérer les ordres de paiement
+        List<OrdreDePaiement> ordres = ordreDePaiementRepo.findByEntreprise(entreprise);
+        for (OrdreDePaiement ordre : ordres) {
+            ordrePaiementCodes.put(ordre.getId(), ordre.getCode());
+        }
+        
+        // Récupérer les entreprises
+        entrepriseNoms.put(entreprise.getId(), entreprise.getNom());
+        
+        // Récupérer les utilisateurs
+        List<Utilisateur> utilisateurs = utilisateurRepo.findByEntreprise(entreprise);
+        for (Utilisateur utilisateur : utilisateurs) {
+            utilisateurNoms.put(utilisateur.getId(), utilisateur.getPrenom() + " " + utilisateur.getNom());
+        }
+        
+        // Enrichir chaque DTO
+        for (HistoriqueDTO dto : historiqueDTO) {
+            // Ajouter le code du document selon le type
+            if ("BUDGET".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                dto.setDocumentCode(budgetCodes.get(dto.getIdDocument()));
+            } else if ("LIGNE_CREDIT".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                dto.setDocumentCode(ligneCreditCodes.get(dto.getIdDocument()));
+            } else if ("FICHE_BESOIN".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                dto.setDocumentCode(ficheBesoinCodes.get(dto.getIdDocument()));
+            } else if ("DEMANDE_ACHAT".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                dto.setDocumentCode(demandeAchatCodes.get(dto.getIdDocument()));
+            } else if ("BON_COMMANDE".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                dto.setDocumentCode(bonCommandeCodes.get(dto.getIdDocument()));
+            } else if ("ATTESTATION_SERVICE_FAIT".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                dto.setDocumentCode(attestationServiceCodes.get(dto.getIdDocument()));
+            } else if ("DECISION_PRELEVEMENT".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                dto.setDocumentCode(decisionPrelevementCodes.get(dto.getIdDocument()));
+            } else if ("ORDRE_PAIEMENT".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                dto.setDocumentCode(ordrePaiementCodes.get(dto.getIdDocument()));
+            }
+            
+            // Cas spécial : pour les actions sur les utilisateurs, afficher le nom de l'utilisateur concerné
+            if ("UTILISATEUR".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                // Récupérer l'utilisateur concerné par l'action
+                Optional<Utilisateur> utilisateurConcerne = utilisateurRepo.findById(dto.getIdDocument());
+                if (utilisateurConcerne.isPresent()) {
+                    Utilisateur user = utilisateurConcerne.get();
+                    dto.setUtilisateurConcerneNom(user.getPrenom() + " " + user.getNom());
+                    // Ne pas écraser l'email et le nom de l'entreprise de l'auteur
+                }
+            }
+            // Cas spécial : pour les actions sur les entreprises, afficher le nom de l'entreprise concernée
+            else if ("ENTREPRISE".equals(dto.getTypeDocument()) && dto.getIdDocument() != null) {
+                // Récupérer l'entreprise concernée par l'action
+                Optional<Entreprise> entrepriseConcernee = entrepriseRepo.findById(dto.getIdDocument());
+                if (entrepriseConcernee.isPresent()) {
+                    Entreprise ent = entrepriseConcernee.get();
+                    dto.setEntrepriseNom(ent.getNom());
+                }
+            }
+            // Pour les autres types d'actions, utiliser les noms de l'utilisateur et de l'entreprise qui ont effectué l'action
+            else {
+                // Ajouter le nom de l'entreprise
+                if (dto.getEntrepriseId() != null) {
+                    dto.setEntrepriseNom(entrepriseNoms.get(dto.getEntrepriseId()));
+                }
+                
+                // Ajouter le nom de l'utilisateur
+                if (dto.getUtilisateurId() != null) {
+                    dto.setUtilisateurNomComplet(utilisateurNoms.get(dto.getUtilisateurId()));
+                }
             }
         }
     }
