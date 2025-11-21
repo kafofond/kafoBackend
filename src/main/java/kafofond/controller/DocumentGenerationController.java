@@ -19,6 +19,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Contrôleur unifié pour la génération de tous les documents de l'application
@@ -60,6 +62,8 @@ public class DocumentGenerationController {
     private final AttestationServiceFaitService attestationServiceFaitService;
     private final DecisionPrelevementService decisionPrelevementService;
     private final OrdreDePaiementService ordreDePaiementService;
+    private final LigneCreditService ligneCreditService;
+
 
     private final DocumentService documentService;
     private final UtilisateurService utilisateurService;
@@ -212,7 +216,7 @@ public class DocumentGenerationController {
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
             // Récupérer le budget avec initialisation des relations
-            Budget budget = budgetService.trouverParIdAvecRelations(id)
+            Budget budget = budgetService.trouverParId(id)
                     .orElseThrow(() -> new RuntimeException("Budget introuvable"));
 
             if (!budget.getEntreprise().getId().equals(user.getEntreprise().getId())) {
@@ -327,7 +331,7 @@ public class DocumentGenerationController {
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
             // Récupérer la fiche de besoin avec initialisation des relations
-            FicheDeBesoin fiche = ficheBesoinService.trouverParIdAvecRelations(id)
+            FicheDeBesoin fiche = ficheBesoinService.trouverParId(id)
                     .orElseThrow(() -> new RuntimeException("Fiche de besoin introuvable"));
 
             if (!fiche.getEntreprise().getId().equals(user.getEntreprise().getId())) {
@@ -442,7 +446,7 @@ public class DocumentGenerationController {
                     .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
             // Récupérer la demande d'achat avec initialisation des relations
-            DemandeDAchat demande = demandeDAchatService.trouverParIdAvecRelations(id)
+            DemandeDAchat demande = demandeDAchatService.trouverParId(id)
                     .orElseThrow(() -> new RuntimeException("Demande d'achat introuvable"));
 
             if (!demande.getEntreprise().getId().equals(user.getEntreprise().getId())) {
@@ -990,6 +994,292 @@ public class DocumentGenerationController {
             log.error("Erreur lors du téléchargement du PDF pour ligne de crédit", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Erreur: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Génère un PDF pour une liste de documents d'un type donné
+     */
+    @PostMapping("/liste/{typeDocument}/pdf")
+    @Operation(summary = "Générer un PDF d'une liste de documents", description = "Génère un document PDF professionnel contenant une liste de documents d'un type donné")
+    public ResponseEntity<?> genererPdfListeDocuments(
+            @Parameter(description = "Type de document") @PathVariable String typeDocument,
+            @Parameter(description = "Liste des IDs des documents") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "documents") String nomFichier,
+            Authentication auth) {
+
+        try {
+            log.info("Génération du PDF pour une liste de {} documents de type {}", ids.size(), typeDocument);
+
+            // Vérifier l'authentification
+            Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+            // Convertir le typeDocument en enum
+            TypeDocument typeDoc = TypeDocument.valueOf(typeDocument);
+
+            // Récupérer les documents selon le type
+            List<Object> documents = new ArrayList<>();
+            for (Long id : ids) {
+                Object document = recupererDocumentParTypeEtId(typeDoc, id, user);
+                documents.add(document);
+            }
+
+            // Générer le PDF
+            String urlPdf = documentService.genererListeDocumentsPdf(typeDoc, documents, nomFichier);
+
+            // Lire le fichier PDF généré
+            String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
+            String filePathStr = "reports/" + fileName;
+            java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
+
+            // Vérifier si le fichier existe
+            if (!java.nio.file.Files.exists(filePath)) {
+                throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
+            }
+
+            byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
+
+            // Préparer la réponse HTTP
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", fileName);
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            log.info("PDF généré avec succès pour la liste de documents {}. Taille: {} bytes", typeDocument, pdfBytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération du PDF pour la liste de documents {}", typeDocument, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/liste/" + typeDocument + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
+        }
+    }
+
+    /**
+     * Génère un PDF pour une liste de budgets
+     */
+    @PostMapping("/liste/budgets/pdf")
+    @Operation(summary = "Générer un PDF d'une liste de budgets", description = "Génère un document PDF professionnel contenant une liste de budgets")
+    public ResponseEntity<?> genererPdfListeBudgets(
+            @Parameter(description = "Liste des IDs des budgets") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "budgets") String nomFichier,
+            Authentication auth) {
+        return genererPdfListeDocumentsCommun(TypeDocument.BUDGET, ids, nomFichier, auth);
+    }
+
+    /**
+     * Génère un PDF pour une liste de lignes de crédit
+     */
+    @PostMapping("/liste/lignes-credit/pdf")
+    @Operation(summary = "Générer un PDF d'une liste de lignes de crédit", description = "Génère un document PDF professionnel contenant une liste de lignes de crédit")
+    public ResponseEntity<?> genererPdfListeLignesCredit(
+            @Parameter(description = "Liste des IDs des lignes de crédit") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "lignes_credit") String nomFichier,
+            Authentication auth) {
+        return genererPdfListeDocumentsCommun(TypeDocument.LIGNE_CREDIT, ids, nomFichier, auth);
+    }
+
+    /**
+     * Génère un PDF pour une liste de fiches de besoin
+     */
+    @PostMapping("/liste/fiches-besoin/pdf")
+    @Operation(summary = "Générer un PDF d'une liste de fiches de besoin", description = "Génère un document PDF professionnel contenant une liste de fiches de besoin")
+    public ResponseEntity<?> genererPdfListeFichesBesoin(
+            @Parameter(description = "Liste des IDs des fiches de besoin") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "fiches_besoin") String nomFichier,
+            Authentication auth) {
+        return genererPdfListeDocumentsCommun(TypeDocument.FICHE_BESOIN, ids, nomFichier, auth);
+    }
+
+    /**
+     * Génère un PDF pour une liste de demandes d'achat
+     */
+    @PostMapping("/liste/demandes-achat/pdf")
+    @Operation(summary = "Générer un PDF d'une liste de demandes d'achat", description = "Génère un document PDF professionnel contenant une liste de demandes d'achat")
+    public ResponseEntity<?> genererPdfListeDemandesAchat(
+            @Parameter(description = "Liste des IDs des demandes d'achat") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "demandes_achat") String nomFichier,
+            Authentication auth) {
+        return genererPdfListeDocumentsCommun(TypeDocument.DEMANDE_ACHAT, ids, nomFichier, auth);
+    }
+
+    /**
+     * Génère un PDF pour une liste de bons de commande
+     */
+    @PostMapping("/liste/bons-commande/pdf")
+    @Operation(summary = "Générer un PDF d'une liste de bons de commande", description = "Génère un document PDF professionnel contenant une liste de bons de commande")
+    public ResponseEntity<?> genererPdfListeBonsCommande(
+            @Parameter(description = "Liste des IDs des bons de commande") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "bons_commande") String nomFichier,
+            Authentication auth) {
+        return genererPdfListeDocumentsCommun(TypeDocument.BON_COMMANDE, ids, nomFichier, auth);
+    }
+
+    /**
+     * Génère un PDF pour une liste d'attestations de service fait
+     */
+    @PostMapping("/liste/attestations-service-fait/pdf")
+    @Operation(summary = "Générer un PDF d'une liste d'attestations de service fait", description = "Génère un document PDF professionnel contenant une liste d'attestations de service fait")
+    public ResponseEntity<?> genererPdfListeAttestationsServiceFait(
+            @Parameter(description = "Liste des IDs des attestations de service fait") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "attestations_service_fait") String nomFichier,
+            Authentication auth) {
+        return genererPdfListeDocumentsCommun(TypeDocument.ATTESTATION_SERVICE_FAIT, ids, nomFichier, auth);
+    }
+
+    /**
+     * Génère un PDF pour une liste de décisions de prélèvement
+     */
+    @PostMapping("/liste/decisions-prelevement/pdf")
+    @Operation(summary = "Générer un PDF d'une liste de décisions de prélèvement", description = "Génère un document PDF professionnel contenant une liste de décisions de prélèvement")
+    public ResponseEntity<?> genererPdfListeDecisionsPrelevement(
+            @Parameter(description = "Liste des IDs des décisions de prélèvement") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "decisions_prelevement") String nomFichier,
+            Authentication auth) {
+        return genererPdfListeDocumentsCommun(TypeDocument.DECISION_PRELEVEMENT, ids, nomFichier, auth);
+    }
+
+    /**
+     * Génère un PDF pour une liste d'ordres de paiement
+     */
+    @PostMapping("/liste/ordres-paiement/pdf")
+    @Operation(summary = "Générer un PDF d'une liste d'ordres de paiement", description = "Génère un document PDF professionnel contenant une liste d'ordres de paiement")
+    public ResponseEntity<?> genererPdfListeOrdresPaiement(
+            @Parameter(description = "Liste des IDs des ordres de paiement") @RequestBody List<Long> ids,
+            @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "ordres_paiement") String nomFichier,
+            Authentication auth) {
+        return genererPdfListeDocumentsCommun(TypeDocument.ORDRE_PAIEMENT, ids, nomFichier, auth);
+    }
+
+    /**
+     * Méthode commune pour générer un PDF de liste de documents
+     */
+    private ResponseEntity<?> genererPdfListeDocumentsCommun(TypeDocument typeDocument, List<Long> ids, String nomFichier, Authentication auth) {
+        try {
+            log.info("Génération du PDF pour une liste de {} documents de type {}", ids.size(), typeDocument);
+
+            // Vérifier l'authentification
+            Utilisateur user = utilisateurService.trouverParEmail(auth.getName())
+                    .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+            // Récupérer les documents selon le type
+            List<Object> documents = new ArrayList<>();
+            for (Long id : ids) {
+                Object document = recupererDocumentParTypeEtId(typeDocument, id, user);
+                documents.add(document);
+            }
+
+            // Générer le PDF
+            String urlPdf = documentService.genererListeDocumentsPdf(typeDocument, documents, nomFichier);
+
+            // Lire le fichier PDF généré
+            String fileName = urlPdf.substring(urlPdf.lastIndexOf("/") + 1);
+            String filePathStr = "reports/" + fileName;
+            java.nio.file.Path filePath = java.nio.file.Paths.get(filePathStr);
+
+            // Vérifier si le fichier existe
+            if (!java.nio.file.Files.exists(filePath)) {
+                throw new RuntimeException("Fichier PDF non trouvé: " + filePathStr);
+            }
+
+            byte[] pdfBytes = java.nio.file.Files.readAllBytes(filePath);
+
+            // Préparer la réponse HTTP
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", fileName);
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            log.info("PDF généré avec succès pour la liste de documents {}. Taille: {} bytes", typeDocument, pdfBytes.length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(pdfBytes);
+
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération du PDF pour la liste de documents {}", typeDocument, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "message", "Erreur lors de la génération du PDF: " + e.getMessage(),
+                            "code", "INTERNAL_ERROR",
+                            "timestamp", java.time.LocalDateTime.now().toString(),
+                            "path", "/api/documents/liste/" + typeDocument + "/pdf",
+                            "details", "Veuillez contacter l'administrateur"));
+        }
+    }
+
+    /**
+     * Récupère un document par son type et son ID avec vérification des droits
+     */
+    private Object recupererDocumentParTypeEtId(TypeDocument typeDocument, Long id, Utilisateur user) {
+        switch (typeDocument) {
+            case DEMANDE_ACHAT:
+                DemandeDAchat demande = demandeDAchatService.trouverParIdAvecRelations(id)
+                        .orElseThrow(() -> new RuntimeException("Demande d'achat introuvable: " + id));
+                if (!demande.getEntreprise().getId().equals(user.getEntreprise().getId())) {
+                    throw new RuntimeException("Accès interdit à la demande d'achat " + id);
+                }
+                return demande;
+            case FICHE_BESOIN:
+                FicheDeBesoin fiche = ficheBesoinService.trouverParId(id)
+                        .orElseThrow(() -> new RuntimeException("Fiche de besoin introuvable: " + id));
+                if (!fiche.getEntreprise().getId().equals(user.getEntreprise().getId())) {
+                    throw new RuntimeException("Accès interdit à la fiche de besoin " + id);
+                }
+                return fiche;
+            case BUDGET:
+                Budget budget = budgetService.trouverParId(id)
+                        .orElseThrow(() -> new RuntimeException("Budget introuvable: " + id));
+                if (!budget.getEntreprise().getId().equals(user.getEntreprise().getId())) {
+                    throw new RuntimeException("Accès interdit au budget " + id);
+                }
+                return budget;
+            case BON_COMMANDE:
+                BonDeCommande bon = bonDeCommandeService.trouverParId(id)
+                        .orElseThrow(() -> new RuntimeException("Bon de commande introuvable: " + id));
+                if (!bon.getEntreprise().getId().equals(user.getEntreprise().getId())) {
+                    throw new RuntimeException("Accès interdit au bon de commande " + id);
+                }
+                return bon;
+            case ATTESTATION_SERVICE_FAIT:
+                AttestationDeServiceFait attestation = attestationServiceFaitService.trouverParIdAvecRelations(id)
+                        .orElseThrow(() -> new RuntimeException("Attestation de service fait introuvable: " + id));
+                if (!attestation.getEntreprise().getId().equals(user.getEntreprise().getId())) {
+                    throw new RuntimeException("Accès interdit à l'attestation de service fait " + id);
+                }
+                return attestation;
+            case DECISION_PRELEVEMENT:
+                DecisionDePrelevement decision = decisionPrelevementService.trouverParId(id)
+                        .orElseThrow(() -> new RuntimeException("Décision de prélèvement introuvable: " + id));
+                if (!decision.getEntreprise().getId().equals(user.getEntreprise().getId())) {
+                    throw new RuntimeException("Accès interdit à la décision de prélèvement " + id);
+                }
+                return decision;
+            case ORDRE_PAIEMENT:
+                OrdreDePaiement ordre = ordreDePaiementService.trouverParIdAvecRelations(id)
+                        .orElseThrow(() -> new RuntimeException("Ordre de paiement introuvable: " + id));
+                if (!ordre.getEntreprise().getId().equals(user.getEntreprise().getId())) {
+                    throw new RuntimeException("Accès interdit à l'ordre de paiement " + id);
+                }
+                return ordre;
+            case LIGNE_CREDIT:
+                LigneCredit ligne = ligneCreditService.trouverParId(id)
+                        .orElseThrow(() -> new RuntimeException("Ligne de crédit introuvable: " + id));
+                if (!ligne.getBudget().getEntreprise().getId().equals(user.getEntreprise().getId())) {
+                    throw new RuntimeException("Accès interdit à la ligne de crédit " + id);
+                }
+                return ligne;
+            default:
+                throw new IllegalArgumentException("Type de document non supporté: " + typeDocument);
         }
     }
 }

@@ -27,6 +27,7 @@ public class TableValidationDTO {
     private LocalDateTime dateValidation;
     private String validateurNomComplet;
     private String validateurEmail;
+    private String codeDocument; // Nouveau champ pour le code du document
     
     /**
      * Convertit une entité TableValidation en DTO
@@ -43,14 +44,8 @@ public class TableValidationDTO {
                 .dateValidation(validation.getDateValidation())
                 .build();
         
-        // Gérer le validateur de manière sécurisée
-        if (validation.getValidateur() != null) {
-            dto.setValidateurId(validation.getValidateur().getId());
-            dto.setValidateurEmail(validation.getValidateur().getEmail());
-            dto.setValidateurNomComplet(
-                validation.getValidateur().getPrenom() + " " + validation.getValidateur().getNom()
-            );
-        }
+        // Ne pas accéder directement aux propriétés du validateur pour éviter les problèmes de proxy
+        // Les informations du validateur seront chargées séparément si nécessaire
         
         return dto;
     }

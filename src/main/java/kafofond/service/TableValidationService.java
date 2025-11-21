@@ -3,6 +3,7 @@ package kafofond.service;
 import kafofond.entity.TableValidation;
 import kafofond.entity.TypeDocument;
 import kafofond.entity.Utilisateur;
+import kafofond.entity.Entreprise;
 import kafofond.repository.TableValidationRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -106,5 +107,32 @@ public class TableValidationService {
     public List<TableValidation> consulterValidationsParStatut(String statut) {
         log.info("Consultation des validations avec le statut {}", statut);
         return tableValidationRepo.findByStatut(statut);
+    }
+
+    /**
+     * Récupère toutes les validations d'une entreprise
+     */
+    @Transactional(readOnly = true)
+    public List<TableValidation> consulterValidationsEntreprise(Entreprise entreprise) {
+        log.info("Consultation des validations pour l'entreprise {}", entreprise.getNom());
+        return tableValidationRepo.findByEntreprise(entreprise);
+    }
+
+    /**
+     * Récupère toutes les validations d'une entreprise par son ID
+     */
+    @Transactional(readOnly = true)
+    public List<TableValidation> consulterValidationsEntrepriseParId(Long entrepriseId) {
+        log.info("Consultation des validations pour l'entreprise #{}", entrepriseId);
+        return tableValidationRepo.findByEntrepriseId(entrepriseId);
+    }
+
+    /**
+     * Récupère toutes les validations d'un utilisateur
+     */
+    @Transactional(readOnly = true)
+    public List<TableValidation> consulterValidationsUtilisateur(Long utilisateurId) {
+        log.info("Consultation des validations de l'utilisateur #{}", utilisateurId);
+        return tableValidationRepo.findByUtilisateurId(utilisateurId);
     }
 }

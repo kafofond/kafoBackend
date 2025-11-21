@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * Service de génération de documents (PDF, Excel)
@@ -1182,5 +1183,339 @@ public class DocumentService {
             log.error("Erreur lors de la génération du PDF pour la ligne de crédit {}", ligne.getId(), e);
             throw new RuntimeException("Erreur lors de la génération du PDF", e);
         }
+    }
+
+    /**
+     * Génère le PDF pour une liste de documents avec iText
+     */
+    public String genererListeDocumentsPdf(TypeDocument typeDocument, List<?> documents, String nomFichier) throws IOException {
+        log.info("Génération du PDF pour une liste de {} documents de type {}", documents.size(), typeDocument);
+        
+        try {
+            // Créer le dossier s'il n'existe pas
+            Path reportsDir = Paths.get(reportsPath);
+            if (!Files.exists(reportsDir)) {
+                log.info("Création du dossier de rapports: {}", reportsDir.toAbsolutePath());
+                Files.createDirectories(reportsDir);
+            }
+            
+            // Nom du fichier
+            String fileName = String.format("liste_%s_%s.pdf", 
+                    nomFichier, 
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")));
+            
+            Path filePath = reportsDir.resolve(fileName);
+            log.info("Chemin du fichier PDF: {}", filePath.toAbsolutePath());
+            
+            // Générer le PDF avec iText selon le type de document
+            byte[] pdfBytes = genererPdfListeDocuments(typeDocument, documents);
+            log.info("PDF généré avec succès, taille: {} bytes", pdfBytes.length);
+            
+            // Écrire le fichier
+            Files.write(filePath, pdfBytes);
+            log.info("Fichier PDF écrit avec succès");
+            
+            String urlPdf = "/api/rapports/liste-" + typeDocument.name().toLowerCase().replace("_", "-") + "/" + fileName;
+            log.info("PDF généré : {}", urlPdf);
+            
+            return urlPdf;
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération du PDF pour la liste de documents de type {}: {}", typeDocument, e.getMessage(), e);
+            throw new IOException("Erreur lors de la génération du PDF", e);
+        }
+    }
+
+    /**
+     * Génère le PDF pour une liste de documents avec iText
+     */
+    private byte[] genererPdfListeDocuments(TypeDocument typeDocument, List<?> documents) {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document document = new Document(pdf);
+
+            // Titre principal
+            String titre = "LISTE DES " + typeDocument.name().replace("_", " ");
+            document.add(new Paragraph(titre)
+                    .setFontSize(20)
+                    .setBold()
+                    .setFontColor(ColorConstants.BLUE)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(20));
+            
+            // Date de génération
+            document.add(new Paragraph("Généré le : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")))
+                    .setFontSize(12)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginBottom(30));
+
+            // Générer le tableau selon le type de document
+            Table table = genererTableauDocuments(typeDocument, documents);
+            document.add(table);
+            
+            // Pied de page
+            document.add(new Paragraph("Total des documents : " + documents.size())
+                    .setFontSize(10)
+                    .setFontColor(ColorConstants.GRAY)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setMarginTop(30));
+            
+            document.close();
+            
+            return baos.toByteArray();
+        } catch (Exception e) {
+            log.error("Erreur lors de la génération du PDF pour la liste de documents de type {}", typeDocument, e);
+            throw new RuntimeException("Erreur lors de la génération du PDF", e);
+        }
+    }
+
+    /**
+     * Génère le tableau de documents selon le type
+     */
+    private Table genererTableauDocuments(TypeDocument typeDocument, List<?> documents) {
+        switch (typeDocument) {
+            case DEMANDE_ACHAT:
+                return genererTableauDemandesAchat(documents);
+            case FICHE_BESOIN:
+                return genererTableauFichesBesoin(documents);
+            case BUDGET:
+                return genererTableauBudgets(documents);
+            case BON_COMMANDE:
+                return genererTableauBonsCommande(documents);
+            case ATTESTATION_SERVICE_FAIT:
+                return genererTableauAttestationsService(documents);
+            case DECISION_PRELEVEMENT:
+                return genererTableauDecisionsPrelevement(documents);
+            case ORDRE_PAIEMENT:
+                return genererTableauOrdresPaiement(documents);
+            case LIGNE_CREDIT:
+                return genererTableauLignesCredit(documents);
+            default:
+                throw new IllegalArgumentException("Type de document non supporté: " + typeDocument);
+        }
+    }
+
+    /**
+     * Génère le tableau pour les demandes d'achat
+     */
+    private Table genererTableauDemandesAchat(List<?> documents) {
+        float[] columnWidths = {1, 3, 2, 2, 2};
+        Table table = new Table(UnitValue.createPercentArray(columnWidths));
+        table.setWidth(UnitValue.createPercentValue(100));
+        
+        // En-têtes du tableau
+        table.addHeaderCell(new Cell().add(new Paragraph("Code").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Description").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Fournisseur").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant Total").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Statut").setBold()));
+        
+        // Données du tableau
+        for (Object obj : documents) {
+            DemandeDAchat demande = (DemandeDAchat) obj;
+            table.addCell(new Cell().add(new Paragraph(demande.getCode() != null ? demande.getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(demande.getDescription() != null ? demande.getDescription() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(demande.getFournisseur() != null ? demande.getFournisseur() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(demande.getMontantTotal() != 0 ? String.format("%,.0f FCFA", demande.getMontantTotal()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(demande.getStatut() != null ? demande.getStatut().name() : "N/A")));
+        }
+        
+        return table;
+    }
+
+    /**
+     * Génère le tableau pour les fiches de besoin
+     */
+    private Table genererTableauFichesBesoin(List<?> documents) {
+        float[] columnWidths = {1, 3, 2, 2, 2};
+        Table table = new Table(UnitValue.createPercentArray(columnWidths));
+        table.setWidth(UnitValue.createPercentValue(100));
+        
+        // En-têtes du tableau
+        table.addHeaderCell(new Cell().add(new Paragraph("Code").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Objet").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Service Bénéficiaire").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant Estimé").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Statut").setBold()));
+        
+        // Données du tableau
+        for (Object obj : documents) {
+            FicheDeBesoin fiche = (FicheDeBesoin) obj;
+            table.addCell(new Cell().add(new Paragraph(fiche.getCode() != null ? fiche.getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(fiche.getObjet() != null ? fiche.getObjet() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(fiche.getServiceBeneficiaire() != null ? fiche.getServiceBeneficiaire() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(fiche.getMontantEstime() != 0 ? String.format("%,.0f FCFA", fiche.getMontantEstime()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(fiche.getStatut() != null ? fiche.getStatut().name() : "N/A")));
+        }
+        
+        return table;
+    }
+
+    /**
+     * Génère le tableau pour les budgets
+     */
+    private Table genererTableauBudgets(List<?> documents) {
+        float[] columnWidths = {1, 3, 2, 2, 2};
+        Table table = new Table(UnitValue.createPercentArray(columnWidths));
+        table.setWidth(UnitValue.createPercentValue(100));
+        
+        // En-têtes du tableau
+        table.addHeaderCell(new Cell().add(new Paragraph("Code").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Intitulé").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Année").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant Alloué").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Statut").setBold()));
+        
+        // Données du tableau
+        for (Object obj : documents) {
+            Budget budget = (Budget) obj;
+            table.addCell(new Cell().add(new Paragraph(budget.getCode() != null ? budget.getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(budget.getIntituleBudget() != null ? budget.getIntituleBudget() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(budget.getDateDebut() != null ? String.valueOf(budget.getDateDebut().getYear()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(budget.getMontantBudget() != 0 ? String.format("%,.0f FCFA", budget.getMontantBudget()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(budget.getStatut() != null ? budget.getStatut().name() : "N/A")));
+        }
+        
+        return table;
+    }
+
+    /**
+     * Génère le tableau pour les bons de commande
+     */
+    private Table genererTableauBonsCommande(List<?> documents) {
+        float[] columnWidths = {1, 3, 2, 2, 2};
+        Table table = new Table(UnitValue.createPercentArray(columnWidths));
+        table.setWidth(UnitValue.createPercentValue(100));
+        
+        // En-têtes du tableau
+        table.addHeaderCell(new Cell().add(new Paragraph("Code").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Fournisseur").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Demande d'Achat").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant Total").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Statut").setBold()));
+        
+        // Données du tableau
+        for (Object obj : documents) {
+            BonDeCommande bon = (BonDeCommande) obj;
+            table.addCell(new Cell().add(new Paragraph(bon.getCode() != null ? bon.getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(bon.getFournisseur() != null ? bon.getFournisseur() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(bon.getDemandeDAchat() != null && bon.getDemandeDAchat().getCode() != null ? bon.getDemandeDAchat().getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(bon.getMontantTotal() != 0 ? String.format("%,.0f FCFA", bon.getMontantTotal()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(bon.getStatut() != null ? bon.getStatut().name() : "N/A")));
+        }
+        
+        return table;
+    }
+
+    /**
+     * Génère le tableau pour les attestations de service fait
+     */
+    private Table genererTableauAttestationsService(List<?> documents) {
+        float[] columnWidths = {1, 3, 2, 2, 2};
+        Table table = new Table(UnitValue.createPercentArray(columnWidths));
+        table.setWidth(UnitValue.createPercentValue(100));
+        
+        // En-têtes du tableau
+        table.addHeaderCell(new Cell().add(new Paragraph("Code").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Bon de Commande").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Date Service").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Statut").setBold()));
+        
+        // Données du tableau
+        for (Object obj : documents) {
+            AttestationDeServiceFait attestation = (AttestationDeServiceFait) obj;
+            table.addCell(new Cell().add(new Paragraph(attestation.getCode() != null ? attestation.getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(attestation.getBonDeCommande() != null && attestation.getBonDeCommande().getCode() != null ? attestation.getBonDeCommande().getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(attestation.getDateLivraison() != null ? attestation.getDateLivraison().toString() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(attestation.getBonDeCommande() != null && attestation.getBonDeCommande().getMontantTotal() != 0 ? String.format("%,.0f FCFA", attestation.getBonDeCommande().getMontantTotal()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph("N/A")));
+        }
+        
+        return table;
+    }
+
+    /**
+     * Génère le tableau pour les décisions de prélèvement
+     */
+    private Table genererTableauDecisionsPrelevement(List<?> documents) {
+        float[] columnWidths = {1, 3, 2, 2, 2};
+        Table table = new Table(UnitValue.createPercentArray(columnWidths));
+        table.setWidth(UnitValue.createPercentValue(100));
+        
+        // En-têtes du tableau
+        table.addHeaderCell(new Cell().add(new Paragraph("Code").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Attestation").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Date Prélèvement").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Statut").setBold()));
+        
+        // Données du tableau
+        for (Object obj : documents) {
+            DecisionDePrelevement decision = (DecisionDePrelevement) obj;
+            table.addCell(new Cell().add(new Paragraph(decision.getCode() != null ? decision.getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(decision.getAttestationDeServiceFait() != null && decision.getAttestationDeServiceFait().getCode() != null ? decision.getAttestationDeServiceFait().getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(decision.getDateCreation() != null ? decision.getDateCreation().toLocalDate().toString() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(decision.getMontant() != 0 ? String.format("%,.0f FCFA", decision.getMontant()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(decision.getStatut() != null ? decision.getStatut().name() : "N/A")));
+        }
+        
+        return table;
+    }
+
+    /**
+     * Génère le tableau pour les ordres de paiement
+     */
+    private Table genererTableauOrdresPaiement(List<?> documents) {
+        float[] columnWidths = {1, 3, 2, 2, 2};
+        Table table = new Table(UnitValue.createPercentArray(columnWidths));
+        table.setWidth(UnitValue.createPercentValue(100));
+        
+        // En-têtes du tableau
+        table.addHeaderCell(new Cell().add(new Paragraph("Code").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Décision Prélèvement").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Date Émission").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Statut").setBold()));
+        
+        // Données du tableau
+        for (Object obj : documents) {
+            OrdreDePaiement ordre = (OrdreDePaiement) obj;
+            table.addCell(new Cell().add(new Paragraph(ordre.getCode() != null ? ordre.getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(ordre.getDecisionDePrelevement() != null && ordre.getDecisionDePrelevement().getCode() != null ? ordre.getDecisionDePrelevement().getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(ordre.getDateCreation() != null ? ordre.getDateCreation().toLocalDate().toString() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(ordre.getMontant() != 0 ? String.format("%,.0f FCFA", ordre.getMontant()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(ordre.getStatut() != null ? ordre.getStatut().name() : "N/A")));
+        }
+        
+        return table;
+    }
+
+    /**
+     * Génère le tableau pour les lignes de crédit
+     */
+    private Table genererTableauLignesCredit(List<?> documents) {
+        float[] columnWidths = {1, 3, 2, 2, 2};
+        Table table = new Table(UnitValue.createPercentArray(columnWidths));
+        table.setWidth(UnitValue.createPercentValue(100));
+        
+        // En-têtes du tableau
+        table.addHeaderCell(new Cell().add(new Paragraph("Code").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Budget").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant Alloué").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Montant Utilisé").setBold()));
+        table.addHeaderCell(new Cell().add(new Paragraph("Statut").setBold()));
+        
+        // Données du tableau
+        for (Object obj : documents) {
+            LigneCredit ligne = (LigneCredit) obj;
+            table.addCell(new Cell().add(new Paragraph(ligne.getCode() != null ? ligne.getCode() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(ligne.getBudget() != null && ligne.getBudget().getIntituleBudget() != null ? ligne.getBudget().getIntituleBudget() : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(ligne.getMontantAllouer() != 0 ? String.format("%,.0f FCFA", ligne.getMontantAllouer()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(ligne.getMontantEngager() != 0 ? String.format("%,.0f FCFA", ligne.getMontantEngager()) : "N/A")));
+            table.addCell(new Cell().add(new Paragraph(ligne.getStatut() != null ? ligne.getStatut().name() : "N/A")));
+        }
+        
+        return table;
     }
 }
