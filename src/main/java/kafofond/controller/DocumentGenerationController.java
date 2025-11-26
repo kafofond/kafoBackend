@@ -1,5 +1,6 @@
 package kafofond.controller;
 
+import kafofond.dto.IdsListDTO;
 import kafofond.entity.*;
 import kafofond.repository.*;
 import kafofond.service.*;
@@ -1070,10 +1071,10 @@ public class DocumentGenerationController {
     @PostMapping("/liste/budgets/pdf")
     @Operation(summary = "Générer un PDF d'une liste de budgets", description = "Génère un document PDF professionnel contenant une liste de budgets")
     public ResponseEntity<?> genererPdfListeBudgets(
-            @Parameter(description = "Liste des IDs des budgets") @RequestBody List<Long> ids,
+            @Parameter(description = "Liste des IDs des budgets") @RequestBody IdsListDTO idsList,
             @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "budgets") String nomFichier,
             Authentication auth) {
-        return genererPdfListeDocumentsCommun(TypeDocument.BUDGET, ids, nomFichier, auth);
+        return genererPdfListeDocumentsCommun(TypeDocument.BUDGET, idsList.getIds(), nomFichier, auth);
     }
 
     /**
@@ -1082,10 +1083,10 @@ public class DocumentGenerationController {
     @PostMapping("/liste/lignes-credit/pdf")
     @Operation(summary = "Générer un PDF d'une liste de lignes de crédit", description = "Génère un document PDF professionnel contenant une liste de lignes de crédit")
     public ResponseEntity<?> genererPdfListeLignesCredit(
-            @Parameter(description = "Liste des IDs des lignes de crédit") @RequestBody List<Long> ids,
+            @Parameter(description = "Liste des IDs des lignes de crédit") @RequestBody IdsListDTO idsList,
             @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "lignes_credit") String nomFichier,
             Authentication auth) {
-        return genererPdfListeDocumentsCommun(TypeDocument.LIGNE_CREDIT, ids, nomFichier, auth);
+        return genererPdfListeDocumentsCommun(TypeDocument.LIGNE_CREDIT, idsList.getIds(), nomFichier, auth);
     }
 
     /**
@@ -1094,10 +1095,10 @@ public class DocumentGenerationController {
     @PostMapping("/liste/fiches-besoin/pdf")
     @Operation(summary = "Générer un PDF d'une liste de fiches de besoin", description = "Génère un document PDF professionnel contenant une liste de fiches de besoin")
     public ResponseEntity<?> genererPdfListeFichesBesoin(
-            @Parameter(description = "Liste des IDs des fiches de besoin") @RequestBody List<Long> ids,
+            @Parameter(description = "Liste des IDs des fiches de besoin") @RequestBody IdsListDTO idsList,
             @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "fiches_besoin") String nomFichier,
             Authentication auth) {
-        return genererPdfListeDocumentsCommun(TypeDocument.FICHE_BESOIN, ids, nomFichier, auth);
+        return genererPdfListeDocumentsCommun(TypeDocument.FICHE_BESOIN, idsList.getIds(), nomFichier, auth);
     }
 
     /**
@@ -1106,10 +1107,10 @@ public class DocumentGenerationController {
     @PostMapping("/liste/demandes-achat/pdf")
     @Operation(summary = "Générer un PDF d'une liste de demandes d'achat", description = "Génère un document PDF professionnel contenant une liste de demandes d'achat")
     public ResponseEntity<?> genererPdfListeDemandesAchat(
-            @Parameter(description = "Liste des IDs des demandes d'achat") @RequestBody List<Long> ids,
+            @Parameter(description = "Liste des IDs des demandes d'achat") @RequestBody IdsListDTO idsList,
             @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "demandes_achat") String nomFichier,
             Authentication auth) {
-        return genererPdfListeDocumentsCommun(TypeDocument.DEMANDE_ACHAT, ids, nomFichier, auth);
+        return genererPdfListeDocumentsCommun(TypeDocument.DEMANDE_ACHAT, idsList.getIds(), nomFichier, auth);
     }
 
     /**
@@ -1118,10 +1119,10 @@ public class DocumentGenerationController {
     @PostMapping("/liste/bons-commande/pdf")
     @Operation(summary = "Générer un PDF d'une liste de bons de commande", description = "Génère un document PDF professionnel contenant une liste de bons de commande")
     public ResponseEntity<?> genererPdfListeBonsCommande(
-            @Parameter(description = "Liste des IDs des bons de commande") @RequestBody List<Long> ids,
+            @Parameter(description = "Liste des IDs des bons de commande") @RequestBody IdsListDTO idsList,
             @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "bons_commande") String nomFichier,
             Authentication auth) {
-        return genererPdfListeDocumentsCommun(TypeDocument.BON_COMMANDE, ids, nomFichier, auth);
+        return genererPdfListeDocumentsCommun(TypeDocument.BON_COMMANDE, idsList.getIds(), nomFichier, auth);
     }
 
     /**
@@ -1130,10 +1131,10 @@ public class DocumentGenerationController {
     @PostMapping("/liste/attestations-service-fait/pdf")
     @Operation(summary = "Générer un PDF d'une liste d'attestations de service fait", description = "Génère un document PDF professionnel contenant une liste d'attestations de service fait")
     public ResponseEntity<?> genererPdfListeAttestationsServiceFait(
-            @Parameter(description = "Liste des IDs des attestations de service fait") @RequestBody List<Long> ids,
+            @Parameter(description = "Liste des IDs des attestations de service fait") @RequestBody IdsListDTO idsList,
             @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "attestations_service_fait") String nomFichier,
             Authentication auth) {
-        return genererPdfListeDocumentsCommun(TypeDocument.ATTESTATION_SERVICE_FAIT, ids, nomFichier, auth);
+        return genererPdfListeDocumentsCommun(TypeDocument.ATTESTATION_SERVICE_FAIT, idsList.getIds(), nomFichier, auth);
     }
 
     /**
@@ -1142,10 +1143,10 @@ public class DocumentGenerationController {
     @PostMapping("/liste/decisions-prelevement/pdf")
     @Operation(summary = "Générer un PDF d'une liste de décisions de prélèvement", description = "Génère un document PDF professionnel contenant une liste de décisions de prélèvement")
     public ResponseEntity<?> genererPdfListeDecisionsPrelevement(
-            @Parameter(description = "Liste des IDs des décisions de prélèvement") @RequestBody List<Long> ids,
+            @Parameter(description = "Liste des IDs des décisions de prélèvement") @RequestBody IdsListDTO idsList,
             @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "decisions_prelevement") String nomFichier,
             Authentication auth) {
-        return genererPdfListeDocumentsCommun(TypeDocument.DECISION_PRELEVEMENT, ids, nomFichier, auth);
+        return genererPdfListeDocumentsCommun(TypeDocument.DECISION_PRELEVEMENT, idsList.getIds(), nomFichier, auth);
     }
 
     /**
@@ -1154,10 +1155,10 @@ public class DocumentGenerationController {
     @PostMapping("/liste/ordres-paiement/pdf")
     @Operation(summary = "Générer un PDF d'une liste d'ordres de paiement", description = "Génère un document PDF professionnel contenant une liste d'ordres de paiement")
     public ResponseEntity<?> genererPdfListeOrdresPaiement(
-            @Parameter(description = "Liste des IDs des ordres de paiement") @RequestBody List<Long> ids,
+            @Parameter(description = "Liste des IDs des ordres de paiement") @RequestBody IdsListDTO idsList,
             @Parameter(description = "Nom du fichier (optionnel)") @RequestParam(defaultValue = "ordres_paiement") String nomFichier,
             Authentication auth) {
-        return genererPdfListeDocumentsCommun(TypeDocument.ORDRE_PAIEMENT, ids, nomFichier, auth);
+        return genererPdfListeDocumentsCommun(TypeDocument.ORDRE_PAIEMENT, idsList.getIds(), nomFichier, auth);
     }
 
     /**

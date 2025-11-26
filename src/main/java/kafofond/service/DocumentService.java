@@ -377,7 +377,7 @@ public class DocumentService {
                     .setMarginBottom(20));
             
             // Nom de l'entreprise
-            if (bon.getEntreprise() != null) {
+            if (bon.getEntreprise() != null && bon.getEntreprise().getNom() != null) {
                 document.add(new Paragraph(bon.getEntreprise().getNom())
                         .setFontSize(16)
                         .setBold()
@@ -399,19 +399,19 @@ public class DocumentService {
             }
             
             table.addCell("Fournisseur");
-            table.addCell(bon.getFournisseur());
+            table.addCell(bon.getFournisseur() != null ? bon.getFournisseur() : "N/A");
             
             table.addCell("Description");
-            table.addCell(bon.getDescription());
+            table.addCell(bon.getDescription() != null ? bon.getDescription() : "N/A");
             
             table.addCell("Montant Total");
             table.addCell(String.format("%.2f FCFA", bon.getMontantTotal()));
             
             table.addCell("Service Bénéficiaire");
-            table.addCell(bon.getServiceBeneficiaire());
+            table.addCell(bon.getServiceBeneficiaire() != null ? bon.getServiceBeneficiaire() : "N/A");
             
             table.addCell("Mode de Paiement");
-            table.addCell(bon.getModePaiement());
+            table.addCell(bon.getModePaiement() != null ? bon.getModePaiement() : "N/A");
             
             if (bon.getDateCreation() != null) {
                 table.addCell("Date de Création");
@@ -448,9 +448,9 @@ public class DocumentService {
             // Informations sur la personne ayant validé/approuvé
             if (bon.getCreePar() != null) {
                 document.add(new Paragraph("Document traité par :"));
-                document.add(new Paragraph(bon.getCreePar().getPrenom() + " " + bon.getCreePar().getNom())
+                document.add(new Paragraph((bon.getCreePar().getPrenom() != null ? bon.getCreePar().getPrenom() : "") + " " + (bon.getCreePar().getNom() != null ? bon.getCreePar().getNom() : ""))
                         .setBold());
-                document.add(new Paragraph(bon.getCreePar().getRole().toString())
+                document.add(new Paragraph(bon.getCreePar().getRole() != null ? bon.getCreePar().getRole().toString() : "")
                         .setMarginBottom(30));
             }
             
@@ -487,7 +487,7 @@ public class DocumentService {
                     .setMarginBottom(20));
             
             // Nom de l'entreprise
-            if (budget.getEntreprise() != null) {
+            if (budget.getEntreprise() != null && budget.getEntreprise().getNom() != null) {
                 document.add(new Paragraph(budget.getEntreprise().getNom())
                         .setFontSize(16)
                         .setBold()
@@ -509,10 +509,10 @@ public class DocumentService {
             }
             
             table.addCell("Intitulé");
-            table.addCell(budget.getIntituleBudget());
+            table.addCell(budget.getIntituleBudget() != null ? budget.getIntituleBudget() : "N/A");
             
             table.addCell("Description");
-            table.addCell(budget.getDescription());
+            table.addCell(budget.getDescription() != null ? budget.getDescription() : "N/A");
             
             table.addCell("Montant");
             table.addCell(String.format("%.2f FCFA", budget.getMontantBudget()));
@@ -542,9 +542,9 @@ public class DocumentService {
             // Informations sur la personne ayant validé/approuvé
             if (budget.getCreePar() != null) {
                 document.add(new Paragraph("Document traité par :"));
-                document.add(new Paragraph(budget.getCreePar().getPrenom() + " " + budget.getCreePar().getNom())
+                document.add(new Paragraph((budget.getCreePar().getPrenom() != null ? budget.getCreePar().getPrenom() : "") + " " + (budget.getCreePar().getNom() != null ? budget.getCreePar().getNom() : ""))
                         .setBold());
-                document.add(new Paragraph(budget.getCreePar().getRole().toString())
+                document.add(new Paragraph(budget.getCreePar().getRole() != null ? budget.getCreePar().getRole().toString() : "")
                         .setMarginBottom(30));
             }
             
@@ -581,7 +581,7 @@ public class DocumentService {
                     .setMarginBottom(20));
             
             // Nom de l'entreprise
-            if (fiche.getEntreprise() != null) {
+            if (fiche.getEntreprise() != null && fiche.getEntreprise().getNom() != null) {
                 document.add(new Paragraph(fiche.getEntreprise().getNom())
                         .setFontSize(16)
                         .setBold()
@@ -603,13 +603,13 @@ public class DocumentService {
             }
             
             table.addCell("Service Bénéficiaire");
-            table.addCell(fiche.getServiceBeneficiaire());
+            table.addCell(fiche.getServiceBeneficiaire() != null ? fiche.getServiceBeneficiaire() : "N/A");
             
             table.addCell("Objet");
-            table.addCell(fiche.getObjet());
+            table.addCell(fiche.getObjet() != null ? fiche.getObjet() : "N/A");
             
             table.addCell("Description");
-            table.addCell(fiche.getDescription());
+            table.addCell(fiche.getDescription() != null ? fiche.getDescription() : "N/A");
             
             table.addCell("Montant Estimé");
             table.addCell(String.format("%.2f FCFA", fiche.getMontantEstime()));
@@ -644,9 +644,9 @@ public class DocumentService {
             // Informations sur la personne ayant validé/approuvé
             if (fiche.getCreePar() != null) {
                 document.add(new Paragraph("Document traité par :"));
-                document.add(new Paragraph(fiche.getCreePar().getPrenom() + " " + fiche.getCreePar().getNom())
+                document.add(new Paragraph((fiche.getCreePar().getPrenom() != null ? fiche.getCreePar().getPrenom() : "") + " " + (fiche.getCreePar().getNom() != null ? fiche.getCreePar().getNom() : ""))
                         .setBold());
-                document.add(new Paragraph(fiche.getCreePar().getRole().toString())
+                document.add(new Paragraph(fiche.getCreePar().getRole() != null ? fiche.getCreePar().getRole().toString() : "")
                         .setMarginBottom(30));
             }
             
@@ -683,7 +683,7 @@ public class DocumentService {
                     .setMarginBottom(20));
             
             // Nom de l'entreprise
-            if (demande.getEntreprise() != null) {
+            if (demande.getEntreprise() != null && demande.getEntreprise().getNom() != null) {
                 document.add(new Paragraph(demande.getEntreprise().getNom())
                         .setFontSize(16)
                         .setBold()
@@ -705,19 +705,19 @@ public class DocumentService {
             }
             
             table.addCell("Référence Besoin");
-            table.addCell(demande.getReferenceBesoin());
+            table.addCell(demande.getReferenceBesoin() != null ? demande.getReferenceBesoin() : "N/A");
             
             table.addCell("Description");
-            table.addCell(demande.getDescription());
+            table.addCell(demande.getDescription() != null ? demande.getDescription() : "N/A");
             
             table.addCell("Fournisseur");
-            table.addCell(demande.getFournisseur());
+            table.addCell(demande.getFournisseur() != null ? demande.getFournisseur() : "N/A");
             
             table.addCell("Montant Total");
             table.addCell(String.format("%.2f FCFA", demande.getMontantTotal()));
             
             table.addCell("Service Bénéficiaire");
-            table.addCell(demande.getServiceBeneficiaire());
+            table.addCell(demande.getServiceBeneficiaire() != null ? demande.getServiceBeneficiaire() : "N/A");
             
             if (demande.getDateCreation() != null) {
                 table.addCell("Date de Création");
@@ -749,9 +749,9 @@ public class DocumentService {
             // Informations sur la personne ayant validé/approuvé
             if (demande.getCreePar() != null) {
                 document.add(new Paragraph("Document traité par :"));
-                document.add(new Paragraph(demande.getCreePar().getPrenom() + " " + demande.getCreePar().getNom())
+                document.add(new Paragraph((demande.getCreePar().getPrenom() != null ? demande.getCreePar().getPrenom() : "") + " " + (demande.getCreePar().getNom() != null ? demande.getCreePar().getNom() : ""))
                         .setBold());
-                document.add(new Paragraph(demande.getCreePar().getRole().toString())
+                document.add(new Paragraph(demande.getCreePar().getRole() != null ? demande.getCreePar().getRole().toString() : "")
                         .setMarginBottom(30));
             }
             
@@ -788,7 +788,7 @@ public class DocumentService {
                     .setMarginBottom(20));
             
             // Nom de l'entreprise
-            if (attestation.getEntreprise() != null) {
+            if (attestation.getEntreprise() != null && attestation.getEntreprise().getNom() != null) {
                 document.add(new Paragraph(attestation.getEntreprise().getNom())
                         .setFontSize(16)
                         .setBold()
@@ -810,16 +810,16 @@ public class DocumentService {
             }
             
             table.addCell("Référence Bon Commande");
-            table.addCell(attestation.getReferenceBonCommande());
+            table.addCell(attestation.getReferenceBonCommande() != null ? attestation.getReferenceBonCommande() : "N/A");
             
             table.addCell("Fournisseur");
-            table.addCell(attestation.getFournisseur());
+            table.addCell(attestation.getFournisseur() != null ? attestation.getFournisseur() : "N/A");
             
             table.addCell("Titre");
-            table.addCell(attestation.getTitre());
+            table.addCell(attestation.getTitre() != null ? attestation.getTitre() : "N/A");
             
             table.addCell("Constat");
-            table.addCell(attestation.getConstat());
+            table.addCell(attestation.getConstat() != null ? attestation.getConstat() : "N/A");
             
             if (attestation.getDateLivraison() != null) {
                 table.addCell("Date de Livraison");
@@ -846,9 +846,9 @@ public class DocumentService {
             // Informations sur la personne ayant validé/approuvé
             if (attestation.getCreePar() != null) {
                 document.add(new Paragraph("Document traité par :"));
-                document.add(new Paragraph(attestation.getCreePar().getPrenom() + " " + attestation.getCreePar().getNom())
+                document.add(new Paragraph((attestation.getCreePar().getPrenom() != null ? attestation.getCreePar().getPrenom() : "") + " " + (attestation.getCreePar().getNom() != null ? attestation.getCreePar().getNom() : ""))
                         .setBold());
-                document.add(new Paragraph(attestation.getCreePar().getRole().toString())
+                document.add(new Paragraph(attestation.getCreePar().getRole() != null ? attestation.getCreePar().getRole().toString() : "")
                         .setMarginBottom(30));
             }
             
@@ -885,7 +885,7 @@ public class DocumentService {
                     .setMarginBottom(20));
             
             // Nom de l'entreprise
-            if (decision.getEntreprise() != null) {
+            if (decision.getEntreprise() != null && decision.getEntreprise().getNom() != null) {
                 document.add(new Paragraph(decision.getEntreprise().getNom())
                         .setFontSize(16)
                         .setBold()
@@ -907,19 +907,19 @@ public class DocumentService {
             }
             
             table.addCell("Référence Attestation");
-            table.addCell(decision.getReferenceAttestation());
+            table.addCell(decision.getReferenceAttestation() != null ? decision.getReferenceAttestation() : "N/A");
             
             table.addCell("Montant");
             table.addCell(String.format("%.2f FCFA", decision.getMontant()));
             
             table.addCell("Compte Origine");
-            table.addCell(decision.getCompteOrigine());
+            table.addCell(decision.getCompteOrigine() != null ? decision.getCompteOrigine() : "N/A");
             
             table.addCell("Compte Destinataire");
-            table.addCell(decision.getCompteDestinataire());
+            table.addCell(decision.getCompteDestinataire() != null ? decision.getCompteDestinataire() : "N/A");
             
             table.addCell("Motif Prélèvement");
-            table.addCell(decision.getMotifPrelevement());
+            table.addCell(decision.getMotifPrelevement() != null ? decision.getMotifPrelevement() : "N/A");
             
             if (decision.getDateCreation() != null) {
                 table.addCell("Date de Création");
@@ -946,9 +946,9 @@ public class DocumentService {
             // Informations sur la personne ayant validé/approuvé
             if (decision.getCreePar() != null) {
                 document.add(new Paragraph("Document traité par :"));
-                document.add(new Paragraph(decision.getCreePar().getPrenom() + " " + decision.getCreePar().getNom())
+                document.add(new Paragraph((decision.getCreePar().getPrenom() != null ? decision.getCreePar().getPrenom() : "") + " " + (decision.getCreePar().getNom() != null ? decision.getCreePar().getNom() : ""))
                         .setBold());
-                document.add(new Paragraph(decision.getCreePar().getRole().toString())
+                document.add(new Paragraph(decision.getCreePar().getRole() != null ? decision.getCreePar().getRole().toString() : "")
                         .setMarginBottom(30));
             }
             
@@ -985,7 +985,7 @@ public class DocumentService {
                     .setMarginBottom(20));
             
             // Nom de l'entreprise
-            if (ordre.getEntreprise() != null) {
+            if (ordre.getEntreprise() != null && ordre.getEntreprise().getNom() != null) {
                 document.add(new Paragraph(ordre.getEntreprise().getNom())
                         .setFontSize(16)
                         .setBold()
@@ -1007,19 +1007,19 @@ public class DocumentService {
             }
             
             table.addCell("Référence Décision Prélèvement");
-            table.addCell(ordre.getReferenceDecisionPrelevement());
+            table.addCell(ordre.getReferenceDecisionPrelevement() != null ? ordre.getReferenceDecisionPrelevement() : "N/A");
             
             table.addCell("Montant");
             table.addCell(String.format("%.2f FCFA", ordre.getMontant()));
             
             table.addCell("Description");
-            table.addCell(ordre.getDescription());
+            table.addCell(ordre.getDescription() != null ? ordre.getDescription() : "N/A");
             
             table.addCell("Compte Origine");
-            table.addCell(ordre.getCompteOrigine());
+            table.addCell(ordre.getCompteOrigine() != null ? ordre.getCompteOrigine() : "N/A");
             
             table.addCell("Compte Destinataire");
-            table.addCell(ordre.getCompteDestinataire());
+            table.addCell(ordre.getCompteDestinataire() != null ? ordre.getCompteDestinataire() : "N/A");
             
             if (ordre.getDateExecution() != null) {
                 table.addCell("Date d'Exécution");
@@ -1051,9 +1051,9 @@ public class DocumentService {
             // Informations sur la personne ayant validé/approuvé
             if (ordre.getCreePar() != null) {
                 document.add(new Paragraph("Document traité par :"));
-                document.add(new Paragraph(ordre.getCreePar().getPrenom() + " " + ordre.getCreePar().getNom())
+                document.add(new Paragraph((ordre.getCreePar().getPrenom() != null ? ordre.getCreePar().getPrenom() : "") + " " + (ordre.getCreePar().getNom() != null ? ordre.getCreePar().getNom() : ""))
                         .setBold());
-                document.add(new Paragraph(ordre.getCreePar().getRole().toString())
+                document.add(new Paragraph(ordre.getCreePar().getRole() != null ? ordre.getCreePar().getRole().toString() : "")
                         .setMarginBottom(30));
             }
             
@@ -1112,10 +1112,10 @@ public class DocumentService {
             }
             
             table.addCell("Intitulé Ligne");
-            table.addCell(ligne.getIntituleLigne());
+            table.addCell(ligne.getIntituleLigne() != null ? ligne.getIntituleLigne() : "N/A");
             
             table.addCell("Description");
-            table.addCell(ligne.getDescription());
+            table.addCell(ligne.getDescription() != null ? ligne.getDescription() : "N/A");
             
             table.addCell("Montant Alloué");
             table.addCell(String.format("%.2f FCFA", ligne.getMontantAllouer()));
@@ -1164,9 +1164,9 @@ public class DocumentService {
             // Informations sur la personne ayant validé/approuvé
             if (ligne.getCreePar() != null) {
                 document.add(new Paragraph("Document traité par :"));
-                document.add(new Paragraph(ligne.getCreePar().getPrenom() + " " + ligne.getCreePar().getNom())
+                document.add(new Paragraph((ligne.getCreePar().getPrenom() != null ? ligne.getCreePar().getPrenom() : "") + " " + (ligne.getCreePar().getNom() != null ? ligne.getCreePar().getNom() : ""))
                         .setBold());
-                document.add(new Paragraph(ligne.getCreePar().getRole().toString())
+                document.add(new Paragraph(ligne.getCreePar().getRole() != null ? ligne.getCreePar().getRole().toString() : "")
                         .setMarginBottom(30));
             }
             
