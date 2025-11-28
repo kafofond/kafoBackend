@@ -33,6 +33,7 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin(origins = "http://localhost:*")
 @Tag(name = "Authentification", description = "Endpoints pour l'authentification et l'inscription des utilisateurs")
 public class AuthController {
 
