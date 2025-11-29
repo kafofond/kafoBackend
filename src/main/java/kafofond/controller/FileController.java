@@ -27,7 +27,7 @@ public class FileController {
      * Gère l'upload de fichiers (MultipartFile) pour tout document nécessitant une pièce jointe.
      * Accessible à tous les rôles qui peuvent créer ou modifier des documents.
      */
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'TRESORERIE', 'GESTIONNAIRE', 'COMPTABLE')")
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_TRESORERIE', 'ROLE_GESTIONNAIRE', 'ROLE_COMPTABLE')")
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
         // Le nom du paramètre ("file") doit correspondre à celui utilisé dans le Flutter MultipartRequest.
