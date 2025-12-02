@@ -32,6 +32,10 @@ public class UtilisateurService {
 
     @Transactional
     public UtilisateurDTO creerUtilisateurFromSimpleDTO(UtilisateurCreateDTO utilisateurCreateDTO, Utilisateur admin) {
+
+        log.info("=== DÉBUT SERVICE creerUtilisateur ===");
+        log.info("Utilisateur reçu - Email: {}, MotDePasse: {}",
+                utilisateurCreateDTO.getEmail(), utilisateurCreateDTO.getMotDePasse() != null ? "PRÉSENT" : "NULL");
         // Vérifier les permissions
         if (admin.getRole() != Role.SUPER_ADMIN && admin.getRole() != Role.ADMIN && admin.getRole() != Role.DIRECTEUR) {
             throw new IllegalArgumentException(
@@ -43,6 +47,18 @@ public class UtilisateurService {
                 .ifPresent(u -> {
                     throw new IllegalArgumentException("Email déjà utilisé");
                 });
+
+
+        // LOG: Vérifier si le mot de passe est déjà encodé
+        log.info("Mot de passe avant traitement: {}", utilisateurCreateDTO.getMotDePasse());
+
+        // NE PAS ré-encoder si déjà encodé!
+        if (!utilisateurCreateDTO.getMotDePasse().startsWith("$2a$")) { // Vérifier si c'est déjà un hash BCrypt
+            log.info("Encodage du mot de passe...");
+            utilisateurCreateDTO.setMotDePasse(passwordEncoder.encode(utilisateurCreateDTO.getMotDePasse()));
+        } else {
+            log.info("Mot de passe déjà encodé, pas de ré-encodage");
+        }
 
         // Créer l'utilisateur à partir du DTO simplifié
         Utilisateur user = new Utilisateur();
@@ -86,6 +102,8 @@ public class UtilisateurService {
         } catch (Exception e) {
             log.warn("Impossible d'envoyer l'email de notification : {}", e.getMessage());
         }
+
+        log.info("=== FIN SERVICE creerUtilisateur ===");
 
         // Convertir en DTO pour la réponse
         return utilisateurMapper.toDTO(saved);
