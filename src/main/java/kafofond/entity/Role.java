@@ -11,5 +11,5 @@ public enum Role {
     RESPONSABLE,
     DIRECTEUR,
     ADMIN,
-    SUPER_AIN
+    SUPER_ADMIN
 }
